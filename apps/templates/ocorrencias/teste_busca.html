@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Busca Ativa - Teste{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4>Busca Ativa - Teste Simplificado</h4>
+        </div>
+        <div class="card-body">
+            
+            <!-- Tabela SIMPLES sem muitos estilos -->
+            <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Turma</th>
+                        <th>Nº</th>
+                        <th>Aluno</th>
+                        <th>Tipo</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for occ in ocorrencias %}
+                    <tr>
+                        <td>{{ occ.data|date:"d/m/Y" }}</td>
+                        <td>{{ occ.aluno.turma.nome }}</td>
+                        <td>{{ occ.aluno.numero }}</td>
+                        <td>{{ occ.aluno.nome }}</td>
+                        <td>{{ occ.get_tipo_ocorrencia_display }}</td>
+                        <td>
+                            {% if occ.busca_ativa_realizada %}
+                                Realizada
+                            {% else %}
+                                Pendente
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'editar_ocorrencia_aluno' occ.id %}">Editar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">Nenhuma ocorrência</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

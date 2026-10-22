@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Relatorios Mensais{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <h1><i class="fas fa-archive"></i> Relatorios Mensais</h1>
+        <a href="{% url 'controle_faltas' %}" class="btn btn-secondary">Voltar</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Arquivo</th>
+                    <th>Abrir</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for arquivo in arquivos %}
+                <tr>
+                    <td>{{ arquivo.nome }}</td>
+                    <td>
+                        <a href="{{ arquivo.url }}" class="btn btn-sm btn-primary" target="_blank">Abrir</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="text-center">Nenhum relatorio encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

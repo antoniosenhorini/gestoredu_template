@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Confirmar Exclusao{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h4><i class="fas fa-exclamation-triangle me-2"></i>Confirmar Exclusao</h4>
+        </div>
+        <div class="card-body">
+            <p>Tem certeza que deseja excluir a ocorrencia de <strong>{{ ocorrencia.aluno.nome }}</strong> do dia <strong>{{ ocorrencia.data|date:"d/m/Y" }}</strong> as <strong>{{ ocorrencia.horario_chegada|time:"H:i" }}</strong>?</p>
+            {% if ocorrencia.faltou %}
+                <p><span class="badge bg-warning">Faltou</span></p>
+            {% endif %}
+            <p class="text-muted">Esta acao nao pode ser desfeita.</p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Sim, excluir
+                </button>
+                <a href="{% url 'controle_faltas_alunos' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

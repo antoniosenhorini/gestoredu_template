@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cronograma Semanal - Impressao</title>
+    <style id="print-page-style">
+        @page {
+            size: A4 landscape;
+            margin: 5mm;
+        }
+    </style>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+        }
+
+        .print-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .print-actions button {
+            background: #0d6efd;
+            border: 1px solid #0d6efd;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 10pt;
+            font-weight: bold;
+            padding: 7px 10px;
+        }
+
+        .print-actions button.print-actions__secondary {
+            background: #198754;
+            border-color: #198754;
+        }
+
+        .cabecalho {
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        .cabecalho h3,
+        .cabecalho p {
+            margin: 4px 0;
+        }
+
+        .lab-schedule {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin-bottom: 14px;
+        }
+
+        .lab-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .turno-separator {
+            border-radius: 6px;
+            color: #fff;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin: 14px 0 10px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .turno-separator.manha {
+            background: #0d6efd;
+        }
+
+        .turno-separator.tarde {
+            background: #ffc107;
+            color: #111;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        @media print {
+            .print-actions {
+                display: none !important;
+            }
+
+            body {
+                margin: 5mm;
+            }
+
+            .lab-schedule {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            body.print-landscape .turno-separator {
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+
+            body.print-landscape .lab-schedule {
+                break-after: page;
+                page-break-after: always;
+            }
+
+            body.print-landscape .lab-schedule:last-child {
+                break-after: auto;
+                page-break-after: auto;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="print-landscape">
+    <div class="print-actions" aria-label="Opcoes de impressao">
+        <button type="button" data-print-orientation="portrait">Imprimir Retrato</button>
+        <button type="button" class="print-actions__secondary" data-print-orientation="landscape">Imprimir Paisagem</button>
+    </div>
+
+    <div class="cabecalho">
+        <h3>Cronograma Semanal - Laboratorios</h3>
+        <p>Semana de {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</p>
+        <p>
+            Laboratorio:
+            {% if laboratorio_filtro %}
+                {% for lab in laboratorios_todos %}{% if laboratorio_filtro == lab.id|stringformat:"s" %}{{ lab.nome }}{% endif %}{% endfor %}
+            {% else %}
+                Todos
+            {% endif %}
+            |
+            Turno:
+            {% if turno_filtro == 'manha' %}Manha{% elif turno_filtro == 'tarde' %}Tarde{% else %}Todos{% endif %}
+        </p>
+    </div>
+
+    {% for grupo in grupos_turno_cronograma %}
+        {% if not turno_filtro %}
+        <div class="turno-separator {{ grupo.turno }}" data-turno-separator="{{ grupo.turno }}">{{ grupo.titulo }}</div>
+        {% endif %}
+        {% for lab in laboratorios %}
+            <section class="lab-schedule">
+                <div class="lab-title">{{ lab.nome }} - {{ lab.equipamento }}</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aula</th>
+                            {% for dia in dias_semana %}
+                                <th>{{ dia }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for slot in grupo.slots %}
+                            <tr>
+                                <td><strong>{{ slot.horario_label }}</strong><br><small>{{ slot.turno_label }}</small></td>
+                                {% for dia in dias_semana %}
+                                    <td>
+                                        {% for k, a in agendamentos_dict.items %}
+                                            {% if k.0 == lab.id and k.1 == dia and k.2 == slot.turno and k.3 == slot.horario %}
+                                                <strong>{{ a.disciplina }}</strong><br>
+                                                {{ a.turma.nome }}<br>
+                                                <small>{{ a.professor.nome_abreviado|truncatechars:24 }}</small>
+                                                {% if a.observacao %}<br><small>{{ a.observacao }}</small>{% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        {% endfor %}
+    {% endfor %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pageStyle = document.getElementById('print-page-style');
+            const body = document.body;
+
+            function setPrintOrientation(orientation) {
+                const isPortrait = orientation === 'portrait';
+                body.classList.toggle('print-portrait', isPortrait);
+                body.classList.toggle('print-landscape', !isPortrait);
+                pageStyle.textContent = '@page { size: A4 ' + orientation + '; margin: 5mm; }';
+            }
+
+            document.querySelectorAll('[data-print-orientation]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    setPrintOrientation(button.dataset.printOrientation);
+                    window.print();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

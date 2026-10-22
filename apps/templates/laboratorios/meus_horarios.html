@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Meus Horarios de Laboratorio{% endblock %}
+
+{% block extra_head %}
+<style>
+    .professor-lab-page {
+        background: #f6f9fc;
+        min-height: calc(100vh - 120px);
+    }
+    .professor-lab-section {
+        background: #f8fbff;
+        border: 1px solid #dbeafe;
+    }
+    .professor-lab-card {
+        border: 1px solid #e5eef8;
+        background: #fff;
+    }
+    .professor-lab-card dl {
+        display: grid;
+        grid-template-columns: minmax(92px, 0.42fr) 1fr;
+        gap: 0.35rem 0.75rem;
+        margin: 0;
+    }
+    .professor-lab-card dt {
+        color: #6c757d;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+    .professor-lab-card dd {
+        margin: 0;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .professor-lab-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #e7f1ff;
+        color: #0d6efd;
+    }
+    .professor-lab-filter {
+        background: #ffffff;
+        border: 1px solid #dbeafe;
+        border-radius: 0.85rem;
+        padding: 0.35rem;
+    }
+    .professor-lab-filter .btn {
+        border-radius: 0.65rem;
+        font-weight: 600;
+        min-width: 6.25rem;
+    }
+    .professor-lab-turno {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 999px;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    .professor-lab-turno.manha {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    .professor-lab-turno.tarde {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .professor-lab-separator {
+        border-radius: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-align: center;
+    }
+    @media (max-width: 575.98px) {
+        .professor-lab-card dl {
+            grid-template-columns: 1fr;
+            gap: 0.15rem;
+        }
+        .professor-lab-filter {
+            width: 100%;
+        }
+        .professor-lab-filter .btn {
+            flex: 1 1 0;
+            min-width: 0;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="professor-lab-page container-fluid px-3 px-md-4 py-4">
+    <div class="mx-auto" style="max-width: 1200px;">
+        {% include 'includes/meus_horarios_laboratorio.html' %}
+    </div>
+</div>
+{% endblock %}

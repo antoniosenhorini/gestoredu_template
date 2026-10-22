@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Cronograma Semanal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-calendar-alt"></i> Cronograma Semanal - Laboratórios Fixos</h4>
+        </div>
+        <div class="card-body">
+
+            <!-- BOTÃO DE IMPRESSÃO -->
+            <div class="mb-3 text-end">
+                <button onclick="window.print()" class="btn btn-info">
+                    <i class="fas fa-print"></i> Imprimir / PDF
+                </button>
+            </div>
+
+            <div class="d-flex justify-content-between mb-4">
+                <a href="?data_inicio={{ semana_anterior|date:'Y-m-d' }}" class="btn btn-secondary">
+                    <i class="fas fa-chevron-left"></i> Semana Anterior
+                </a>
+                <span class="fw-bold">Semana de {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</span>
+                <a href="?data_inicio={{ semana_proxima|date:'Y-m-d' }}" class="btn btn-secondary">
+                    Próxima Semana <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered text-center">
+                    <thead>
+                        <tr class="table-dark">
+                            <th style="width: 80px;">Horário</th>
+                            {% for lab in laboratorios %}
+                                <th colspan="5" style="background-color: {% cycle '#e74c3c' '#3498db' '#2ecc71' %}; color: white;">
+                                    {{ lab.nome }}
+                                </th>
+                            {% endfor %}
+                        </tr>
+                        <tr class="table-secondary">
+                            <th></th>
+                            {% for lab in laboratorios %}
+                                {% for dia in dias_semana %}
+                                    <th>{{ dia|slice:":-3" }}</th>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for horario in horarios %}
+                        <tr>
+                            <td class="fw-bold bg-light">{{ horario }}ª Aula</td>
+                            {% for lab in laboratorios %}
+                                {% for dia in dias_semana %}
+                                    <td style="background-color: {% cycle '#f9ebea' '#eaf2f8' '#eafaf1' %}">
+                                        {% for k, a in agendamentos_dict.items %}
+                                            {% if k.0 == lab.id and k.1 == dia and k.2 == horario %}
+                                            <div class="p-1 rounded" style="background-color: {% cycle '#e74c3c' '#3498db' '#2ecc71' %}; color: white;">
+                                                <strong>{{ a.disciplina }}</strong><br>
+                                                {{ a.turma.nome }}<br>
+                                                <small>{{ a.professor.nome_completo|truncatechars:12 }}</small>
+                                                <br>
+                                                <a href="{% url 'excluir_agendamento' a.id %}?data_inicio={{ data_inicio|date:'Y-m-d' }}"
+                                                   class="btn btn-danger btn-sm mt-1"
+                                                   onclick="return confirm('Excluir este agendamento?')"
+                                                   style="font-size: 0.7rem; padding: 1px 5px;">
+                                                    <i class="fas fa-trash-alt"></i> Excluir
+                                                </a>
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <a href="{% url 'listar_laboratorios' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style media="print">
+    /* Oculta elementos de navegação e botões */
+    .btn, .card-header, .d-flex, .mt-4, .mb-3, .mb-4, .navbar, footer, .actions {
+        display: none !important;
+    }
+
+    /* Força que a tabela e seu container sejam visíveis na impressão */
+    .table-responsive, .table, tbody, tr, td, th {
+        display: block !important;
+        visibility: visible !important;
+        overflow: visible !important;
+    }
+
+    /* Reaplica o layout de tabela para impressão */
+    .table {
+        display: table !important;
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px; /* Reduz fonte para caber na largura */
+    }
+
+    .table thead, .table tbody {
+        display: table-header-group !important;
+    }
+
+    .table tr {
+        display: table-row !important;
+    }
+
+    .table th, .table td {
+        display: table-cell !important;
+        border: 1px solid #000 !important;
+        padding: 2px !important;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* Remove cores de fundo (economia de tinta) e garante texto preto */
+    .p-1, .rounded, .bg-primary, .bg-secondary, .table-dark, .table-secondary {
+        background-color: transparent !important;
+        color: black !important;
+    }
+
+    /* Força orientação paisagem para tabelas largas */
+    @page {
+        size: landscape;
+        margin: 1cm;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .container-fluid {
+        padding: 0;
+        margin: 0;
+    }
+
+    .card {
+        box-shadow: none;
+        border: none;
+        margin: 0;
+    }
+</style>

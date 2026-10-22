@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Confer&ecirc;ncia de Ocorr&ecirc;ncias{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-between gap-2">
+            <div>
+                <h1 class="h4 mb-1">
+                    <i class="fas fa-clipboard-check me-2"></i>Confer&ecirc;ncia de Ocorr&ecirc;ncias Disciplinares
+                </h1>
+                <div class="small opacity-75">Confira os registros por data, turno, turma, aluno, pedagoga e tipo.</div>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-light text-primary">
+                    <i class="fas fa-list-check me-1"></i>{{ ocorrencias|length }} registro(s)
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end mb-4">
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label for="data" class="form-label fw-semibold">
+                        <i class="fas fa-calendar-day me-1"></i>Data
+                    </label>
+                    <input type="date" name="data" id="data" class="form-control" value="{{ data_filtro }}">
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label for="turno" class="form-label fw-semibold">
+                        <i class="fas fa-clock me-1"></i>Turno
+                    </label>
+                    <select name="turno" id="turno" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="manha" {% if turno_filtro == 'manha' %}selected{% endif %}>Manh&atilde;</option>
+                        <option value="tarde" {% if turno_filtro == 'tarde' %}selected{% endif %}>Tarde</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label for="turma" class="form-label fw-semibold">
+                        <i class="fas fa-users me-1"></i>Turma
+                    </label>
+                    <select name="turma" id="turma" class="form-select">
+                        <option value="">Todas</option>
+                        {% for turma in turmas %}
+                            <option value="{{ turma.id }}" {% if turma.id|stringformat:'s' == turma_filtro %}selected{% endif %}>
+                                {{ turma.serie }} - {{ turma.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label for="aluno" class="form-label fw-semibold">
+                        <i class="fas fa-user-graduate me-1"></i>Aluno
+                    </label>
+                    <input type="search" name="aluno" id="aluno" class="form-control" value="{{ aluno_filtro }}" placeholder="Nome do aluno">
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label for="pedagoga" class="form-label fw-semibold">
+                        <i class="fas fa-user-tie me-1"></i>Pedagoga
+                    </label>
+                    <select name="pedagoga" id="pedagoga" class="form-select">
+                        <option value="">Todas</option>
+                        {% for pedagoga in pedagogas %}
+                            <option value="{{ pedagoga }}" {% if pedagoga == pedagoga_filtro %}selected{% endif %}>{{ pedagoga }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-2">
+                    <label for="tipo" class="form-label fw-semibold">
+                        <i class="fas fa-tags me-1"></i>Tipo
+                    </label>
+                    <select name="tipo" id="tipo" class="form-select">
+                        <option value="">Todos</option>
+                        {% for valor, rotulo in tipos_ocorrencia %}
+                            <option value="{{ valor }}" {% if valor == tipo_filtro %}selected{% endif %}>{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 d-flex flex-column flex-md-row gap-2 justify-content-end">
+                    <a href="{% url 'imprimir_conferencia_ocorrencias' %}?data={{ data_filtro }}&turno={{ turno_filtro }}&turma={{ turma_filtro }}&aluno={{ aluno_filtro|urlencode }}&pedagoga={{ pedagoga_filtro|urlencode }}&tipo={{ tipo_filtro }}" class="btn btn-outline-dark" target="_blank">
+                        <i class="fas fa-print me-1"></i>Imprimir
+                    </a>
+                    <a href="{% url 'conferencia_ocorrencias' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-filter-circle-xmark me-1"></i>Limpar filtros
+                    </a>
+                    <a href="{% url 'registrar_ocorrencia_aluno' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar para registrar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Turno</th>
+                            <th>Turma</th>
+                            <th>N&ordm;</th>
+                            <th>Aluno</th>
+                            <th>Ocorr&ecirc;ncia</th>
+                            <th>Descri&ccedil;&atilde;o</th>
+                            <th>Atendido por</th>
+                            <th class="text-end">A&ccedil;&otilde;es</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ocorrencia in ocorrencias %}
+                            <tr>
+                                <td>{{ ocorrencia.data|date:"d/m/Y" }}</td>
+                                <td>
+                                    <span class="badge {% if ocorrencia.aluno.turma.turno == 'manha' or ocorrencia.turno == 'manha' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
+                                        {% if ocorrencia.aluno.turma.turno == 'manha' or ocorrencia.turno == 'manha' %}Manh&atilde;{% elif ocorrencia.aluno.turma.turno == 'tarde' or ocorrencia.turno == 'tarde' %}Tarde{% else %}-{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ ocorrencia.aluno.turma.serie }} - {{ ocorrencia.aluno.turma.nome }}</td>
+                                <td>{{ ocorrencia.aluno.numero }}</td>
+                                <td>{{ ocorrencia.aluno.nome }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        {{ ocorrencia.get_tipo_ocorrencia_display }}
+                                    </span>
+                                </td>
+                                <td class="text-break">
+                                    {{ ocorrencia.motivo_alegado|default:ocorrencia.observacoes_adicionais|default:"Sem descri&ccedil;&atilde;o" }}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-user-tie me-1"></i>{{ ocorrencia.atendido_por|default:"N&atilde;o informado" }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'editar_ocorrencia_aluno' ocorrencia.id %}" class="btn btn-outline-primary" title="Editar ocorr&ecirc;ncia">
+                                            <i class="fas fa-pen-to-square"></i>
+                                        </a>
+                                        <a href="{% url 'excluir_ocorrencia_aluno' ocorrencia.id %}" class="btn btn-outline-danger" title="Excluir ocorr&ecirc;ncia">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-5">
+                                    <i class="fas fa-circle-info fa-2x d-block mb-2"></i>
+                                    Nenhuma ocorr&ecirc;ncia encontrada para os filtros selecionados.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

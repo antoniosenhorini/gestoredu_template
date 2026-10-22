@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Busca Ativa - Contato com Responsável{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'painel_equipe' %}">Painel</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'busca_ativa' %}?mes={{ mes }}&ano={{ ano }}&turma={{ turma_selecionada }}">Busca Ativa</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Registrar Contato</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-phone-volume me-2"></i>Busca Ativa - Registro de Contato</h4>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Informações do Aluno e da Falta (Somente Leitura) -->
+            <div class="alert alert-light border mb-4">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <span class="text-muted d-block small">Aluno:</span>
+                        <strong class="fs-6">{{ falta.aluno.nome }}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="text-muted d-block small">Turma / Número:</span>
+                        <strong>{{ falta.aluno.turma.nome }} - Nº {{ falta.aluno.numero }}</strong>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="text-muted d-block small">Data da Falta:</span>
+                        <span class="badge bg-secondary fs-6">{{ falta.data|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="text-muted d-block small">Status Busca Ativa:</span>
+                        {% if falta.busca_ativa_realizada %}
+                            <span class="badge bg-success">✅ Realizada</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">⏳ Pendente</span>
+                        {% endif %}
+                    </div>
+                    {% if falta.pedagoga %}
+                    <div class="col-md-4">
+                        <span class="text-muted d-block small">Pedagoga Responsável:</span>
+                        <span>{{ falta.pedagoga }}</span>
+                    </div>
+                    {% endif %}
+                    {% if falta.observacoes %}
+                    <div class="col-md-8">
+                        <span class="text-muted d-block small">Observações da Falta:</span>
+                        <span>{{ falta.observacoes }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Formulário de Registro do Contato -->
+            <form method="post">
+                {% csrf_token %}
+
+                <h5 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-address-book me-2"></i>Informações do Contato
+                </h5>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="responsavel_contatado" class="form-label fw-bold">Responsável Contatado:</label>
+                        <input type="text"
+                               name="responsavel_contatado"
+                               id="responsavel_contatado"
+                               class="form-control"
+                               placeholder="Ex: Mãe (Maria), Pai (José), Avó..."
+                               value="{{ falta.responsavel_contatado }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="horario_contato" class="form-label fw-bold">Horário do Contato:</label>
+                        <input type="time"
+                               name="horario_contato"
+                               id="horario_contato"
+                               class="form-control"
+                               value="{% if falta.horario_contato %}{{ falta.horario_contato|time:'H:i' }}{% endif %}">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="alegado_responsavel" class="form-label fw-bold">O que foi alegado pelo responsável:</label>
+                    <textarea name="alegado_responsavel"
+                              id="alegado_responsavel"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Descreva a justificativa ou posicionamento apresentado pela família...">{{ falta.alegado_responsavel }}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="fas fa-save me-2"></i>Salvar Busca Ativa
+                    </button>
+                    <a href="{% url 'busca_ativa' %}?mes={{ mes }}&ano={{ ano }}&turma={{ turma_selecionada }}" class="btn btn-secondary px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Cancelar / Voltar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

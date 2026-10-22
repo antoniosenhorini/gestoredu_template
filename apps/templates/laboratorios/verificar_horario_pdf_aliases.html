@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Vínculos Pendentes do PDF{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                <h4 class="mb-0"><i class="fas fa-link me-2"></i>Vínculos Pendentes do PDF</h4>
+                <a href="{% url 'verificar_horario_pdf_upload' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                O PDF usa apelidos/abreviações de professores e turmas que não batem literalmente com o cadastro.
+                Resolva os vínculos abaixo <strong>uma única vez</strong> — eles serão reaproveitados automaticamente
+                em todos os próximos uploads.
+            </div>
+
+            <h5 class="mb-3">Professores <span class="badge text-bg-secondary">{{ professores_pendentes|length }}</span></h5>
+            {% if professores_pendentes %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Texto no PDF</th>
+                                <th>Sugestão</th>
+                                <th>Vincular a</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in professores_pendentes %}
+                                <tr>
+                                    <td>{{ item.alias.texto_pdf }}</td>
+                                    <td>{{ item.sugestao.nome_completo|default:"—" }}</td>
+                                    <td>
+                                        <form method="post" class="d-flex gap-2">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="tipo" value="professor">
+                                            <input type="hidden" name="alias_id" value="{{ item.alias.id }}">
+                                            <input type="hidden" name="acao" value="vincular">
+                                            <select name="professor_id" class="form-select form-select-sm">
+                                                <option value="">— selecione —</option>
+                                                {% for professor in professores %}
+                                                    <option value="{{ professor.id }}" {% if item.sugestao and professor.id == item.sugestao.id %}selected{% endif %}>{{ professor.nome_completo }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-success">Confirmar</button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="tipo" value="professor">
+                                            <input type="hidden" name="alias_id" value="{{ item.alias.id }}">
+                                            <input type="hidden" name="acao" value="ignorar">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Ignorar sempre</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-success">Nenhum professor pendente de vínculo.</div>
+            {% endif %}
+
+            <h5 class="mb-3">Turmas <span class="badge text-bg-secondary">{{ turmas_pendentes|length }}</span></h5>
+            {% if turmas_pendentes %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Texto no PDF</th>
+                                <th>Sugestão</th>
+                                <th>Vincular a</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in turmas_pendentes %}
+                                <tr>
+                                    <td>{{ item.alias.texto_pdf }}</td>
+                                    <td>{{ item.sugestao.nome|default:"—" }}</td>
+                                    <td>
+                                        <form method="post" class="d-flex gap-2">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="tipo" value="turma">
+                                            <input type="hidden" name="alias_id" value="{{ item.alias.id }}">
+                                            <select name="turma_id" class="form-select form-select-sm">
+                                                <option value="">— selecione —</option>
+                                                {% for turma in turmas %}
+                                                    <option value="{{ turma.id }}" {% if item.sugestao and turma.id == item.sugestao.id %}selected{% endif %}>{{ turma.nome }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-success">Confirmar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-success mb-0">Nenhuma turma pendente de vínculo.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

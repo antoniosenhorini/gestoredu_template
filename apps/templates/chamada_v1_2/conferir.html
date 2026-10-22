@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Conferir/Editar Chamada v1.2{% endblock %}
+
+{% block extra_head %}
+<style>
+    .chamada-resumo-fixo {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: #fff;
+        border-bottom: 1px solid #dee2e6;
+    }
+    /* Cartao do aluno: grid de 2 colunas (identificacao | acoes) no desktop,
+       vira 1 coluna no mobile. Grid (nao flex-column) evita o esticamento
+       vertical dos botoes visto na versao anterior. */
+    .chamada-linha-aluno {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.4rem;
+        border-bottom: 1px solid #eef1f4;
+    }
+    .chamada-linha-aluno.falta-marcada {
+        background: #fdecea;
+    }
+    .chamada-linha-aluno.atestado {
+        background: #f1f3f5;
+    }
+    .chamada-info-aluno {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        min-width: 0;
+    }
+    .chamada-area-status {
+        display: grid;
+        gap: 0.4rem;
+        justify-items: stretch;
+    }
+    .chamada-botoes-status {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(88px, auto));
+        gap: 0.5rem;
+    }
+    .chamada-botao-status {
+        min-height: 44px;
+        height: auto;
+        padding: 0.4rem 0.75rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.1;
+    }
+    .aviso-atestado-ativo {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.3rem 0.5rem;
+        background: #e7f6fd;
+        border: 1px solid #9fd8ef;
+        border-left: 0.3rem solid #0dcaf0;
+        border-radius: 0.5rem;
+        padding: 0.4rem 0.6rem;
+        color: #055160;
+        font-size: 0.85rem;
+    }
+    .aviso-atestado-titulo {
+        font-weight: 800;
+        letter-spacing: 0.02em;
+    }
+    .aviso-atestado-periodo {
+        font-size: 0.85rem;
+    }
+    @media (max-width: 575.98px) {
+        .chamada-linha-aluno {
+            grid-template-columns: 1fr;
+        }
+        .chamada-botao-status {
+            white-space: normal;
+        }
+    }
+    .modal-footer {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    @media (max-width: 400px) {
+        .modal-footer .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-primary text-white py-3">
+            <h1 class="h5 mb-0">
+                <i class="fas fa-list-check me-2"></i>Conferir/Editar Chamada v1.2 <span class="badge bg-light text-primary ms-1">experimental</span>
+            </h1>
+        </div>
+        <div class="card-body p-3">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-12 col-md-6">
+                    <label for="turma" class="form-label fw-semibold">Turma</label>
+                    <select name="turma" id="turma" class="form-select" required>
+                        <option value="">Selecione a turma</option>
+                        {% for t in turmas %}
+                            <option value="{{ t.id }}" {% if turma_selecionada and t.id == turma_selecionada.id %}selected{% endif %}>{{ t.nome }} - {{ t.get_turno_display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-8 col-md-4">
+                    <label for="data" class="form-label fw-semibold">Data</label>
+                    <input type="date" name="data" id="data" class="form-control" value="{{ data_selecionada|date:'Y-m-d'|default:'' }}" required>
+                </div>
+                <div class="col-4 col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Buscar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if turma_selecionada and data_selecionada %}
+        <div class="chamada-resumo-fixo card border-0 shadow-sm mb-3">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="fw-semibold">
+                    {{ turma_selecionada.nome }} - {{ data_selecionada|date:"d/m/Y" }} |
+                    {{ alunos|length }} alunos | <span id="resumo-presentes">0</span> presentes | <span id="resumo-faltosos">0</span> faltosos
+                </div>
+                <button type="button" id="btn-abrir-confirmacao" class="btn btn-success fw-semibold">
+                    <i class="fas fa-save me-1"></i>Salvar Alterações
+                </button>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                {% if not alunos %}
+                    <p class="text-muted mb-0">Nenhum aluno ativo encontrado para esta turma.</p>
+                {% else %}
+                    <div id="lista-alunos">
+                        {% for aluno in alunos %}
+                            <div class="chamada-linha-aluno {% if aluno.atestado_ativo %}atestado{% endif %}"
+                                 data-aluno-id="{{ aluno.id }}">
+                                <div class="chamada-info-aluno">
+                                    <span class="badge bg-secondary">{{ aluno.numero }}</span>
+                                    <span>{{ aluno.nome }}</span>
+                                </div>
+                                <div class="chamada-area-status">
+                                    <div class="chamada-botoes-status" role="group" aria-label="Status de {{ aluno.nome }}">
+                                        <input type="radio" class="btn-check status-radio" name="status_{{ aluno.id }}" id="presente_{{ aluno.id }}" value="presente"
+                                               {% if aluno.id not in faltas_existentes %}checked{% endif %} {% if aluno.id in atestado_ids %}disabled{% endif %}>
+                                        <label class="btn btn-outline-success chamada-botao-status" for="presente_{{ aluno.id }}">
+                                            <i class="fas fa-check"></i> Presente
+                                        </label>
+
+                                        <input type="radio" class="btn-check status-radio" name="status_{{ aluno.id }}" id="falta_{{ aluno.id }}" value="falta"
+                                               {% if aluno.id in faltas_existentes %}checked{% endif %} {% if aluno.id in atestado_ids %}disabled{% endif %}>
+                                        <label class="btn btn-outline-danger chamada-botao-status" for="falta_{{ aluno.id }}">
+                                            <i class="fas fa-times"></i> Falta
+                                        </label>
+                                    </div>
+                                    {% if aluno.atestado_ativo %}
+                                        <div class="aviso-atestado-ativo" role="status">
+                                            <i class="fas fa-notes-medical" aria-hidden="true"></i>
+                                            <span class="aviso-atestado-titulo">ATESTADO ATIVO</span>
+                                            <span class="aviso-atestado-periodo">De {{ aluno.atestado_ativo.data_inicio|date:"d/m/Y" }} até {{ aluno.atestado_ativo.data_fim|date:"d/m/Y" }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% elif turma_id_invalido %}
+        <p class="text-muted">Turma nao encontrada.</p>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="modalConfirmarEdicao" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-clipboard-list me-1"></i>Confirmar Alteração</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Deseja salvar as alterações desta chamada?</p>
+                <div id="modal-status-envio" class="alert d-none mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">VOLTAR E CORRIGIR</button>
+                <button type="button" id="btn-confirmar-edicao" class="btn btn-success fw-semibold">CONFIRMAR ALTERAÇÃO</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if turma_selecionada and data_selecionada %}
+<script>
+(function () {
+    'use strict';
+
+    var TURMA_ID = '{{ turma_selecionada.id }}';
+    var DATA_CHAMADA = '{{ data_selecionada|date:"Y-m-d" }}';
+    var URL_SALVAR = '{% url "chamada_v1_2_conferir_salvar" %}';
+    var CSRF_TOKEN = '{{ csrf_token }}';
+
+    var listaAlunosEl = document.getElementById('lista-alunos');
+    var resumoPresentesEl = document.getElementById('resumo-presentes');
+    var resumoFaltososEl = document.getElementById('resumo-faltosos');
+    var modalEl = document.getElementById('modalConfirmarEdicao');
+    var modalConfirmar = new bootstrap.Modal(modalEl);
+    var totalAlunos = listaAlunosEl ? listaAlunosEl.querySelectorAll('.chamada-linha-aluno').length : 0;
+    var enviando = false;
+
+    function idsFaltosos() {
+        var ids = [];
+        if (!listaAlunosEl) { return ids; }
+        listaAlunosEl.querySelectorAll('.chamada-linha-aluno').forEach(function (linha) {
+            var alunoId = linha.getAttribute('data-aluno-id');
+            var radioFalta = document.getElementById('falta_' + alunoId);
+            if (radioFalta && radioFalta.checked) { ids.push(alunoId); }
+        });
+        return ids;
+    }
+
+    function atualizarResumo() {
+        var faltosos = idsFaltosos();
+        resumoFaltososEl.textContent = faltosos.length;
+        resumoPresentesEl.textContent = totalAlunos - faltosos.length;
+        listaAlunosEl.querySelectorAll('.chamada-linha-aluno').forEach(function (linha) {
+            var alunoId = linha.getAttribute('data-aluno-id');
+            var radioFalta = document.getElementById('falta_' + alunoId);
+            linha.classList.toggle('falta-marcada', !!(radioFalta && radioFalta.checked));
+        });
+    }
+
+    if (listaAlunosEl) {
+        listaAlunosEl.addEventListener('change', function (evento) {
+            if (evento.target.classList.contains('status-radio')) { atualizarResumo(); }
+        });
+    }
+
+    document.getElementById('btn-abrir-confirmacao').addEventListener('click', function () {
+        var statusEl = document.getElementById('modal-status-envio');
+        statusEl.classList.add('d-none');
+        statusEl.textContent = '';
+        var btnConfirmar = document.getElementById('btn-confirmar-edicao');
+        btnConfirmar.disabled = false;
+        btnConfirmar.textContent = 'CONFIRMAR ALTERAÇÃO';
+        modalConfirmar.show();
+    });
+
+    function mostrarStatusModal(tipo, mensagem) {
+        var statusEl = document.getElementById('modal-status-envio');
+        statusEl.className = 'alert mt-3 mb-0 alert-' + tipo;
+        statusEl.textContent = mensagem;
+    }
+
+    document.getElementById('btn-confirmar-edicao').addEventListener('click', function () {
+        if (enviando) { return; }
+        enviando = true;
+        var btnConfirmar = document.getElementById('btn-confirmar-edicao');
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = 'Salvando...';
+
+        var formData = new FormData();
+        formData.append('turma', TURMA_ID);
+        formData.append('data', DATA_CHAMADA);
+        idsFaltosos().forEach(function (alunoId) { formData.append('falta_ids', alunoId); });
+
+        fetch(URL_SALVAR, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN },
+            body: formData,
+        }).then(function (resposta) {
+            return resposta.json().then(function (dados) { return { ok: resposta.ok, dados: dados }; });
+        }).then(function (resultado) {
+            enviando = false;
+            if (resultado.ok && resultado.dados.status === 'ok') {
+                mostrarStatusModal('success', 'Alteracoes salvas com sucesso.');
+                btnConfirmar.textContent = 'SALVO';
+                setTimeout(function () { window.location.reload(); }, 1200);
+            } else {
+                mostrarStatusModal('danger', resultado.dados.mensagem || 'Nao foi possivel salvar. Tente novamente.');
+                btnConfirmar.disabled = false;
+                btnConfirmar.textContent = 'CONFIRMAR ALTERAÇÃO';
+            }
+        }).catch(function () {
+            enviando = false;
+            mostrarStatusModal(
+                'danger',
+                'Nao foi possivel confirmar se a alteracao foi salva. Verifique a conexao e recarregue a pagina antes de tentar novamente.'
+            );
+            btnConfirmar.disabled = false;
+            btnConfirmar.textContent = 'CONFIRMAR ALTERAÇÃO';
+        });
+    });
+
+    atualizarResumo();
+})();
+</script>
+{% endif %}
+{% endblock %}

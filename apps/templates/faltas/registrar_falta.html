@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Registrar Falta - Colégio Cívico Militar{% endblock %}
+
+{% block extra_head %}
+<style>
+    .registro-falta-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .registro-falta-card .card-header {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 20px;
+    }
+    .registro-falta-card .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+    }
+    .registro-falta-card .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'painel_equipe' %}">Painel</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'controle_faltas' %}">Controle de Faltas</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Registrar Falta</li>
+        </ol>
+    </nav>
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card registro-falta-card">
+                <div class="card-header">
+                    <h4><i class="fas fa-pen me-2"></i>Registrar Falta</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'registrar_falta' %}">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Professor</label>
+                                <select name="professor" class="form-select" required>
+                                    <option value="">Selecione...</option>
+                                    {% for prof in professores %}
+                                    <option value="{{ prof.id }}">{{ prof.get_full_name|default:prof.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data</label>
+                                <input type="date" name="data" class="form-control" value="{% now 'Y-m-d' %}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Turno</label>
+                                <select name="turno" class="form-select" required>
+                                    <option value="manha">Manhã</option>
+                                    <option value="tarde">Tarde</option>
+                                    <option value="integral">Integral</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Horário Previsto</label>
+                                <input type="time" name="horario_previsto" class="form-control" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Horário Real</label>
+                                <input type="time" name="horario_real" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status</label>
+                                <select name="tipo" class="form-select" required>
+                                    <option value="presente">Presente</option>
+                                    <option value="atraso">Atraso</option>
+                                    <option value="falta">Falta</option>
+                                    <option value="justificada">Justificada</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Observação</label>
+                                <textarea name="observacao" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <a href="{% url 'controle_faltas' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Salvar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

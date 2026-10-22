@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Login - Colegio Civico Militar{% endblock %}
+
+{% block extra_head %}
+<style>
+    .login-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .login-card .card-header {
+        background: #0d6efd;
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+    }
+    .login-card .btn-primary {
+        background: #0d6efd;
+        border: none;
+        padding: 10px;
+    }
+    .login-card .btn-primary:hover {
+        background: #0b5ed7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+            <div class="card login-card">
+                <div class="card-header text-center py-3">
+                    <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Acesso Restrito</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Usuario ou senha incorretos. Tente novamente.
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-user me-2"></i>Usuario</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-lock me-2"></i>Senha</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i>Entrar no Sistema
+                        </button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'recuperar_senha' %}" class="text-decoration-none">
+                            <i class="fas fa-unlock-keyhole me-1"></i>Esqueci minha senha
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

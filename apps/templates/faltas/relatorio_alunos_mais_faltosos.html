@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Alunos Mais Faltosos{% endblock %}
+
+{% block extra_head %}
+<style>
+    .report-card {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+
+    .ranking-table th,
+    .ranking-table td {
+        vertical-align: middle;
+    }
+
+    .recortes-print {
+        display: none;
+    }
+
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 7mm;
+        }
+
+        body.print-list .no-print,
+        body.print-cutouts .no-print,
+        body.print-list .navbar,
+        body.print-cutouts .navbar,
+        body.print-list .breadcrumb,
+        body.print-cutouts .breadcrumb,
+        body.print-list footer,
+        body.print-cutouts footer {
+            display: none !important;
+        }
+
+        body.print-list {
+            background: #fff !important;
+            color: #000 !important;
+            font-size: 10px;
+        }
+
+        body.print-list .container-fluid {
+            width: 100% !important;
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        body.print-list .report-card {
+            border: 0 !important;
+        }
+
+        body.print-list .card-header {
+            padding: 0 0 3mm 0 !important;
+            background: #fff !important;
+            color: #000 !important;
+            border: 0 !important;
+        }
+
+        body.print-list .card-body {
+            padding: 0 !important;
+        }
+
+        body.print-list .turma-bloco {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin-bottom: 3mm;
+        }
+
+        body.print-list .turma-titulo {
+            font-size: 12px;
+            font-weight: 700;
+            margin: 0 0 1mm 0;
+            border-bottom: 1px solid #000;
+        }
+
+        body.print-list .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-bottom: 1mm;
+        }
+
+        body.print-list .ranking-table th,
+        body.print-list .ranking-table td {
+            border: 1px solid #777;
+            padding: 1mm 1.5mm;
+            color: #000 !important;
+        }
+
+        body.print-list .badge {
+            border: 0 !important;
+            background: transparent !important;
+            color: #000 !important;
+            padding: 0 !important;
+            font-size: 10px !important;
+        }
+
+        body.print-cutouts {
+            background: #fff !important;
+            color: #000 !important;
+        }
+
+        body.print-cutouts .lista-print {
+            display: none !important;
+        }
+
+        body.print-cutouts .recortes-print {
+            display: block !important;
+            padding: 0;
+        }
+
+        body.print-cutouts .recorte-turma {
+            break-after: page;
+            page-break-after: always;
+        }
+
+        body.print-cutouts .recorte-turma:last-child {
+            break-after: auto;
+            page-break-after: auto;
+        }
+
+        body.print-cutouts .recorte-turma-cabecalho {
+            border: 1px solid #000;
+            padding: 2mm 3mm;
+            margin: 0 0 3mm 0;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            gap: 4mm;
+        }
+
+        body.print-cutouts .recorte-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4mm;
+        }
+
+        body.print-cutouts .container-fluid {
+            width: 100% !important;
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        body.print-cutouts .report-card {
+            border: 0 !important;
+        }
+
+        body.print-cutouts .card-header,
+        body.print-cutouts .card-body {
+            padding: 0 !important;
+            border: 0 !important;
+            background: #fff !important;
+        }
+
+        body.print-cutouts .recorte-card {
+            border: 1px dashed #000;
+            padding: 4mm;
+            min-height: 43mm;
+            break-inside: avoid;
+            page-break-inside: avoid;
+            font-size: 11px;
+            line-height: 1.25;
+        }
+
+        body.print-cutouts .recorte-nome {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 2mm;
+        }
+
+        body.print-cutouts .recorte-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2mm 3mm;
+        }
+
+        body.print-cutouts .recorte-periodo {
+            grid-column: 1 / -1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <nav aria-label="breadcrumb" class="no-print">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'painel_equipe' %}">Painel</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Relatório de Alunos Mais Faltosos</li>
+        </ol>
+    </nav>
+
+    <div class="report-card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                <div>
+                    <h1 class="h4 mb-1">
+                        <i class="fas fa-trophy me-2"></i>Relatório de Alunos Mais Faltosos
+                    </h1>
+                    <div class="small opacity-75">
+                        {% if turno_filtro == 'manha' %}Turno: Manhã{% else %}Turno: Tarde{% endif %}
+                        {% if data_inicial %} | De {{ data_inicial }}{% endif %}
+                        {% if data_final %} até {{ data_final }}{% endif %}
+                    </div>
+                </div>
+                <div class="align-self-md-center">
+                    <span class="badge bg-light text-primary">{{ total_alunos }} aluno(s)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-3 p-md-4">
+            <form method="get" class="row g-3 align-items-end mb-4 no-print">
+                <div class="col-12 col-md-2">
+                    <label for="turno" class="form-label fw-semibold">Turno</label>
+                    <select name="turno" id="turno" class="form-select">
+                        <option value="manha" {% if turno_filtro == 'manha' %}selected{% endif %}>Manhã</option>
+                        <option value="tarde" {% if turno_filtro == 'tarde' %}selected{% endif %}>Tarde</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="turma" class="form-label fw-semibold">Turma</label>
+                    <select name="turma" id="turma" class="form-select">
+                        <option value="">Todas</option>
+                        {% for turma in turmas %}
+                            <option value="{{ turma.id }}" {% if turma.id|stringformat:'s' == turma_filtro %}selected{% endif %}>
+                                {{ turma.serie }} - {{ turma.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label for="data_inicial" class="form-label fw-semibold">Data inicial</label>
+                    <input type="date" name="data_inicial" id="data_inicial" class="form-control" value="{{ data_inicial }}">
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label for="data_final" class="form-label fw-semibold">Data final</label>
+                    <input type="date" name="data_final" id="data_final" class="form-control" value="{{ data_final }}">
+                </div>
+
+                <div class="col-12 col-md-3 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                    </button>
+                    <a href="{% url 'relatorio_alunos_mais_faltosos' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-filter-circle-xmark me-1"></i>Limpar
+                    </a>
+                    <button type="button" class="btn btn-outline-dark" onclick="imprimirRelatorio('print-list')">
+                        <i class="fas fa-print me-1"></i>Imprimir Lista
+                    </button>
+                    <button type="button" class="btn btn-outline-dark" onclick="imprimirRelatorio('print-cutouts')">
+                        <i class="fas fa-scissors me-1"></i>Imprimir Recortes
+                    </button>
+                </div>
+            </form>
+
+            <div class="lista-print">
+                {% for grupo in turmas_relatorio %}
+                    <section class="turma-bloco mb-4">
+                        <h2 class="h5 turma-titulo">{{ grupo.serie }} - {{ grupo.turma }}</h2>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped table-bordered ranking-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 80px;">Posição</th>
+                                        <th>Nome</th>
+                                        <th style="width: 160px;">Turma</th>
+                                        <th class="text-end" style="width: 180px;">Total de aulas/faltas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for aluno in grupo.alunos %}
+                                        <tr>
+                                            <td>{{ aluno.posicao }}</td>
+                                            <td>{{ aluno.nome }}</td>
+                                            <td>{{ aluno.serie }} - {{ aluno.turma }}</td>
+                                            <td class="text-end">
+                                                <span class="badge bg-danger rounded-pill">{{ aluno.total_aulas_faltadas }}</span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                {% empty %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-circle-info fa-2x d-block mb-2"></i>
+                        Nenhum aluno com falta para os filtros selecionados.
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="recortes-print">
+                {% for grupo in turmas_relatorio %}
+                    <section class="recorte-turma">
+                        <div class="recorte-turma-cabecalho">
+                            <span>TURMA: {{ grupo.serie }} - {{ grupo.turma }}</span>
+                            <span>{{ grupo.alunos|length }} aluno(s)</span>
+                        </div>
+
+                        <div class="recorte-grid">
+                            {% for aluno in grupo.alunos %}
+                                <article class="recorte-card">
+                                    {% widthratio aluno.total_aulas_faltadas 6 1 as dias_com_falta %}
+                                    <div class="recorte-nome">{{ aluno.nome }}</div>
+                                    <div class="recorte-info">
+                                        <div><strong>Turma</strong><br>{{ aluno.serie }} - {{ aluno.turma }}</div>
+                                        <div><strong>Posição</strong><br>{{ aluno.posicao }}</div>
+                                        <div class="recorte-periodo">
+                                            <strong>Período analisado</strong><br>
+                                            <span class="periodo-analisado-texto">
+                                                {% if data_inicial and data_final %}
+                                                    {{ data_inicial|slice:"8:10" }}/{{ data_inicial|slice:"5:7" }}/{{ data_inicial|slice:":4" }} a {{ data_final|slice:"8:10" }}/{{ data_final|slice:"5:7" }}/{{ data_final|slice:":4" }}
+                                                {% elif data_inicial %}
+                                                    A partir de {{ data_inicial|slice:"8:10" }}/{{ data_inicial|slice:"5:7" }}/{{ data_inicial|slice:":4" }}
+                                                {% elif data_final %}
+                                                    Até {{ data_final|slice:"8:10" }}/{{ data_final|slice:"5:7" }}/{{ data_final|slice:":4" }}
+                                                {% else %}
+                                                    Período não informado
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div><strong>Dias com falta</strong><br>{{ dias_com_falta }}</div>
+                                        <div><strong>Aulas/Faltas</strong><br>{{ aluno.total_aulas_faltadas }}</div>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function formatarDataFiltro(valor) {
+        if (!valor || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+            return '';
+        }
+
+        return valor.slice(8, 10) + '/' + valor.slice(5, 7) + '/' + valor.slice(0, 4);
+    }
+
+    function obterPeriodoAnalisado() {
+        const parametros = new URLSearchParams(window.location.search);
+        const campoDataInicial = document.getElementById('data_inicial');
+        const campoDataFinal = document.getElementById('data_final');
+        const dataInicial = parametros.get('data_inicial') || (campoDataInicial ? campoDataInicial.value : '');
+        const dataFinal = parametros.get('data_final') || (campoDataFinal ? campoDataFinal.value : '');
+        const dataInicialFormatada = formatarDataFiltro(dataInicial);
+        const dataFinalFormatada = formatarDataFiltro(dataFinal);
+
+        if (dataInicialFormatada && dataFinalFormatada) {
+            return dataInicialFormatada + ' a ' + dataFinalFormatada;
+        }
+        if (dataInicialFormatada) {
+            return 'A partir de ' + dataInicialFormatada;
+        }
+        if (dataFinalFormatada) {
+            return 'Até ' + dataFinalFormatada;
+        }
+        return 'Período não informado';
+    }
+
+    function atualizarPeriodoAnalisado() {
+        const periodo = obterPeriodoAnalisado();
+        document.querySelectorAll('.periodo-analisado-texto').forEach(function(elemento) {
+            elemento.textContent = periodo;
+        });
+    }
+
+    function imprimirRelatorio(classeImpressao) {
+        document.body.classList.remove('print-list', 'print-cutouts');
+        atualizarPeriodoAnalisado();
+        document.body.classList.add(classeImpressao);
+        window.print();
+        window.setTimeout(function() {
+            document.body.classList.remove('print-list', 'print-cutouts');
+        }, 500);
+    }
+</script>
+{% endblock %}

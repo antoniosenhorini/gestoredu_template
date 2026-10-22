@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confer&ecirc;ncia de Ocorr&ecirc;ncias - Impress&atilde;o</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #fff;
+            color: #000;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            line-height: 1.35;
+            margin: 24px;
+        }
+
+        .no-print {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+        }
+
+        .btn {
+            background: #fff;
+            border: 1px solid #222;
+            border-radius: 4px;
+            color: #000;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 13px;
+            padding: 8px 12px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #111;
+            color: #fff;
+        }
+
+        header {
+            border-bottom: 2px solid #000;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 16px;
+            margin-top: 6px;
+        }
+
+        .meta {
+            display: grid;
+            gap: 4px;
+            grid-template-columns: repeat(2, 1fr);
+            margin: 12px 0 16px;
+        }
+
+        .meta div {
+            border: 1px solid #999;
+            padding: 6px 8px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #333;
+            padding: 6px 7px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #eee;
+            font-weight: 700;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .empty {
+            padding: 22px;
+            text-align: center;
+        }
+
+        @media print {
+            @page {
+                margin: 1.2cm;
+            }
+
+            body {
+                margin: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            th {
+                background: #eee !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <a class="btn" href="{% url 'conferencia_ocorrencias' %}?data={{ data_filtro }}&turno={{ turno_filtro }}&turma={{ turma_filtro }}&aluno={{ aluno_filtro|urlencode }}&pedagoga={{ pedagoga_filtro|urlencode }}&tipo={{ tipo_filtro }}">Voltar para confer&ecirc;ncia</a>
+        <button class="btn btn-primary" type="button" onclick="window.print()">Imprimir</button>
+    </div>
+
+    <header>
+        <h1>Col&eacute;gio C&iacute;vico Militar Vereador Luiz Zanchim</h1>
+        <h2>Confer&ecirc;ncia de Ocorr&ecirc;ncias Disciplinares</h2>
+    </header>
+
+    <section class="meta">
+        <div><strong>Data da impress&atilde;o:</strong> {{ impresso_em|date:"d/m/Y H:i" }}</div>
+        <div><strong>Data filtrada:</strong> {{ data_filtro|date:"d/m/Y" }}</div>
+        <div>
+            <strong>Turno:</strong>
+            {% if turno_filtro == 'manha' %}Manh&atilde;{% elif turno_filtro == 'tarde' %}Tarde{% else %}Todos{% endif %}
+        </div>
+        <div>
+            <strong>Turma:</strong>
+            {% if turma_filtro %}
+                {% for turma in turmas %}
+                    {% if turma.id|stringformat:'s' == turma_filtro %}{{ turma.serie }} - {{ turma.nome }}{% endif %}
+                {% endfor %}
+            {% else %}
+                Todas
+            {% endif %}
+        </div>
+        <div><strong>Aluno:</strong> {{ aluno_filtro|default:"Todos" }}</div>
+        <div><strong>Pedagoga:</strong> {{ pedagoga_filtro|default:"Todas" }}</div>
+        <div>
+            <strong>Tipo:</strong>
+            {% if tipo_filtro %}
+                {% for valor, rotulo in tipos_ocorrencia %}
+                    {% if valor == tipo_filtro %}{{ rotulo }}{% endif %}
+                {% endfor %}
+            {% else %}
+                Todos
+            {% endif %}
+        </div>
+        <div><strong>Total de registros:</strong> {{ ocorrencias|length }}</div>
+    </section>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Turno</th>
+                <th>Turma</th>
+                <th class="text-center">N&ordm;</th>
+                <th>Nome do aluno</th>
+                <th>Ocorr&ecirc;ncia</th>
+                <th>Descri&ccedil;&atilde;o</th>
+                <th>Atendido por</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ocorrencia in ocorrencias %}
+                <tr>
+                    <td>{{ ocorrencia.data|date:"d/m/Y" }}</td>
+                    <td>{% if ocorrencia.aluno.turma.turno == 'manha' or ocorrencia.turno == 'manha' %}Manh&atilde;{% elif ocorrencia.aluno.turma.turno == 'tarde' or ocorrencia.turno == 'tarde' %}Tarde{% else %}-{% endif %}</td>
+                    <td>{{ ocorrencia.aluno.turma.serie }} - {{ ocorrencia.aluno.turma.nome }}</td>
+                    <td class="text-center">{{ ocorrencia.aluno.numero }}</td>
+                    <td>{{ ocorrencia.aluno.nome }}</td>
+                    <td>{{ ocorrencia.get_tipo_ocorrencia_display }}</td>
+                    <td>{{ ocorrencia.motivo_alegado|default:ocorrencia.observacoes_adicionais|default:"Sem descricao" }}</td>
+                    <td>{{ ocorrencia.atendido_por|default:"Nao informado" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" class="empty">Nenhuma ocorr&ecirc;ncia encontrada para os filtros selecionados.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

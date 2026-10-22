@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Equipe - Colégio Cívico Militar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            display: block;
+            padding: 15px 20px;
+            transition: 0.3s;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding-left: 30px;
+        }
+        .sidebar i {
+            margin-right: 10px;
+            width: 25px;
+            text-align: center;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .content-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .page-header {
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            background: #e9ecef;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        .dashboard-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            margin-bottom: 1.25rem;
+        }
+        .dashboard-card .card-header,
+        .dashboard-card-header {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 1.25rem;
+        }
+        .dashboard-title {
+            color: #1f2937;
+            font-weight: 700;
+            margin: 0;
+        }
+        .dashboard-subtitle {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin: 0.25rem 0 0;
+        }
+        .filter-card {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            height: 100%;
+        }
+        .filter-card .form-label {
+            color: #374151;
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+        .metric-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #0d6efd;
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+            padding: 1rem;
+            min-height: 120px;
+        }
+        .metric-card.warning { border-left-color: #f59e0b; }
+        .metric-card.info { border-left-color: #0ea5e9; }
+        .metric-card.success { border-left-color: #22c55e; }
+        .metric-label {
+            color: #64748b;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .metric-value {
+            color: #111827;
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .metric-icon {
+            align-items: center;
+            background: #eef2ff;
+            border-radius: 8px;
+            color: #0d6efd;
+            display: inline-flex;
+            height: 40px;
+            justify-content: center;
+            width: 40px;
+        }
+        .chart-wrap {
+            min-height: 320px;
+            position: relative;
+        }
+        .turno-badge {
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            color: #475569;
+            display: inline-flex;
+            font-size: 0.82rem;
+            font-weight: 700;
+            gap: 0.35rem;
+            padding: 0.35rem 0.75rem;
+        }
+        .turno-badge.active {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+        }
+        @media (max-width: 991.98px) {
+            .sidebar { min-height: auto; }
+            .main-content { padding: 16px 10px; }
+            .page-header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body class="min-vh-100 d-flex flex-column">
+    {% include 'includes/menu_principal.html' %}
+    <main class="flex-grow-1">
+    <div class="container-fluid px-2 px-md-4 py-3">
+        <div class="row">
+            <!-- MENU LATERAL -->
+            <div class="col-lg-3 col-xl-2 p-0 sidebar">
+                <div class="p-4">
+                    <h4 class="text-center mb-4">
+                        <i class="fas fa-shield-alt"></i> Painel da Equipe
+                    </h4>
+                    <hr style="border-color: rgba(255,255,255,0.2);">
+                </div>
+                <nav>
+                    <!-- CONTEÚDO PÚBLICO -->
+                <div class="menu-secao">
+                    <div style="background-color: #17a2b8; color: white; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center; font-weight: bold;">
+                        📢 CONTEÚDO PÚBLICO
+                    </div>
+
+                    <!-- BOTÃO IR PARA SITE DOS PROFESSORES -->
+                    <a href="{% url 'home' %}" target="_blank"
+                       style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #28a745; background: rgba(255,255,255,0.1); border-radius: 5px; margin-bottom: 15px;">
+                        <i class="fas fa-globe" style="color: #28a745; margin-right: 10px; width: 25px; text-align: center;"></i>
+                        🌐 Ir para o Site dos Professores
+                    </a>
+
+                    <!-- LINKS EXISTENTES -->
+                    <a href="{% url 'admin:apps_recado_changelist' %}" target="_blank">
+                        <i class="fas fa-bullhorn"></i> Recados Públicos
+                    </a>
+                    <a href="{% url 'admin:apps_documento_changelist' %}" target="_blank">
+                        <i class="fas fa-file-pdf"></i> Documentos Públicos
+                    </a>
+                    <a href="{% url 'admin:apps_evento_changelist' %}" target="_blank">
+                        <i class="fas fa-calendar-alt"></i> Eventos Públicos
+                    </a>
+                    <a href="{% url 'admin:apps_video_changelist' %}" target="_blank">
+                        <i class="fas fa-video"></i> Vídeos Públicos
+                    </a>
+                </div>
+
+                    <!-- CONTEÚDO PRIVADO -->
+                    <div class="menu-secao">
+                        <div style="background-color: #dc3545; color: white; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center; font-weight: bold;">
+                            🔒 CONTEÚDO PRIVADO
+                        </div>
+                        <a href="{% url 'lista_recados_internos' %}">
+                            <i class="fas fa-comments"></i> Recados Internos
+                        </a>
+                        <a href="{% url 'lista_documentos_privados' %}">
+                            <i class="fas fa-file-pdf"></i> Documentos Privados
+                        </a>
+                        <a href="{% url 'lista_eventos_privados' %}">
+                            <i class="fas fa-calendar-check"></i> Eventos Privados
+                        </a>
+                    </div>
+
+                   <!-- GESTÃO -->
+                    <div class="menu-secao">
+                        <div style="background-color: #28a745; color: white; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center; font-weight: bold;">
+                            ⚙️ GESTÃO
+                        </div>
+
+                        <a href="{% url 'listar_laboratorios' %}"
+                            style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-laptop" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            🖥️ Laboratórios
+                        </a>
+
+                        <!-- Controle de Faltas - Professores -->
+                        <a href="{% url 'controle_faltas' %}">
+                            <i class="fas fa-user-clock"></i> Controle de Faltas - Professores
+                        </a>
+
+                        <!-- Controle de Faltas - Alunos -->
+                        <a href="{% url 'controle_faltas_alunos' %}"
+                            style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #ffc107; margin-top: 5px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                            <i class="fas fa-user-graduate" style="color: #ffc107; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Controle de Faltas - Alunos
+                        </a>
+
+                    <!-- NOVO: Busca Ativa -->
+                        <a href="{% url 'busca_ativa' %}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #28a745; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-magnifying-glass" style="color: #28a745; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Busca Ativa
+                        </a>
+                    <!-- NOVOS LINKS -->
+                        <a href="{% url 'cadastrar_professor' %}" style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #007bff; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-chalkboard-user"></i> Cadastrar Professor
+                        </a>
+
+                        <a href="{% url 'listar_professores' %}" style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #007bff; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-list"></i> Listar Professores
+                        </a>
+
+                        <a href="{% url 'cadastrar_aluno' %}" style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #28a745; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-user-plus"></i> Cadastrar Aluno
+                        </a>
+
+                        <a href="{% url 'listar_alunos' %}" style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #28a745; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-users"></i> Listar Alunos
+                        </a>
+
+                        <a href="{% url 'atestados_alunos' %}" style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #20c997; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-hospital"></i> Atestados de Alunos
+                        </a>
+                    </div>
+
+                    <!-- RELATÓRIOS -->
+                    <div class="menu-secao">
+                        <div style="background-color: #17a2b8; color: white; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center; font-weight: bold;">
+                            📊 RELATÓRIOS
+                        </div>
+
+                        <!-- Relatório de Ocorrências - Alunos -->
+                        <a href="{% url 'relatorio_ocorrencias_alunos' %}?mes={{ mes_atual }}&ano={{ ano_atual }}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                            <i class="fas fa-file-excel" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Relatório de Ocorrências - Alunos
+                        </a>
+
+                        <!-- Relatório de Faltas - Alunos -->
+                        <a href="{% url 'relatorio_faltas_alunos' %}?mes={{ mes_atual }}&ano={{ ano_atual }}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-file-csv" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Relatório de Faltas - Alunos
+                        </a>
+
+                        <!-- Relatório Individual de Faltas -->
+                        <a href="{% url 'relatorio_faltas' %}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-print" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Relatório Individual de Faltas
+                        </a>
+
+                        <!-- Relatório de Alunos Mais Faltosos -->
+                        <a href="{% url 'relatorio_alunos_mais_faltosos' %}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-trophy" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Relatório de Alunos Mais Faltosos
+                        </a>
+
+                        <!-- Relatório de Alunos com Mais Ocorrências -->
+                        <a href="{% url 'relatorio_alunos_mais_ocorrencias' %}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-triangle-exclamation" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Alunos com Mais Ocorrências
+                        </a>
+
+                        <!-- Relatório de Faltas por Aluno (agrupado) -->
+                        <a href="{% url 'relatorio_faltas_por_aluno' %}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-chart-bar" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Relatório de Faltas por Aluno (agrupado)
+                        </a>
+
+                        <!-- Relatório por Tipo de Ocorrência (NOVO) -->
+                        <a href="{% url 'relatorio_filtro' %}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-filter" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Relatório por Tipo de Ocorrência
+                        </a>
+
+                        <!-- Histórico de Acessos - visível apenas para superusuário -->
+                        {% if user.is_superuser %}
+                        <a href="{% url 'historico_acessos' %}"
+                           style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #17a2b8; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
+                            <i class="fas fa-history" style="color: #17a2b8; margin-right: 10px; width: 25px; text-align: center;"></i>
+                            Histórico de Acessos
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- SAÍDA -->
+                    <div class="menu-secao">
+                        <a href="{% url 'home' %}" style="background-color: #6c757d; color: white; display: block; padding: 15px; border-radius: 5px; margin-top: 20px; text-align: center;">
+                            <i class="fas fa-arrow-left"></i> Voltar ao Site
+                        </a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- CONTEÚDO PRINCIPAL -->
+            <div class="col-lg-9 col-xl-10 main-content">
+                <div class="page-header">
+                    <h2><i class="fas fa-tachometer-alt me-2"></i>Olá, {{ usuario.get_full_name|default:usuario.username }}!</h2>
+                    <span class="user-info">
+                        <i class="fas fa-user-circle me-2"></i> Equipe Diretiva
+                    </span>
+                </div>
+
+                {% include 'includes/aviso_senha_padrao.html' %}
+
+                <!-- ===== GRÁFICO DE FALTAS ===== -->
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <h5 class="dashboard-title"><i class="fas fa-chart-column text-primary me-2"></i>Faltas de Alunos - Percentual Diário</h5>
+            <p class="dashboard-subtitle">Comparativo entre manhã e tarde conforme os filtros selecionados.</p>
+        </div>
+        <div class="card-body">
+            <div class="filter-card mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="metric-icon"><i class="fas fa-filter"></i></span>
+                    <div>
+                        <h5 class="dashboard-title">Filtro do Gráfico Principal</h5>
+                        <p class="dashboard-subtitle">Escolha dia, mês e ano para acompanhar as faltas.</p>
+                    </div>
+                </div>
+            <form method="get" class="row g-3">
+                <input type="hidden" name="dia_ranking" value="{{ dia_ranking|default:'' }}">
+                <input type="hidden" name="mes_ranking" value="{{ mes_ranking }}">
+                <input type="hidden" name="ano_ranking" value="{{ ano_ranking }}">
+                <input type="hidden" name="turno_ranking" value="{{ turno_ranking }}">
+                <input type="hidden" name="dia_ocorrencias_ranking" value="{{ dia_ocorrencias_ranking|default:'' }}">
+                <input type="hidden" name="mes_ocorrencias_ranking" value="{{ mes_ocorrencias_ranking }}">
+                <input type="hidden" name="ano_ocorrencias_ranking" value="{{ ano_ocorrencias_ranking }}">
+                <input type="hidden" name="turno_ocorrencias_ranking" value="{{ turno_ocorrencias_ranking }}">
+	                <div class="col-12 col-sm-6 col-lg-3">
+	                    <label class="form-label"><i class="fas fa-calendar-day me-1"></i>Dia</label>
+                    <select name="dia" class="form-select">
+                        <option value="">Mês inteiro</option>
+                        {% for d in dias_filtro %}
+                            <option value="{{ d }}" {% if d == dia %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+	                <div class="col-12 col-sm-6 col-lg-3">
+	                    <label class="form-label"><i class="fas fa-calendar-alt me-1"></i>Mês</label>
+                    <select name="mes" class="form-select">
+                        {% for m in meses %}
+                            <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+	                <div class="col-12 col-sm-6 col-lg-3">
+	                    <label class="form-label"><i class="fas fa-calendar me-1"></i>Ano</label>
+                    <select name="ano" class="form-select">
+                        {% for a in anos %}
+                            <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+	                <div class="col-12 col-lg-auto align-self-end">
+	                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>Filtrar</button>
+                </div>
+	                <div class="col-12 col-lg-auto align-self-end">
+	                    <a href="?mes={{ mes_atual }}&ano={{ ano_atual }}" class="btn btn-secondary w-100"><i class="fas fa-calendar-check me-1"></i>Mês atual</a>
+                </div>
+	                <div class="col-12 col-lg-auto align-self-end">
+	                    <a href="{% url 'painel_equipe' %}" class="btn btn-outline-secondary w-100"><i class="fas fa-eraser me-1"></i>Limpar filtros</a>
+                </div>
+            </form>
+            </div>
+
+            <p class="text-muted">
+                <i class="fas fa-users me-1"></i>
+                Total de alunos: <strong>Manhã: {{ total_manha }}</strong> |
+                <strong>Tarde: {{ total_tarde }}</strong>
+            </p>
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="metric-card warning">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <div class="metric-label">Total de faltas</div>
+                                <div class="metric-value">{{ total_faltas_grafico }}</div>
+                                <small class="text-muted">No filtro principal</small>
+                            </div>
+                            <span class="metric-icon"><i class="fas fa-user-clock"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="metric-card info">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <div class="metric-label">Total de ocorrências</div>
+                                <div class="metric-value">{{ total_ocorrencias_periodo }}</div>
+                                <small class="text-muted">No mesmo período</small>
+                            </div>
+                            <span class="metric-icon"><i class="fas fa-clipboard-list"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="metric-card success">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <div class="metric-label">Justificativas</div>
+                                <div class="metric-value">{{ total_justificativas_periodo }}</div>
+                                <small class="text-muted">Faltas justificadas</small>
+                            </div>
+                            <span class="metric-icon"><i class="fas fa-check-circle"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <div class="metric-label">Alunos por turno</div>
+                                <div class="fs-5 fw-bold text-dark">M: {{ total_manha }} | T: {{ total_tarde }}</div>
+                                <small class="text-muted">Base ativa cadastrada</small>
+                            </div>
+                            <span class="metric-icon"><i class="fas fa-users"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <a href="{% url 'lista_avisos_professores' %}" class="text-decoration-none">
+                        <div class="metric-card warning h-100">
+                            <div class="d-flex justify-content-between gap-3">
+                                <div>
+                                    <div class="metric-label">Avisos de professores</div>
+                                    <div class="metric-value">{{ avisos_professores_pendentes }}</div>
+                                    <small class="text-muted">Pendentes de visualiza&ccedil;&atilde;o</small>
+                                </div>
+                                <span class="metric-icon"><i class="fas fa-person-circle-exclamation"></i></span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            {% if sem_dados_faltas_diarias %}
+                <div class="alert alert-info mb-3">Nenhum dado encontrado para os filtros selecionados.</div>
+            {% endif %}
+            <div class="chart-wrap">
+                <canvas id="graficoFaltas"></canvas>
+            </div>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const ctx = document.getElementById('graficoFaltas').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ dias_json|safe }},
+                        datasets: [
+                            {
+                                label: '🌅 Manhã - % de faltas',
+                                data: {{ percentuais_manha_json|safe }},
+                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                borderColor: '#FF6384',
+                                borderWidth: 1
+                            },
+                            {
+                                label: '🌇 Tarde - % de faltas',
+                                data: {{ percentuais_tarde_json|safe }},
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                borderColor: '#36A2EB',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+	                    options: {
+	                        responsive: true,
+	                        maintainAspectRatio: false,
+	                        scales: {
+                            y: {
+                                title: { display: true, text: 'Percentual de faltas (%)' },
+                                 min: 0,
+                                 max: 70,
+                                ticks: { stepSize: 1 }
+                            },
+                            x: {
+                                title: { display: true, text: 'Dia do mês' }
+                            }
+                        }
+                    }
+                });
+            });
+            </script>
+        </div>
+    </div>
+
+                <!-- Estatisticas e graficos de Ocorrencias Disciplinares -->
+<div class="dashboard-card">
+    <div class="dashboard-card-header d-flex flex-column flex-lg-row justify-content-between gap-3">
+        <div>
+            <h5 class="dashboard-title"><i class="fas fa-clipboard-list text-primary me-2"></i>Ocorr&ecirc;ncias Disciplinares</h5>
+            <p class="dashboard-subtitle">Indicadores do mesmo per&iacute;odo filtrado no gr&aacute;fico principal.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="turno-badge"><i class="fas fa-sun"></i>Manh&atilde;: {{ ocorrencias_turno_manha }}</span>
+            <span class="turno-badge"><i class="fas fa-cloud-sun"></i>Tarde: {{ ocorrencias_turno_tarde }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="metric-card info">
+                    <div class="d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="metric-label">Total de ocorr&ecirc;ncias</div>
+                            <div class="metric-value">{{ total_ocorrencias_periodo }}</div>
+                            <small class="text-muted">No filtro principal</small>
+                        </div>
+                        <span class="metric-icon"><i class="fas fa-clipboard-list"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="metric-card warning">
+                    <div class="d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="metric-label">Alunos envolvidos</div>
+                            <div class="metric-value">{{ total_alunos_com_ocorrencias }}</div>
+                            <small class="text-muted">Alunos distintos</small>
+                        </div>
+                        <span class="metric-icon"><i class="fas fa-user-graduate"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="metric-card success">
+                    <div class="d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="metric-label">Por turno</div>
+                            <div class="fs-5 fw-bold text-dark">M: {{ ocorrencias_turno_manha }} | T: {{ ocorrencias_turno_tarde }}</div>
+                            <small class="text-muted">Registros no per&iacute;odo</small>
+                        </div>
+                        <span class="metric-icon"><i class="fas fa-clock"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="metric-card">
+                    <div class="d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="metric-label">Pedagoga destaque</div>
+                            {% if pedagoga_top_ocorrencias %}
+                                <div class="fs-5 fw-bold text-dark">{{ pedagoga_top_ocorrencias.atendido_por }}</div>
+                                <small class="text-muted">{{ pedagoga_top_ocorrencias.total }} ocorr&ecirc;ncia(s)</small>
+                            {% else %}
+                                <div class="fs-5 fw-bold text-dark">Sem dados</div>
+                                <small class="text-muted">Nenhum registro no per&iacute;odo</small>
+                            {% endif %}
+                        </div>
+                        <span class="metric-icon"><i class="fas fa-user-tie"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-12 col-xl-7">
+                <div class="border rounded-3 p-3 h-100">
+                    <h6 class="dashboard-title"><i class="fas fa-chart-line text-primary me-2"></i>Ocorr&ecirc;ncias por Dia</h6>
+                    <p class="dashboard-subtitle mb-3">Quantidade de ocorr&ecirc;ncias ao longo do per&iacute;odo filtrado.</p>
+                    {% if sem_dados_ocorrencias_diarias %}
+                        <div class="alert alert-info mb-3">Nenhuma ocorr&ecirc;ncia encontrada para os filtros selecionados.</div>
+                    {% endif %}
+                    <div class="chart-wrap">
+                        <canvas id="graficoOcorrenciasDia"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-5">
+                <div class="border rounded-3 p-3 h-100">
+                    <h6 class="dashboard-title"><i class="fas fa-tags text-primary me-2"></i>Tipos de Ocorr&ecirc;ncia</h6>
+                    <p class="dashboard-subtitle mb-3">Categorias mais frequentes no per&iacute;odo.</p>
+                    {% if sem_dados_tipos_ocorrencia %}
+                        <div class="alert alert-info mb-3">Nenhuma ocorr&ecirc;ncia encontrada para os filtros selecionados.</div>
+                    {% else %}
+                        <div class="chart-wrap">
+                            <canvas id="graficoTiposOcorrencia"></canvas>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="dashboard-card border shadow-none mb-0">
+            <div class="dashboard-card-header d-flex flex-column flex-lg-row justify-content-between gap-3">
+                <div>
+                    <h5 class="dashboard-title"><i class="fas fa-ranking-star text-warning me-2"></i>Ranking de Ocorr&ecirc;ncias por Turma</h5>
+                    <p class="dashboard-subtitle">Turmas agrupadas por turno, com filtro pr&oacute;prio para ocorr&ecirc;ncias.</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="turno-badge {% if not turno_ocorrencias_ranking %}active{% endif %}"><i class="fas fa-layer-group"></i>Todos</span>
+                    <span class="turno-badge {% if turno_ocorrencias_ranking == 'manha' %}active{% endif %}"><i class="fas fa-sun"></i>Manh&atilde;</span>
+                    <span class="turno-badge {% if turno_ocorrencias_ranking == 'tarde' %}active{% endif %}"><i class="fas fa-cloud-sun"></i>Tarde</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="filter-card mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="metric-icon"><i class="fas fa-filter"></i></span>
+                        <div>
+                            <h5 class="dashboard-title">Filtro do Ranking de Ocorr&ecirc;ncias por Turma</h5>
+                            <p class="dashboard-subtitle">Escolha dia, m&ecirc;s, ano e turno para comparar as turmas.</p>
+                        </div>
+                    </div>
+                    <form method="get" class="row g-3">
+                        <input type="hidden" name="dia" value="{{ dia|default:'' }}">
+                        <input type="hidden" name="mes" value="{{ mes }}">
+                        <input type="hidden" name="ano" value="{{ ano }}">
+                        <input type="hidden" name="dia_ranking" value="{{ dia_ranking|default:'' }}">
+                        <input type="hidden" name="mes_ranking" value="{{ mes_ranking }}">
+                        <input type="hidden" name="ano_ranking" value="{{ ano_ranking }}">
+                        <input type="hidden" name="turno_ranking" value="{{ turno_ranking }}">
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <label class="form-label"><i class="fas fa-calendar-day me-1"></i>Dia</label>
+                            <select name="dia_ocorrencias_ranking" class="form-select">
+                                <option value="">M&ecirc;s inteiro</option>
+                                {% for d in dias_filtro %}
+                                    <option value="{{ d }}" {% if d == dia_ocorrencias_ranking %}selected{% endif %}>{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <label class="form-label"><i class="fas fa-calendar-alt me-1"></i>M&ecirc;s</label>
+                            <select name="mes_ocorrencias_ranking" class="form-select">
+                                {% for m in meses %}
+                                    <option value="{{ m }}" {% if m == mes_ocorrencias_ranking %}selected{% endif %}>{{ m }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <label class="form-label"><i class="fas fa-calendar me-1"></i>Ano</label>
+                            <select name="ano_ocorrencias_ranking" class="form-select">
+                                {% for a in anos %}
+                                    <option value="{{ a }}" {% if a == ano_ocorrencias_ranking %}selected{% endif %}>{{ a }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <label class="form-label"><i class="fas fa-clock me-1"></i>Turno</label>
+                            <select name="turno_ocorrencias_ranking" class="form-select">
+                                <option value="" {% if not turno_ocorrencias_ranking %}selected{% endif %}>Todos</option>
+                                <option value="manha" {% if turno_ocorrencias_ranking == 'manha' %}selected{% endif %}>Manh&atilde;</option>
+                                <option value="tarde" {% if turno_ocorrencias_ranking == 'tarde' %}selected{% endif %}>Tarde</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-lg-auto align-self-end">
+                            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-chart-bar me-1"></i>Filtrar</button>
+                        </div>
+                        <div class="col-12 col-lg-auto align-self-end">
+                            <a href="{% url 'painel_equipe' %}?dia={{ dia|default:'' }}&mes={{ mes }}&ano={{ ano }}" class="btn btn-outline-secondary w-100"><i class="fas fa-eraser me-1"></i>Limpar ranking</a>
+                        </div>
+                    </form>
+                </div>
+
+                {% if sem_dados_ranking_ocorrencias %}
+                    <div class="alert alert-info mb-3">Nenhuma ocorr&ecirc;ncia encontrada para os filtros selecionados.</div>
+                {% endif %}
+
+                {% if not turno_ocorrencias_ranking or turno_ocorrencias_ranking == 'manha' %}
+                <h6 class="mt-4"><i class="fas fa-sun text-warning me-2"></i>Per&iacute;odo da Manh&atilde;</h6>
+                {% if ocorrencias_turmas_manha %}
+                <div class="chart-wrap">
+                    <canvas id="graficoOcorrenciasRankingManha"></canvas>
+                </div>
+                {% else %}
+                <p class="text-muted">Nenhuma ocorr&ecirc;ncia encontrada para os filtros selecionados.</p>
+                {% endif %}
+                {% endif %}
+
+                {% if not turno_ocorrencias_ranking or turno_ocorrencias_ranking == 'tarde' %}
+                <h6 class="mt-4"><i class="fas fa-moon text-info me-2"></i>Per&iacute;odo da Tarde</h6>
+                {% if ocorrencias_turmas_tarde %}
+                <div class="chart-wrap">
+                    <canvas id="graficoOcorrenciasRankingTarde"></canvas>
+                </div>
+                {% else %}
+                <p class="text-muted">Nenhuma ocorr&ecirc;ncia encontrada para os filtros selecionados.</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const diasOcorrencias = {{ dias_json|safe }};
+    const ocorrenciasPorDia = {{ ocorrencias_por_dia_json|safe }};
+    const canvasOcorrenciasDia = document.getElementById('graficoOcorrenciasDia');
+    if (canvasOcorrenciasDia) {
+        new Chart(canvasOcorrenciasDia.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: diasOcorrencias,
+                datasets: [{
+                    label: 'Ocorrencias por dia',
+                    data: ocorrenciasPorDia,
+                    backgroundColor: 'rgba(13, 110, 253, 0.16)',
+                    borderColor: '#0d6efd',
+                    borderWidth: 2,
+                    tension: 0.25,
+                    fill: true,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Quantidade de Ocorrencias' }, ticks: { stepSize: 1 } },
+                    x: { title: { display: true, text: 'Dia do mes' } }
+                }
+            }
+        });
+    }
+
+    const canvasTipos = document.getElementById('graficoTiposOcorrencia');
+    const tiposLabels = {{ ranking_tipos_ocorrencia_labels_json|safe }};
+    const tiposTotais = {{ ranking_tipos_ocorrencia_totais_json|safe }};
+    if (canvasTipos && tiposLabels.length > 0) {
+        new Chart(canvasTipos.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: tiposLabels,
+                datasets: [{
+                    data: tiposTotais,
+                    backgroundColor: ['#0d6efd', '#f59e0b', '#22c55e', '#ef4444', '#8b5cf6', '#14b8a6']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    const canvasOcorrenciasManha = document.getElementById('graficoOcorrenciasRankingManha');
+    const ocorrenciasTurmasManha = {{ ocorrencias_turmas_manha_json|safe }};
+    const ocorrenciasTotaisManha = {{ ocorrencias_totais_manha_json|safe }};
+    if (canvasOcorrenciasManha && ocorrenciasTurmasManha.length > 0) {
+        new Chart(canvasOcorrenciasManha.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ocorrenciasTurmasManha,
+                datasets: [{
+                    label: 'Total de Ocorrencias',
+                    data: ocorrenciasTotaisManha,
+                    backgroundColor: 'rgba(245, 158, 11, 0.72)',
+                    borderColor: '#f59e0b',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Quantidade de Ocorrencias' }, ticks: { stepSize: 1 } },
+                    x: { title: { display: true, text: 'Turma' } }
+                }
+            }
+        });
+    }
+
+    const canvasOcorrenciasTarde = document.getElementById('graficoOcorrenciasRankingTarde');
+    const ocorrenciasTurmasTarde = {{ ocorrencias_turmas_tarde_json|safe }};
+    const ocorrenciasTotaisTarde = {{ ocorrencias_totais_tarde_json|safe }};
+    if (canvasOcorrenciasTarde && ocorrenciasTurmasTarde.length > 0) {
+        new Chart(canvasOcorrenciasTarde.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ocorrenciasTurmasTarde,
+                datasets: [{
+                    label: 'Total de Ocorrencias',
+                    data: ocorrenciasTotaisTarde,
+                    backgroundColor: 'rgba(14, 165, 233, 0.72)',
+                    borderColor: '#0ea5e9',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Quantidade de Ocorrencias' }, ticks: { stepSize: 1 } },
+                    x: { title: { display: true, text: 'Turma' } }
+                }
+            }
+        });
+    }
+});
+</script>
+
+                <!-- Ranking de Faltas por Turma -->
+<div class="dashboard-card">
+    <div class="dashboard-card-header d-flex flex-column flex-lg-row justify-content-between gap-3">
+        <div>
+            <h5 class="dashboard-title"><i class="fas fa-trophy text-warning me-2"></i>Ranking de Faltas por Turma</h5>
+            <p class="dashboard-subtitle">Turmas agrupadas por turno, com destaque para o filtro selecionado.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="turno-badge {% if not turno_ranking %}active{% endif %}"><i class="fas fa-layer-group"></i>Todos</span>
+            <span class="turno-badge {% if turno_ranking == 'manha' %}active{% endif %}"><i class="fas fa-sun"></i>Manhã</span>
+            <span class="turno-badge {% if turno_ranking == 'tarde' %}active{% endif %}"><i class="fas fa-cloud-sun"></i>Tarde</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="filter-card mb-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="metric-icon"><i class="fas fa-ranking-star"></i></span>
+                <div>
+                    <h5 class="dashboard-title">Filtro do Ranking de Faltas por Turma</h5>
+                    <p class="dashboard-subtitle">Escolha dia, mês, ano e turno para comparar as turmas.</p>
+                </div>
+            </div>
+        <form method="get" class="row g-3">
+            <input type="hidden" name="dia" value="{{ dia|default:'' }}">
+            <input type="hidden" name="mes" value="{{ mes }}">
+            <input type="hidden" name="ano" value="{{ ano }}">
+            <input type="hidden" name="dia_ocorrencias_ranking" value="{{ dia_ocorrencias_ranking|default:'' }}">
+            <input type="hidden" name="mes_ocorrencias_ranking" value="{{ mes_ocorrencias_ranking }}">
+            <input type="hidden" name="ano_ocorrencias_ranking" value="{{ ano_ocorrencias_ranking }}">
+            <input type="hidden" name="turno_ocorrencias_ranking" value="{{ turno_ocorrencias_ranking }}">
+	            <div class="col-12 col-sm-6 col-xl-3">
+	                <label class="form-label"><i class="fas fa-calendar-day me-1"></i>Dia</label>
+                <select name="dia_ranking" class="form-select">
+                    <option value="">Mês inteiro</option>
+                    {% for d in dias_filtro %}
+                        <option value="{{ d }}" {% if d == dia_ranking %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+	            <div class="col-12 col-sm-6 col-xl-3">
+	                <label class="form-label"><i class="fas fa-calendar-alt me-1"></i>Mês</label>
+                <select name="mes_ranking" class="form-select">
+                    {% for m in meses %}
+                        <option value="{{ m }}" {% if m == mes_ranking %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+	            <div class="col-12 col-sm-6 col-xl-3">
+	                <label class="form-label"><i class="fas fa-calendar me-1"></i>Ano</label>
+                <select name="ano_ranking" class="form-select">
+                    {% for a in anos %}
+                        <option value="{{ a }}" {% if a == ano_ranking %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+	            <div class="col-12 col-sm-6 col-xl-3">
+	                <label class="form-label"><i class="fas fa-clock me-1"></i>Turno</label>
+                <select name="turno_ranking" class="form-select">
+                    <option value="" {% if not turno_ranking %}selected{% endif %}>Todos</option>
+                    <option value="manha" {% if turno_ranking == 'manha' %}selected{% endif %}>Manhã</option>
+                    <option value="tarde" {% if turno_ranking == 'tarde' %}selected{% endif %}>Tarde</option>
+                </select>
+            </div>
+	            <div class="col-12 col-lg-auto align-self-end">
+	                <button type="submit" name="atualizar_ranking" class="btn btn-primary w-100"><i class="fas fa-chart-bar me-1"></i>Filtrar</button>
+            </div>
+	            <div class="col-12 col-lg-auto align-self-end">
+	                <a href="{% url 'painel_equipe' %}" class="btn btn-outline-secondary w-100"><i class="fas fa-eraser me-1"></i>Limpar filtros</a>
+            </div>
+        </form>
+        </div>
+        {% if sem_dados_ranking %}
+            <div class="alert alert-info mb-3">Nenhum dado encontrado para os filtros selecionados.</div>
+        {% endif %}
+
+        {% if not turno_ranking or turno_ranking == 'manha' %}
+        <!-- Gráfico Manhã -->
+        <h6 class="mt-4"><i class="fas fa-sun text-warning me-2"></i>Período da Manhã</h6>
+        {% if turmas_manha %}
+        <div class="chart-wrap">
+            <canvas id="graficoRankingManha"></canvas>
+        </div>
+        {% else %}
+        <p class="text-muted">Nenhum dado encontrado para os filtros selecionados.</p>
+        {% endif %}
+        {% endif %}
+
+        {% if not turno_ranking or turno_ranking == 'tarde' %}
+        <!-- Gráfico Tarde -->
+        <h6 class="mt-4"><i class="fas fa-moon text-info me-2"></i>Período da Tarde</h6>
+        {% if turmas_tarde %}
+        <div class="chart-wrap">
+            <canvas id="graficoRankingTarde"></canvas>
+        </div>
+        {% else %}
+        <p class="text-muted">Nenhum dado encontrado para os filtros selecionados.</p>
+        {% endif %}
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico Manhã
+    const canvasManha = document.getElementById('graficoRankingManha');
+    const turmasManha = {{ turmas_manha_json|safe }};
+    const totaisManha = {{ totais_manha_json|safe }};
+
+    if (canvasManha && turmasManha && turmasManha.length > 0) {
+        new Chart(canvasManha.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: turmasManha,
+                datasets: [{
+                    label: 'Total de Faltas',
+                    data: totaisManha,
+                    backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Quantidade de Faltas' }, ticks: { stepSize: 1 } },
+                    x: { title: { display: true, text: 'Turma' } }
+                }
+            }
+        });
+    }
+
+    // Gráfico Tarde
+    const canvasTarde = document.getElementById('graficoRankingTarde');
+    const turmasTarde = {{ turmas_tarde_json|safe }};
+    const totaisTarde = {{ totais_tarde_json|safe }};
+
+    if (canvasTarde && turmasTarde && turmasTarde.length > 0) {
+        new Chart(canvasTarde.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: turmasTarde,
+                datasets: [{
+                    label: 'Total de Faltas',
+                    data: totaisTarde,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Quantidade de Faltas' }, ticks: { stepSize: 1 } },
+                    x: { title: { display: true, text: 'Turma' } }
+                }
+            }
+        });
+    }
+});
+</script>
+
+                <!-- Relatório de Total de Faltas (colapsável) -->
+                <div class="content-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-simple text-primary me-2"></i>Relatório de Total de Faltas
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRelatorio" aria-expanded="false" aria-controls="collapseRelatorio">
+                            <i class="fas fa-chevron-down"></i> Mostrar/Esconder
+                        </button>
+                    </div>
+                    <div class="collapse mt-3" id="collapseRelatorio">
+                        <div class="card card-body bg-light">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light">
+                                        <tr><th>Turma</th><th>Total de Faltas</th> </thead>
+                                    <tbody>
+                                        {% for turma, total in ranking_manha %}
+                                         <tr><td><strong>{{ turma }}</strong> (Manhã)</td><td><span class="badge bg-danger">{{ total }}</span></td></tr>
+                                        {% endfor %}
+                                        {% for turma, total in ranking_tarde %}
+                                         <tr><td><strong>{{ turma }}</strong> (Tarde)</td><td><span class="badge bg-danger">{{ total }}</span></td></tr>
+                                        {% empty %}
+                                         <tr><td colspan="2" class="text-center">Nenhuma falta registrada neste período.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <small class="text-muted">Total de faltas no período:
+                                    <strong>{{ total_faltas_periodo }}</strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card de Consulta Rápida de Turmas -->
+                <div class="content-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-school text-primary me-2"></i>Turmas para digitar no formulário
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTurmas" aria-expanded="false" aria-controls="collapseTurmas">
+                            <i class="fas fa-chevron-down"></i> Mostrar/Esconder
+                        </button>
+                    </div>
+                    <div class="collapse mt-3" id="collapseTurmas">
+                        <div class="card card-body bg-light">
+                            <p class="mb-2">Use estas abreviações exatas no campo "Turma" do formulário de ocorrências:</p>
+                            <div class="row">
+                                {% for turma in turmas %}
+                                <div class="col-md-3 col-sm-4 col-6">
+                                    <span class="badge bg-secondary mb-1 p-2" style="font-size: 0.9rem;">{{ turma.nome }}</span>
+                                </div>
+                                {% empty %}
+                                <p class="text-muted">Nenhuma turma cadastrada.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- fim main-content -->
+        </div> <!-- fim row -->
+    </div> <!-- fim container-fluid -->
+
+    <!-- MODAL DE UPLOAD DE DOCUMENTO -->
+    <div class="modal fade" id="modalUpload" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Enviar Documento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" enctype="multipart/form-data" action="{% url 'upload_documento_privado' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Título do Documento</label>
+                            <input type="text" name="titulo" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Categoria</label>
+                            <input type="text" name="categoria" class="form-control" placeholder="Ex: Atas, Planejamento, Reuniões">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Arquivo</label>
+                            <input type="file" name="arquivo" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrição (opcional)</label>
+                            <textarea name="descricao" class="form-control" rows="2" placeholder="Breve descrição do documento"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Enviar Documento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOVO EVENTO -->
+    <div class="modal fade" id="modalEvento" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Evento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'criar_evento_privado' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Título do Evento</label>
+                            <input type="text" name="titulo" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrição</label>
+                            <textarea name="descricao" class="form-control" rows="2" placeholder="Detalhes do evento"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data Início</label>
+                                <input type="datetime-local" name="data_inicio" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data Fim</label>
+                                <input type="datetime-local" name="data_fim" class="form-control">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Local</label>
+                            <input type="text" name="local" class="form-control" placeholder="Local do evento (opcional)">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Criar Evento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    </main>
+    {% include 'includes/rodape_padrao.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+	            const ctx = document.getElementById('graficoFaltasInativo');
+            if (!ctx) {
+                return;
+            }
+            const dias = {{ dias_json|safe }};
+            const percentuais = {{ percentuais_manha_json|safe }};
+
+            new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: dias,
+                    datasets: [{
+                        label: '% de faltas',
+                        data: percentuais,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Percentual de faltas (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Dia do mês'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

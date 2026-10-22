@@ -1,0 +1,295 @@
+{% extends "base_painel.html" %}
+{% load static %}
+
+{% block title %}Atestados de Alunos{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h3><i class="fas fa-file-medical"></i> Cadastrar Atestado de Aluno</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" id="form-atestado-aluno" class="row g-3">
+                {% csrf_token %}
+                <input type="hidden" name="turma" id="turma_hidden" value="">
+
+                <div class="col-12">
+                    <label class="form-label fw-bold d-block">Turno</label>
+                    <div class="d-flex flex-column flex-sm-row gap-2">
+                        <input type="radio" class="btn-check" name="turno_opcao" id="turno_manha" value="manha" autocomplete="off">
+                        <label class="btn btn-outline-primary text-start" for="turno_manha">
+                            <i class="fas fa-sun"></i> Manhã
+                        </label>
+
+                        <input type="radio" class="btn-check" name="turno_opcao" id="turno_tarde" value="tarde" autocomplete="off">
+                        <label class="btn btn-outline-primary text-start" for="turno_tarde">
+                            <i class="fas fa-cloud-sun"></i> Tarde
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-7">
+                    <label for="turma" class="form-label fw-bold">Turma</label>
+                    <select id="turma" class="form-select" required disabled>
+                        <option value="">Selecione o turno primeiro</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-5">
+                    <label for="numero_aluno" class="form-label fw-bold">Número do aluno</label>
+                    <input type="text" name="numero_aluno" id="numero_aluno" class="form-control" inputmode="numeric" pattern="[0-9]*" required disabled>
+                </div>
+
+                <div class="col-12">
+                    <div id="aluno-alerta" class="alert alert-info d-none mb-0" role="alert">
+                        <div class="d-flex gap-2">
+                            <i id="aluno-alerta-icone" class="fas fa-user-graduate mt-1"></i>
+                            <div>
+                                <div class="fw-bold" id="aluno-nome"></div>
+                                <div class="small" id="aluno-detalhes"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="data_inicio" class="form-label fw-bold">Data início</label>
+                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" required>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="data_fim" class="form-label fw-bold">Data fim</label>
+                    <input type="date" name="data_fim" id="data_fim" class="form-control" required>
+                </div>
+
+                <div class="col-12">
+                    <label for="observacao" class="form-label fw-bold">Observação</label>
+                    <textarea name="observacao" id="observacao" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input type="checkbox" name="ativo" id="ativo" class="form-check-input" checked>
+                        <label for="ativo" class="form-check-label fw-bold">Ativo</label>
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex flex-column flex-md-row gap-2 justify-content-end">
+                    <a href="{% url 'listar_alunos' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                    <button type="submit" id="btn-salvar" class="btn btn-success" disabled>
+                        <i class="fas fa-save"></i> Salvar Atestado
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3><i class="fas fa-list"></i> Atestados Cadastrados</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Turma</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th>Ativo</th>
+                            <th>Observação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for atestado in atestados %}
+                        <tr>
+                            <td>{{ atestado.aluno.nome }}</td>
+                            <td>{{ atestado.aluno.turma.nome }}</td>
+                            <td>{{ atestado.data_inicio|date:"d/m/Y" }}</td>
+                            <td>{{ atestado.data_fim|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if atestado.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ atestado.observacao|default:"-" }}</td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a href="{% url 'editar_atestado_aluno' atestado.id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </a>
+                                    <form method="post" action="{% url 'alternar_atestado_aluno' atestado.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm {% if atestado.ativo %}btn-outline-secondary{% else %}btn-outline-success{% endif %}">
+                                            {% if atestado.ativo %}
+                                                <i class="fas fa-toggle-off"></i> Desativar
+                                            {% else %}
+                                                <i class="fas fa-toggle-on"></i> Ativar
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    {% if not atestado.ativo %}
+                                    <form method="post"
+                                          action="{% url 'excluir_atestado_aluno' atestado.id %}"
+                                          onsubmit="return confirm('Excluir este atestado inativo? Esta ação não poderá ser desfeita.');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash-alt"></i> Excluir
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">Nenhum atestado cadastrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ turmas|json_script:"turmas-data" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const turmas = JSON.parse(document.getElementById('turmas-data').textContent);
+    const turnoRadios = document.querySelectorAll('input[name="turno_opcao"]');
+    const turmaSelect = document.getElementById('turma');
+    const turmaHidden = document.getElementById('turma_hidden');
+    const numeroInput = document.getElementById('numero_aluno');
+    const alerta = document.getElementById('aluno-alerta');
+    const alertaIcone = document.getElementById('aluno-alerta-icone');
+    const alunoNome = document.getElementById('aluno-nome');
+    const alunoDetalhes = document.getElementById('aluno-detalhes');
+    const salvarButton = document.getElementById('btn-salvar');
+    const form = document.getElementById('form-atestado-aluno');
+    let alunoEncontrado = false;
+
+    function turnoSelecionado() {
+        const radio = document.querySelector('input[name="turno_opcao"]:checked');
+        return radio ? radio.value : '';
+    }
+
+    function mostrarAviso(tipo, mensagem, detalhe) {
+        alunoEncontrado = tipo === 'sucesso';
+        salvarButton.disabled = !alunoEncontrado;
+        alunoNome.textContent = mensagem || '';
+        alunoDetalhes.textContent = detalhe || '';
+
+        if (!mensagem) {
+            alerta.className = 'alert alert-info d-none mb-0';
+            return;
+        }
+
+        alerta.className = tipo === 'sucesso' ? 'alert alert-success mb-0' : 'alert alert-warning mb-0';
+        alertaIcone.className = tipo === 'sucesso' ? 'fas fa-user-graduate mt-1' : 'fas fa-circle-exclamation mt-1';
+    }
+
+    function limparAluno() {
+        mostrarAviso('', '', '');
+    }
+
+    function preencherTurmas() {
+        const turno = turnoSelecionado();
+        turmaSelect.innerHTML = '';
+        turmaHidden.value = '';
+        numeroInput.value = '';
+        numeroInput.disabled = true;
+        limparAluno();
+
+        if (!turno) {
+            turmaSelect.disabled = true;
+            turmaSelect.innerHTML = '<option value="">Selecione o turno primeiro</option>';
+            return;
+        }
+
+        const turmasFiltradas = turmas.filter(turma => turma.turno === turno);
+        turmaSelect.disabled = false;
+        turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
+
+        turmasFiltradas.forEach(turma => {
+            const option = document.createElement('option');
+            option.value = turma.id;
+            option.textContent = `${turma.serie} - ${turma.nome}`;
+            turmaSelect.appendChild(option);
+        });
+
+        if (!turmasFiltradas.length) {
+            turmaSelect.disabled = true;
+            turmaSelect.innerHTML = '<option value="">Nenhuma turma neste turno</option>';
+            mostrarAviso('erro', 'Nenhuma turma encontrada para este turno.', '');
+        }
+    }
+
+    function buscarAluno() {
+        const turmaId = turmaSelect.value;
+        turmaHidden.value = turmaId || '';
+        numeroInput.value = numeroInput.value.replace(/\D/g, '');
+        const numero = numeroInput.value;
+        limparAluno();
+
+        if (!turmaId || !numero) {
+            return;
+        }
+
+        const params = new URLSearchParams({turma_id: turmaId, numero: numero});
+        fetch(`{% url 'buscar_aluno_atestado' %}?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.encontrado) {
+                    mostrarAviso('erro', data.erro || 'Aluno não encontrado.', 'Confira a turma e o número de chamada.');
+                    return;
+                }
+
+                mostrarAviso(
+                    'sucesso',
+                    data.nome,
+                    `Número ${data.numero} | Turma ${data.turma_label} | Turno ${data.turno_label}`
+                );
+            })
+            .catch(() => {
+                mostrarAviso('erro', 'Erro ao buscar aluno.', 'Tente novamente.');
+            });
+    }
+
+    turnoRadios.forEach(radio => {
+        radio.addEventListener('change', preencherTurmas);
+    });
+
+    turmaSelect.addEventListener('change', function () {
+        turmaHidden.value = turmaSelect.value || '';
+        numeroInput.value = '';
+        numeroInput.disabled = !turmaSelect.value;
+        limparAluno();
+        if (!numeroInput.disabled) {
+            numeroInput.focus();
+        }
+    });
+
+    numeroInput.addEventListener('input', buscarAluno);
+
+    form.addEventListener('submit', function (event) {
+        turmaHidden.value = turmaSelect.value || '';
+        if (!alunoEncontrado) {
+            event.preventDefault();
+            mostrarAviso('erro', 'Localize o aluno antes de salvar.', 'Selecione turno, turma e informe o número.');
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,481 @@
+{% extends 'base.html' %}
+{% block title %}Diagnostico do Cronograma{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                <h4 class="mb-0"><i class="fas fa-stethoscope me-2"></i>Diagnostico do Cronograma dos Laboratorios</h4>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'verificar_horario_pdf_upload' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-file-pdf me-1"></i>Verificar cronograma pelo PDF
+                    </a>
+                    <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalDatasRemovidas">
+                        🗃️ Datas removidas
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                A completude do cronograma considera os Laboratórios 1, 2 e 3. Laboratório 4 (tablets) e Laboratório 5 (celulares) não impedem ativação.
+            </div>
+            <div class="alert alert-secondary small mb-4">
+                <strong>Como funciona:</strong> clique em <strong>+ Criar semana</strong> para preparar uma nova semana em edição (pode haver várias ao mesmo tempo, por turno). Confira os agendamentos em <strong>✏️ Editar</strong> e, só depois de tudo certo, clique em <strong>▶ Ativar — DD/MM</strong> daquela semana especifica para publicá-la como o cronograma válido do turno. A semana ativa anterior passa automaticamente para o histórico (nunca é apagada). Editar/Criar nunca ativa automaticamente.
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="turno-control turno-control-manha">
+                        <div class="turno-control-icon">🌅</div>
+                        <div class="turno-control-body">
+                            <div class="turno-control-label">Manhã</div>
+
+                            <div class="turno-semana-card turno-semana-card-ativa">
+                                {% if semana_ativa_manha_inicio %}
+                                    <span class="turno-semana-card-label">🟢 CRONOGRAMA ATIVO</span>
+                                    <span class="turno-semana-card-periodo">desde {{ semana_ativa_manha_inicio|date:"d/m/Y" }}</span>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        <a href="{% url 'cronograma_semanal_turno' turno_forcado='manha' %}?data_inicio={{ semana_ativa_manha_inicio|date:'Y-m-d' }}"
+                                           class="btn btn-sm btn-light text-success fw-bold">🔬 Editar cronograma ativo</a>
+                                        <form method="post" action="{% url 'desativar_cronograma_laboratorio' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="turno" value="manha">
+                                            <button type="submit" class="btn btn-sm btn-outline-light"
+                                                    onclick="return confirm('Desativar o cronograma da MANHÃ (a semana ativa vira histórica)?');">
+                                                🚫 Desativar
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span class="turno-semana-card-label">🌅 MANHÃ ATIVA</span>
+                                    <span class="text-white-50">Nenhum período ativo</span>
+                                {% endif %}
+                            </div>
+
+                            {% for semana in semanas_editando_manha %}
+                                <div class="turno-semana-card turno-semana-card-editando">
+                                    <span class="turno-semana-card-label">📝 Em edição</span>
+                                    <span class="turno-semana-card-periodo">desde {{ semana.data_inicio|date:"d/m/Y" }}</span>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        <a href="{% url 'cronograma_semanal_turno' turno_forcado='manha' %}?data_inicio={{ semana.data_inicio|date:'Y-m-d' }}"
+                                           class="btn btn-sm btn-light text-primary fw-bold">✏️ Editar</a>
+                                        <form method="post" action="{% url 'ativar_cronograma_laboratorio' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="turno" value="manha">
+                                            <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                            <input type="hidden" name="data_inicio" value="{{ semana.data_inicio|date:'Y-m-d' }}">
+                                            <button type="submit" class="btn btn-sm btn-light text-primary fw-bold"
+                                                    onclick="return confirm('Ativar a semana da MANHÃ iniciada em {{ semana.data_inicio|date:'d/m/Y' }}?');">
+                                                ▶️ Ativar manhã — {{ semana.data_inicio|date:"d/m" }}
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'cancelar_edicao_semana_cronograma_laboratorio' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="turno" value="manha">
+                                            <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-light"
+                                                    onclick="return confirm('Cancelar a edição da semana de {{ semana.data_inicio|date:'d/m/Y' }} (manhã)?');">
+                                                ✖ Cancelar edição {{ semana.data_inicio|date:"d/m" }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+                            {% if not semanas_editando_manha %}
+                                <form method="post" action="{% url 'ativar_cronograma_laboratorio' %}" class="d-none">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="turno" value="manha">
+                                    <button type="submit" class="btn btn-light text-primary fw-bold" disabled>▶️ Ativar manhã</button>
+                                </form>
+                            {% endif %}
+
+                            <button type="button" class="btn btn-outline-light w-100 mt-2" data-bs-toggle="modal" data-bs-target="#modalCriarSemanaManha">
+                                + Criar semana — Manhã
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="turno-control turno-control-tarde">
+                        <div class="turno-control-icon">☀️</div>
+                        <div class="turno-control-body">
+                            <div class="turno-control-label">Tarde</div>
+
+                            <div class="turno-semana-card turno-semana-card-ativa">
+                                {% if semana_ativa_tarde_inicio %}
+                                    <span class="turno-semana-card-label">🟢 CRONOGRAMA ATIVO</span>
+                                    <span class="turno-semana-card-periodo">desde {{ semana_ativa_tarde_inicio|date:"d/m/Y" }}</span>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        <a href="{% url 'cronograma_semanal_turno' turno_forcado='tarde' %}?data_inicio={{ semana_ativa_tarde_inicio|date:'Y-m-d' }}"
+                                           class="btn btn-sm btn-light text-success fw-bold">🔬 Editar cronograma ativo</a>
+                                        <form method="post" action="{% url 'desativar_cronograma_laboratorio' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="turno" value="tarde">
+                                            <button type="submit" class="btn btn-sm btn-outline-dark"
+                                                    onclick="return confirm('Desativar o cronograma da TARDE (a semana ativa vira histórica)?');">
+                                                🚫 Desativar
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span class="turno-semana-card-label">☀️ TARDE ATIVA</span>
+                                    <span>Nenhum período ativo</span>
+                                {% endif %}
+                            </div>
+
+                            {% for semana in semanas_editando_tarde %}
+                                <div class="turno-semana-card turno-semana-card-editando">
+                                    <span class="turno-semana-card-label">📝 Em edição</span>
+                                    <span class="turno-semana-card-periodo">desde {{ semana.data_inicio|date:"d/m/Y" }}</span>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        <a href="{% url 'cronograma_semanal_turno' turno_forcado='tarde' %}?data_inicio={{ semana.data_inicio|date:'Y-m-d' }}"
+                                           class="btn btn-sm btn-dark fw-bold">✏️ Editar</a>
+                                        <form method="post" action="{% url 'ativar_cronograma_laboratorio' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="turno" value="tarde">
+                                            <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                            <input type="hidden" name="data_inicio" value="{{ semana.data_inicio|date:'Y-m-d' }}">
+                                            <button type="submit" class="btn btn-sm btn-dark fw-bold"
+                                                    onclick="return confirm('Ativar a semana da TARDE iniciada em {{ semana.data_inicio|date:'d/m/Y' }}?');">
+                                                ▶️ Ativar tarde — {{ semana.data_inicio|date:"d/m" }}
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'cancelar_edicao_semana_cronograma_laboratorio' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="turno" value="tarde">
+                                            <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                    onclick="return confirm('Cancelar a edição da semana de {{ semana.data_inicio|date:'d/m/Y' }} (tarde)?');">
+                                                ✖ Cancelar edição {{ semana.data_inicio|date:"d/m" }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+                            {% if not semanas_editando_tarde %}
+                                <form method="post" action="{% url 'ativar_cronograma_laboratorio' %}" class="d-none">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="turno" value="tarde">
+                                    <button type="submit" class="btn btn-dark fw-bold" disabled>▶️ Ativar tarde</button>
+                                </form>
+                            {% endif %}
+
+                            <button type="button" class="btn btn-outline-dark w-100 mt-2" data-bs-toggle="modal" data-bs-target="#modalCriarSemanaTarde">
+                                + Criar semana — Tarde
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row g-3 mb-4" id="historicoCronograma">
+                <div class="col-12 col-md-6">
+                    <section class="border rounded p-3 h-100" data-historico-turno="manha">
+                        <h5 class="mb-3"><i class="fas fa-history me-2"></i>Histórico — Manhã</h5>
+                        {% for semana in semanas_historicas_manha %}
+                            <div class="border-top py-3" data-semana-historica="{{ semana.data_inicio|date:'Y-m-d' }}">
+                                <div class="fw-bold">{{ semana.data_inicio|date:"d/m/Y" }}</div>
+                                <div class="text-muted small mb-2">{{ semana.horarios_total }} horários</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <form method="post" action="{% url 'editar_semana_cronograma_laboratorio' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                        <button type="submit" class="btn btn-sm btn-primary fw-bold"
+                                                onclick="return confirm('Colocar a versão histórica da manhã de {{ semana.data_inicio|date:'d/m' }} em edição? O cronograma ativo atual continuará publicado.');">
+                                            ✏️ Editar
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'ativar_cronograma_laboratorio' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                        <button type="submit" class="btn btn-sm btn-success fw-bold"
+                                                onclick="return confirm('Ativar o cronograma da manhã de {{ semana.data_inicio|date:'d/m' }}? O cronograma ativo atual será enviado para o histórico.');">
+                                            ▶️ Ativar manhã — {{ semana.data_inicio|date:"d/m" }}
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'excluir_semana_cronograma_laboratorio' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-bold"
+                                                onclick="return confirm('Remover o cronograma da manhã de {{ semana.data_inicio|date:'d/m' }} do Histórico? Os horários associados serão preservados.');">
+                                            🗑️ Remover
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted small mb-0">Nenhuma semana histórica.</p>
+                        {% endfor %}
+                    </section>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <section class="border rounded p-3 h-100" data-historico-turno="tarde">
+                        <h5 class="mb-3"><i class="fas fa-history me-2"></i>Histórico — Tarde</h5>
+                        {% for semana in semanas_historicas_tarde %}
+                            <div class="border-top py-3" data-semana-historica="{{ semana.data_inicio|date:'Y-m-d' }}">
+                                <div class="fw-bold">{{ semana.data_inicio|date:"d/m/Y" }}</div>
+                                <div class="text-muted small mb-2">{{ semana.horarios_total }} horários</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <form method="post" action="{% url 'editar_semana_cronograma_laboratorio' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                        <button type="submit" class="btn btn-sm btn-warning text-dark fw-bold"
+                                                onclick="return confirm('Colocar a versão histórica da tarde de {{ semana.data_inicio|date:'d/m' }} em edição? O cronograma ativo atual continuará publicado.');">
+                                            ✏️ Editar
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'ativar_cronograma_laboratorio' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                        <button type="submit" class="btn btn-sm btn-success fw-bold"
+                                                onclick="return confirm('Ativar o cronograma da tarde de {{ semana.data_inicio|date:'d/m' }}? O cronograma ativo atual será enviado para o histórico.');">
+                                            ▶️ Ativar tarde — {{ semana.data_inicio|date:"d/m" }}
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'excluir_semana_cronograma_laboratorio' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="semana_id" value="{{ semana.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-bold"
+                                                onclick="return confirm('Remover o cronograma da tarde de {{ semana.data_inicio|date:'d/m' }} do Histórico? Os horários associados serão preservados.');">
+                                            🗑️ Remover
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted small mb-0">Nenhuma semana histórica.</p>
+                        {% endfor %}
+                    </section>
+                </div>
+            </div>
+
+            {% if not semanas %}
+                <div class="alert alert-info mb-0">
+                    Nenhum agendamento de laboratorio encontrado para diagnostico.
+                </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{% url 'listar_laboratorios' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCriarSemanaManha" tabindex="-1" aria-labelledby="modalCriarSemanaManhaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalCriarSemanaManhaLabel">🌅 Criar semana — Manhã</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" action="{% url 'editar_semana_cronograma_laboratorio' %}">
+                {% csrf_token %}
+                <input type="hidden" name="turno" value="manha">
+                <div class="modal-body">
+                    <label for="dataCriarManha" class="form-label fw-bold">📅 Data de início</label>
+                    <input type="date" class="form-control form-control-lg" id="dataCriarManha" name="data_inicio" required>
+                    <div class="form-text">
+                        A data escolhida identifica a semana usada para montar o cronograma (a grade de horários
+                        daquela versão). Depois de ativado, este cronograma permanecerá ativo até que outro
+                        cronograma deste turno seja ativado — não existe expiração automática por tempo. Isso cria
+                        uma nova semana EM EDIÇÃO, sem limite de quantidade, e só fica ativa quando você clicar em
+                        "Ativar manhã — DD/MM" para ela especificamente. Isso afeta somente a manhã.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">📝 Criar semana</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCriarSemanaTarde" tabindex="-1" aria-labelledby="modalCriarSemanaTardeLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="modalCriarSemanaTardeLabel">☀️ Criar semana — Tarde</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" action="{% url 'editar_semana_cronograma_laboratorio' %}">
+                {% csrf_token %}
+                <input type="hidden" name="turno" value="tarde">
+                <div class="modal-body">
+                    <label for="dataCriarTarde" class="form-label fw-bold">📅 Data de início</label>
+                    <input type="date" class="form-control form-control-lg" id="dataCriarTarde" name="data_inicio" required>
+                    <div class="form-text">
+                        A data escolhida identifica a semana usada para montar o cronograma (a grade de horários
+                        daquela versão). Depois de ativado, este cronograma permanecerá ativo até que outro
+                        cronograma deste turno seja ativado — não existe expiração automática por tempo. Isso cria
+                        uma nova semana EM EDIÇÃO, sem limite de quantidade, e só fica ativa quando você clicar em
+                        "Ativar tarde — DD/MM" para ela especificamente. Isso afeta somente a tarde.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-warning text-dark">📝 Criar semana</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDatasRemovidas" tabindex="-1" aria-labelledby="modalDatasRemovidasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="modalDatasRemovidasLabel">🗃️ Datas removidas</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">
+                    Semanas do cronograma de laboratórios que foram canceladas. A data continua reservada no
+                    banco e não pode ser usada para criar uma nova semana neste turno. Esta lista é somente para
+                    consulta — nenhuma ação de edição, ativação, restauração ou exclusão está disponível aqui.
+                </p>
+
+                <h6 class="fw-bold mt-3 mb-2">🌅 MANHÃ</h6>
+                <ul class="list-unstyled mb-4" data-canceladas-turno="manha">
+                    {% for semana in semanas_canceladas_manha %}
+                        <li class="border-bottom py-2" data-semana-cancelada="{{ semana.data_inicio|date:'Y-m-d' }}">
+                            <div class="d-flex justify-content-between flex-wrap gap-2">
+                                <span class="fw-bold">{{ semana.data_inicio|date:"d/m/Y" }}</span>
+                                <span>{{ semana.horarios_total }} horário{{ semana.horarios_total|pluralize }}</span>
+                            </div>
+                            <div class="text-muted small">
+                                {% if semana.cancelado_em %}
+                                    Cancelada em {{ semana.cancelado_em|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    Data do cancelamento não registrada
+                                {% endif %}
+                                {% if semana.cancelado_por %}
+                                    — por {{ semana.cancelado_por.get_full_name|default:semana.cancelado_por.username }}
+                                {% else %}
+                                    — usuário não registrado
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="text-muted small">Nenhuma data removida na manhã.</li>
+                    {% endfor %}
+                </ul>
+
+                <h6 class="fw-bold mt-3 mb-2">☀️ TARDE</h6>
+                <ul class="list-unstyled mb-0" data-canceladas-turno="tarde">
+                    {% for semana in semanas_canceladas_tarde %}
+                        <li class="border-bottom py-2" data-semana-cancelada="{{ semana.data_inicio|date:'Y-m-d' }}">
+                            <div class="d-flex justify-content-between flex-wrap gap-2">
+                                <span class="fw-bold">{{ semana.data_inicio|date:"d/m/Y" }}</span>
+                                <span>{{ semana.horarios_total }} horário{{ semana.horarios_total|pluralize }}</span>
+                            </div>
+                            <div class="text-muted small">
+                                {% if semana.cancelado_em %}
+                                    Cancelada em {{ semana.cancelado_em|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    Data do cancelamento não registrada
+                                {% endif %}
+                                {% if semana.cancelado_por %}
+                                    — por {{ semana.cancelado_por.get_full_name|default:semana.cancelado_por.username }}
+                                {% else %}
+                                    — usuário não registrado
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="text-muted small">Nenhuma data removida na tarde.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .turno-control {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        height: 100%;
+        padding: 1.25rem;
+        border-radius: 14px;
+        color: #fff;
+    }
+
+    .turno-control-manha {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    }
+
+    .turno-control-tarde {
+        background: linear-gradient(135deg, #f59e0b, #f97316);
+    }
+
+    .turno-control-icon {
+        font-size: 2.25rem;
+        line-height: 1;
+    }
+
+    .turno-control-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .turno-control-label {
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        opacity: .9;
+        margin-bottom: .5rem;
+    }
+
+    .turno-semana-card {
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px dashed rgba(255, 255, 255, 0.6);
+        border-radius: 10px;
+        padding: .6rem .8rem;
+        margin-bottom: .6rem;
+    }
+
+    .turno-semana-card-ativa {
+        border-style: solid;
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .turno-semana-card-label {
+        display: block;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        opacity: .95;
+    }
+
+    .turno-semana-card-periodo {
+        display: block;
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-top: .1rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .turno-control {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}

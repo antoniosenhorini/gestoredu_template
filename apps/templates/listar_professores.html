@@ -1,0 +1,60 @@
+{% extends "base_painel.html" %}
+{% load static %}
+
+{% block title %}Lista de Professores{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3><i class="fas fa-chalkboard-teacher"></i> Professores Cadastrados</h3>
+        </div>
+        <div class="card-body">
+            <a href="{% url 'cadastrar_professor' %}" class="btn btn-primary mb-3">
+                <i class="fas fa-plus"></i> Novo Professor
+            </a>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF</th>
+                            <th>Disciplinas</th>
+                            <th>Carga Horária</th>
+                            <th>Ativo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for professor in professores %}
+                        <tr>
+                            <td>{{ professor.nome_completo }}</td>
+                            <td>{{ professor.cpf|default:"-" }}</td>
+                            <td>{{ professor.disciplinas|truncatewords:5 }}</td>
+                            <td>{{ professor.carga_horaria }}h</td>
+                            <td>
+                                {% if professor.ativo %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'editar_professor' professor.id %}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Nenhum professor cadastrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

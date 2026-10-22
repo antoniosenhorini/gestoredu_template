@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatorio de Avisos de Professores{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4 py-3">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h4 mb-1"><i class="fas fa-chart-simple me-2"></i>Relatorio Mensal de Avisos</h1>
+            <p class="mb-0 small opacity-75">Filtre os avisos por mes, ano, professor e tipo.</p>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end mb-4">
+                <div class="col-12 col-md-2">
+                    <label class="form-label fw-semibold">Mes</label>
+                    <select name="mes" class="form-select">
+                        {% for item in meses %}
+                            <option value="{{ item }}" {% if item == mes %}selected{% endif %}>{{ item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label fw-semibold">Ano</label>
+                    <select name="ano" class="form-select">
+                        {% for item in anos %}
+                            <option value="{{ item }}" {% if item == ano %}selected{% endif %}>{{ item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold">Professor</label>
+                    <input type="search" name="professor" value="{{ professor_filtro }}" class="form-control" placeholder="Nome do professor">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold">Tipo</label>
+                    <select name="tipo" class="form-select">
+                        <option value="">Todos</option>
+                        {% for valor, rotulo in tipos %}
+                            <option value="{{ valor }}" {% if valor == tipo_filtro %}selected{% endif %}>{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>Filtrar</button>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="button" class="btn btn-outline-dark w-100" onclick="window.print()"><i class="fas fa-print me-1"></i>Imprimir</button>
+                </div>
+            </form>
+
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-4">
+                    <div class="border rounded p-3 bg-light"><strong>Atestados:</strong> {{ total_atestados }}</div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="border rounded p-3 bg-light"><strong>Faltas:</strong> {{ total_faltas }}</div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="border rounded p-3 bg-light"><strong>Atrasos:</strong> {{ total_atrasos }}</div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Professor</th>
+                            <th>Disciplina</th>
+                            <th>Tipo</th>
+                            <th>Detalhes</th>
+                            <th>Observacao</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aviso in avisos %}
+                            <tr>
+                                <td>{{ aviso.data|date:"d/m/Y" }}</td>
+                                <td>{{ aviso.professor_nome }}</td>
+                                <td>{{ aviso.disciplina }}</td>
+                                <td>{{ aviso.get_tipo_display }}</td>
+                                <td>
+                                    {% if aviso.tipo == 'ATESTADO' %}
+                                        {{ aviso.quantidade_dias_atestado }} dia(s)
+                                    {% elif aviso.tipo == 'ATRASO' %}
+                                        {{ aviso.horario_chegada|time:"H:i" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ aviso.observacao|default:"-" }}</td>
+                                <td>{% if aviso.visualizado %}Visualizado{% else %}Pendente{% endif %}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Nenhum aviso encontrado para os filtros selecionados.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

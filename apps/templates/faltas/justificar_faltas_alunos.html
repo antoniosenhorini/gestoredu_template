@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Justificar Faltas{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-between gap-2">
+            <div>
+                <h1 class="h4 mb-1">
+                    <i class="fas fa-file-signature me-2"></i>Justificativa de Faltas
+                </h1>
+                <div class="small opacity-75">Registre justificativas para faltas já lançadas.</div>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-light text-primary">
+                    <i class="fas fa-clock me-1"></i>{{ faltas|length }} pendente(s)
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end mb-4">
+                <div class="col-12 col-md-2">
+                    <label for="data" class="form-label fw-semibold">
+                        <i class="fas fa-calendar-day me-1"></i>Data
+                    </label>
+                    <input type="date" name="data" id="data" class="form-control" value="{{ data_filtro }}">
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label for="turno" class="form-label fw-semibold">
+                        <i class="fas fa-clock me-1"></i>Turno
+                    </label>
+                    <select name="turno" id="turno" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="manha" {% if turno_filtro == 'manha' %}selected{% endif %}>Manhã</option>
+                        <option value="tarde" {% if turno_filtro == 'tarde' %}selected{% endif %}>Tarde</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <label for="turma" class="form-label fw-semibold">
+                        <i class="fas fa-users me-1"></i>Turma
+                    </label>
+                    <select name="turma" id="turma" class="form-select">
+                        <option value="">Todas</option>
+                        {% for turma in turmas %}
+                            <option value="{{ turma.id }}" {% if turma.id|stringformat:'s' == turma_filtro %}selected{% endif %}>
+                                {{ turma.serie }} - {{ turma.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="aluno" class="form-label fw-semibold">
+                        <i class="fas fa-user-graduate me-1"></i>Aluno
+                    </label>
+                    <input type="text" name="aluno" id="aluno" class="form-control" value="{{ aluno_filtro }}" placeholder="Nome do aluno">
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="pedagoga" class="form-label fw-semibold">
+                        <i class="fas fa-user-tie me-1"></i>Pedagoga
+                    </label>
+                    <select name="pedagoga" id="pedagoga" class="form-select">
+                        <option value="">Todas</option>
+                        {% for pedagoga in pedagogas %}
+                            <option value="{{ pedagoga }}" {% if pedagoga == pedagoga_filtro %}selected{% endif %}>{{ pedagoga }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 d-flex flex-column flex-md-row gap-2 justify-content-end">
+                    <a href="{% url 'justificar_faltas_alunos' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-filter-circle-xmark me-1"></i>Limpar filtros
+                    </a>
+                    <a href="{% url 'conferencia_faltas_alunos' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar para Conferência
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Turno</th>
+                            <th>Turma</th>
+                            <th>Nº</th>
+                            <th>Aluno</th>
+                            <th>Pedagoga</th>
+                            <th>Status</th>
+                            <th style="min-width: 360px;">Justificativa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for falta in faltas %}
+                            <tr>
+                                <td>{{ falta.data|date:"d/m/Y" }}</td>
+                                <td>
+                                    <span class="badge {% if falta.aluno.turma.turno == 'manha' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
+                                        {% if falta.aluno.turma.turno == 'manha' %}Manhã{% elif falta.aluno.turma.turno == 'tarde' %}Tarde{% else %}-{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ falta.aluno.turma.serie }} - {{ falta.aluno.turma.nome }}</td>
+                                <td>{{ falta.aluno.numero }}</td>
+                                <td>{{ falta.aluno.nome }}</td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-user-tie me-1"></i>{{ falta.pedagoga|default:"Não informada" }}
+                                    </span>
+                                </td>
+                                <td><span class="badge bg-warning text-dark">Pendente</span></td>
+                                <td>
+                                    <form method="post" class="row g-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="falta_id" value="{{ falta.id }}">
+                                        <div class="col-12">
+                                            <textarea name="justificativa" class="form-control form-control-sm" rows="2" placeholder="Justificativa da falta" required></textarea>
+                                        </div>
+                                        <div class="col-12 col-md-7">
+                                            <input type="text" name="responsavel_justificativa" class="form-control form-control-sm" placeholder="Responsável que justificou" required>
+                                        </div>
+                                        <div class="col-12 col-md-5">
+                                            <input type="date" name="data_justificativa" class="form-control form-control-sm" value="{% now 'Y-m-d' %}" required>
+                                        </div>
+                                        <div class="col-12 text-end">
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="fas fa-save me-1"></i>Salvar justificativa
+                                            </button>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <i class="fas fa-circle-info fa-2x d-block mb-2"></i>
+                                    Nenhuma falta pendente de justificativa para os filtros selecionados.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

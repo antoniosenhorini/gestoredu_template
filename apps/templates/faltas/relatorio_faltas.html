@@ -1,0 +1,49 @@
+﻿{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h4><i class="fas fa-user-graduate me-2"></i>RelatÃ³rio de Faltas</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Aluno:</strong> {{ aluno.nome }} ({{ aluno.turma.nome }})</p>
+            <p><strong>Total de faltas:</strong> {{ total_faltas }} dia(s)</p>
+
+            <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Quantidade</th>
+                        <th>Justificada</th>
+                        <th>ResponsÃ¡vel contatado</th>
+                        <th>Observacoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for falta in faltas %}
+                    <tr>
+                        <td>{{ falta.data|date:"d/m/Y" }}</td>
+                        <td>{{ falta.quantidade_faltas }}</td>
+                        <td>{% if falta.justificada %}Sim{% else %}Nao{% endif %}</td>
+                        <td>{{ falta.responsavel_contatado|default:"â€”" }}</td>
+                        <td>{{ falta.observacoes|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">Nenhuma falta registrada para este aluno.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-info" onclick="window.print()"><i class="fas fa-print"></i> Imprimir</button>
+                <a href="{% url 'relatorio_faltas' %}" class="btn btn-secondary">Nova consulta</a>
+                <a href="{% url 'painel_equipe' %}" class="btn btn-outline-secondary">Voltar ao painel</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

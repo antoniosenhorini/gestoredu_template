@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Analisar Divergência{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                <h4 class="mb-0"><i class="fas fa-magnifying-glass me-2"></i>Analisar Divergência</h4>
+                <a href="{% url 'verificar_horario_pdf_relatorio' divergencia.upload_id %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar ao relatório
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert {% if divergencia.status == 'conflito' %}alert-danger{% elif divergencia.status == 'verificar' %}alert-warning{% else %}alert-success{% endif %}">
+                <strong>
+                    {% if divergencia.status == 'conflito' %}Conflito
+                    {% elif divergencia.status == 'verificar' %}Verificar
+                    {% else %}Confere{% endif %}
+                </strong>
+                {% if divergencia.detalhe %} — {{ divergencia.detalhe }}{% endif %}
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="text-uppercase text-muted small mb-3">Cronograma atual do laboratório</h6>
+                        {% if agendamento %}
+                            <p class="mb-1"><strong>Professor:</strong> {{ agendamento.professor.nome_completo|default:"—" }}</p>
+                            <p class="mb-1"><strong>Turma:</strong> {{ agendamento.turma.nome|default:"—" }}</p>
+                            <p class="mb-1"><strong>Dia:</strong> {{ divergencia.dia_semana }}</p>
+                            <p class="mb-1"><strong>Horário:</strong> {{ divergencia.horario }}ª aula</p>
+                            <p class="mb-0"><strong>Laboratório:</strong> {{ agendamento.laboratorio.nome }}</p>
+                        {% else %}
+                            <p class="text-muted mb-0">Nenhuma reserva de laboratório associada.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="text-uppercase text-muted small mb-3">Horário encontrado no PDF</h6>
+                        <p class="mb-1"><strong>Professor:</strong> {{ divergencia.professor_pdf_texto|default:"—" }}</p>
+                        <p class="mb-1"><strong>Turma:</strong> {{ divergencia.turma_pdf_texto|default:"—" }}</p>
+                        <p class="mb-1"><strong>Dia:</strong> {{ divergencia.dia_semana }}</p>
+                        <p class="mb-1"><strong>Horário:</strong> {{ divergencia.horario }}ª aula</p>
+                        <p class="mb-0"><strong>Disciplina:</strong> {{ divergencia.disciplina_pdf_texto|default:"—" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {% if divergencia.sugestao_dia and divergencia.sugestao_horario %}
+                <div class="alert alert-info">
+                    <strong>Sugestão:</strong> o PDF indica que esta turma do professor mudou de
+                    <strong>{{ divergencia.dia_semana }} às {{ divergencia.horario }}ª aula</strong> para
+                    <strong>{{ divergencia.sugestao_dia }} às {{ divergencia.sugestao_horario }}ª aula</strong>.
+                </div>
+            {% endif %}
+
+            {% if agendamento %}
+                <div class="d-flex flex-wrap gap-2">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="manter">
+                        <button type="submit" class="btn btn-outline-secondary">Manter como está</button>
+                    </form>
+
+                    <a href="{% url 'verificar_horario_pdf_confirmar' divergencia.id %}" class="btn btn-primary">
+                        Alterar horário do LAB
+                    </a>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="ignorar">
+                        <button type="submit" class="btn btn-outline-dark">Ignorar esta divergência</button>
+                    </form>
+                </div>
+                <div class="form-text mt-2">
+                    "Manter" e "Ignorar" apenas registram sua decisão — nenhuma reserva de laboratório é alterada.
+                    Só "Alterar horário do LAB" leva à tela de confirmação da mudança.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

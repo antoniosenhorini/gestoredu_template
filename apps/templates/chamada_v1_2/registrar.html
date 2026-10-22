@@ -1,0 +1,618 @@
+{% extends 'base.html' %}
+
+{% block title %}Chamada v1.2 - {{ turma.nome }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .chamada-resumo-fixo {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: #fff;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .chamada-orientacao {
+        font-size: 0.9rem;
+    }
+    /* Cartao do aluno: grid de 2 colunas (identificacao | acoes) no desktop,
+       vira 1 coluna (identificacao em cima, acoes embaixo) no mobile. Grid
+       (nao flex-column) e o que evita o esticamento vertical dos botoes: os
+       itens de uma grid-column nao herdam altura uns dos outros por padrao. */
+    .chamada-linha-aluno {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.4rem;
+        border-bottom: 1px solid #eef1f4;
+    }
+    .chamada-linha-aluno.falta-marcada {
+        background: #fdecea;
+    }
+    .chamada-linha-aluno.atestado {
+        background: #f1f3f5;
+    }
+    .chamada-info-aluno {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        min-width: 0;
+    }
+    .chamada-nome-aluno {
+        font-size: 1rem;
+        overflow-wrap: anywhere;
+    }
+    .chamada-area-status {
+        display: grid;
+        gap: 0.4rem;
+        justify-items: stretch;
+    }
+    /* Grid proprio para Presente/Falta/Atestado - por padrao os 3 cabem na
+       mesma linha (colunas 'auto', sem esticar altura); no mobile vira 2
+       colunas com Atestado ocupando a linha toda (ver media query abaixo). */
+    .chamada-botoes-status {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(88px, auto));
+        gap: 0.5rem;
+    }
+    .chamada-botao-status {
+        min-height: 44px;
+        height: auto;
+        padding: 0.4rem 0.75rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.1;
+    }
+    .chamada-rascunho-aviso {
+        position: sticky;
+        top: 0;
+        z-index: 25;
+    }
+    /* Aviso de atestado ativo: nao depende so de cor - tem icone, titulo em
+       caixa alta e borda lateral de destaque. */
+    .aviso-atestado-ativo {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.3rem 0.5rem;
+        background: #e7f6fd;
+        border: 1px solid #9fd8ef;
+        border-left: 0.3rem solid #0dcaf0;
+        border-radius: 0.5rem;
+        padding: 0.4rem 0.6rem;
+        color: #055160;
+        font-size: 0.85rem;
+    }
+    .aviso-atestado-titulo {
+        font-weight: 800;
+        letter-spacing: 0.02em;
+    }
+    .aviso-atestado-periodo {
+        font-size: 0.85rem;
+    }
+    @media (max-width: 575.98px) {
+        .chamada-linha-aluno {
+            grid-template-columns: 1fr;
+        }
+        .chamada-nome-aluno {
+            font-size: 0.98rem;
+        }
+        .chamada-botoes-status {
+            grid-template-columns: 1fr 1fr;
+        }
+        .chamada-botoes-status .btn-abrir-atestado {
+            grid-column: 1 / -1;
+        }
+        .chamada-botao-status {
+            white-space: normal;
+        }
+    }
+    .modal-footer {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    @media (max-width: 400px) {
+        .modal-footer .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+    <div id="chamada-rascunho-aviso" class="chamada-rascunho-aviso alert alert-warning d-none">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        Existe uma chamada não enviada salva neste dispositivo. Deseja continuar?
+        <div class="mt-2 d-flex gap-2">
+            <button type="button" id="btn-recuperar-rascunho" class="btn btn-sm btn-warning fw-semibold">RECUPERAR RASCUNHO</button>
+            <button type="button" id="btn-descartar-rascunho" class="btn btn-sm btn-outline-secondary">DESCARTAR RASCUNHO</button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h1 class="h5 mb-0">
+                <i class="fas fa-clipboard-check me-2"></i>Chamada v1.2 <span class="badge bg-light text-primary ms-1">experimental</span>
+            </h1>
+            <a href="{% url 'chamada_v1_2_selecionar' %}" class="btn btn-sm btn-outline-light">
+                <i class="fas fa-arrow-left me-1"></i>Trocar turma/data
+            </a>
+        </div>
+        <div class="card-body py-2">
+            <div class="row">
+                <div class="col-6 col-md-3"><strong>Turma:</strong> {{ turma.nome }}</div>
+                <div class="col-6 col-md-3"><strong>Turno:</strong> {{ turma.get_turno_display }}</div>
+                <div class="col-12 col-md-6"><strong>Data da chamada:</strong> {{ data|date:"d/m/Y" }}</div>
+            </div>
+            <p class="chamada-orientacao text-muted mb-0 mt-2">
+                <i class="fas fa-circle-info me-1"></i>Alunos com atestado ativo não podem receber falta enquanto estiverem dentro do período informado.
+            </p>
+        </div>
+    </div>
+
+    <div class="chamada-resumo-fixo card border-0 shadow-sm mb-3">
+        <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div id="chamada-resumo-texto" class="fw-semibold">
+                {{ alunos|length }} alunos | <span id="resumo-presentes">{{ alunos|length }}</span> presentes | <span id="resumo-faltosos">0</span> faltosos
+            </div>
+            <button type="button" id="btn-abrir-confirmacao" class="btn btn-success fw-semibold">
+                <i class="fas fa-check-circle me-1"></i>Confirmar Chamada
+            </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-2 p-md-3">
+            {% if not alunos %}
+                <p class="text-muted mb-0">Nenhum aluno ativo encontrado para esta turma.</p>
+            {% else %}
+                <div id="lista-alunos">
+                    {% for aluno in alunos %}
+                        <div class="chamada-linha-aluno {% if aluno.atestado_ativo %}atestado{% endif %}"
+                             data-aluno-id="{{ aluno.id }}" data-aluno-nome="{{ aluno.nome }}" data-atestado="{% if aluno.atestado_ativo %}1{% else %}0{% endif %}">
+                            <div class="chamada-info-aluno">
+                                <span class="badge bg-secondary">{{ aluno.numero }}</span>
+                                <span class="chamada-nome-aluno">{{ aluno.nome }}</span>
+                            </div>
+                            <div class="chamada-area-status">
+                                <div class="chamada-botoes-status" role="group" aria-label="Status de {{ aluno.nome }}">
+                                    <input type="radio" class="btn-check status-radio" name="status_{{ aluno.id }}" id="presente_{{ aluno.id }}" value="presente" checked {% if aluno.atestado_ativo %}disabled{% endif %}>
+                                    <label class="btn btn-outline-success chamada-botao-status" for="presente_{{ aluno.id }}">
+                                        <i class="fas fa-check"></i> Presente
+                                    </label>
+
+                                    <input type="radio" class="btn-check status-radio" name="status_{{ aluno.id }}" id="falta_{{ aluno.id }}" value="falta" {% if aluno.atestado_ativo %}disabled{% endif %}>
+                                    <label class="btn btn-outline-danger chamada-botao-status" for="falta_{{ aluno.id }}">
+                                        <i class="fas fa-times"></i> Falta
+                                    </label>
+
+                                    {% if permissoes.pode_justificar_faltas %}
+                                        <button type="button" class="btn btn-outline-info chamada-botao-status btn-abrir-atestado {% if aluno.atestado_ativo %}d-none{% endif %}" data-aluno-id="{{ aluno.id }}">
+                                            <i class="fas fa-file-medical"></i> Atestado
+                                        </button>
+                                    {% endif %}
+                                </div>
+                                <div class="aviso-atestado-ativo {% if not aluno.atestado_ativo %}d-none{% endif %}" id="aviso-atestado-{{ aluno.id }}" role="status">
+                                    <i class="fas fa-notes-medical" aria-hidden="true"></i>
+                                    <span class="aviso-atestado-titulo">ATESTADO ATIVO</span>
+                                    <span class="aviso-atestado-periodo" id="aviso-atestado-periodo-{{ aluno.id }}">
+                                        {% if aluno.atestado_ativo %}De {{ aluno.atestado_ativo.data_inicio|date:"d/m/Y" }} até {{ aluno.atestado_ativo.data_fim|date:"d/m/Y" }}{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{{ alunos_json|json_script:"alunos-data" }}
+
+<div class="modal fade" id="modalConfirmarChamada" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-clipboard-list me-1"></i>Confirmar Chamada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1"><strong>Turma:</strong> {{ turma.nome }}</p>
+                <p class="mb-3"><strong>Data:</strong> {{ data|date:"d/m/Y" }}</p>
+                <p class="mb-1"><strong>Presentes:</strong> <span id="modal-presentes"></span></p>
+                <p class="mb-3"><strong>Faltosos:</strong> <span id="modal-faltosos"></span></p>
+                <div id="modal-lista-faltosos">
+                    <strong>Alunos marcados com falta:</strong>
+                    <ul id="modal-nomes-faltosos" class="mb-0"></ul>
+                </div>
+                <div id="modal-status-envio" class="alert d-none mt-3 mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btn-voltar-corrigir" class="btn btn-outline-secondary" data-bs-dismiss="modal">VOLTAR E CORRIGIR</button>
+                <button type="button" id="btn-confirmar-chamada" class="btn btn-success fw-semibold">CONFIRMAR CHAMADA</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAtestado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-medical me-1"></i>Atestado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Aluno: <strong id="atestado-modal-nome-aluno"></strong></p>
+                <input type="hidden" id="atestado-modal-aluno-id" value="">
+                <div class="mb-3">
+                    <label for="atestado-data-inicio" class="form-label fw-semibold">Início do atestado</label>
+                    <input type="date" id="atestado-data-inicio" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="atestado-data-fim" class="form-label fw-semibold">Fim do atestado</label>
+                    <input type="date" id="atestado-data-fim" class="form-control" required>
+                </div>
+                <div id="atestado-status-envio" class="alert d-none mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                <button type="button" id="btn-confirmar-atestado" class="btn btn-info fw-semibold">CONFIRMAR ATESTADO</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    'use strict';
+
+    var TURMA_ID = '{{ turma.id }}';
+    var DATA_CHAMADA = '{{ data|date:"Y-m-d" }}';
+    var USUARIO_ID = '{{ request.user.id }}';
+    var URL_REGISTRAR = '{% url "chamada_v1_2_registrar" %}';
+    var URL_ATESTADO = '{% url "chamada_v1_2_atestado" %}';
+    var URL_CONFERIR = '{% url "chamada_v1_2_conferir" %}?turma=' + TURMA_ID + '&data=' + DATA_CHAMADA;
+    var CSRF_TOKEN = '{{ csrf_token }}';
+    var CHAVE_RASCUNHO = 'chamada_v1_2_draft:' + USUARIO_ID + ':' + TURMA_ID + ':' + DATA_CHAMADA;
+
+    var alunosData = JSON.parse(document.getElementById('alunos-data').textContent);
+    var alunosPorId = {};
+    alunosData.forEach(function (a) { alunosPorId[a.id] = a; });
+
+    var listaAlunosEl = document.getElementById('lista-alunos');
+    var resumoPresentesEl = document.getElementById('resumo-presentes');
+    var resumoFaltososEl = document.getElementById('resumo-faltosos');
+    var avisoRascunhoEl = document.getElementById('chamada-rascunho-aviso');
+    var modalEl = document.getElementById('modalConfirmarChamada');
+    var modalConfirmar = new bootstrap.Modal(modalEl);
+    var modalAtestadoEl = document.getElementById('modalAtestado');
+    var modalAtestado = new bootstrap.Modal(modalAtestadoEl);
+    var totalAlunos = alunosData.length;
+    var enviando = false;
+    var jaSalvo = false;
+    var atestadoPendente = null;
+
+    function idsFaltosos() {
+        var ids = [];
+        if (!listaAlunosEl) { return ids; }
+        listaAlunosEl.querySelectorAll('.chamada-linha-aluno').forEach(function (linha) {
+            if (linha.getAttribute('data-atestado') === '1') { return; }
+            var alunoId = linha.getAttribute('data-aluno-id');
+            var radioFalta = document.getElementById('falta_' + alunoId);
+            if (radioFalta && radioFalta.checked) {
+                ids.push(alunoId);
+            }
+        });
+        return ids;
+    }
+
+    function formatarDataBr(isoDate) {
+        var partes = isoDate.split('-');
+        return partes[2] + '/' + partes[1] + '/' + partes[0];
+    }
+
+    function atualizarResumo() {
+        var faltosos = idsFaltosos();
+        resumoFaltososEl.textContent = faltosos.length;
+        resumoPresentesEl.textContent = totalAlunos - faltosos.length;
+
+        listaAlunosEl.querySelectorAll('.chamada-linha-aluno').forEach(function (linha) {
+            var alunoId = linha.getAttribute('data-aluno-id');
+            var radioFalta = document.getElementById('falta_' + alunoId);
+            linha.classList.toggle('falta-marcada', !!(radioFalta && radioFalta.checked));
+        });
+    }
+
+    function salvarRascunho() {
+        if (jaSalvo) { return; }
+        var dados = {
+            faltaIds: idsFaltosos(),
+            atestadoPendente: atestadoPendente,
+            salvoEm: new Date().toISOString(),
+        };
+        try {
+            localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(dados));
+        } catch (e) { /* localStorage indisponivel: segue sem rascunho local */ }
+    }
+
+    function limparRascunho() {
+        try { localStorage.removeItem(CHAVE_RASCUNHO); } catch (e) { /* ignorar */ }
+    }
+
+    function carregarRascunho() {
+        var bruto;
+        try { bruto = localStorage.getItem(CHAVE_RASCUNHO); } catch (e) { return null; }
+        if (!bruto) { return null; }
+        try { return JSON.parse(bruto); } catch (e) { return null; }
+    }
+
+    function aplicarRascunho(dados) {
+        (dados.faltaIds || []).forEach(function (alunoId) {
+            var radioFalta = document.getElementById('falta_' + alunoId);
+            if (radioFalta && !radioFalta.disabled) { radioFalta.checked = true; }
+        });
+        atualizarResumo();
+
+        if (dados.atestadoPendente) {
+            abrirModalAtestado(
+                dados.atestadoPendente.alunoId,
+                dados.atestadoPendente.dataInicio,
+                dados.atestadoPendente.dataFim
+            );
+        }
+    }
+
+    var rascunhoExistente = carregarRascunho();
+    if (rascunhoExistente && (
+        (rascunhoExistente.faltaIds && rascunhoExistente.faltaIds.length) || rascunhoExistente.atestadoPendente
+    )) {
+        avisoRascunhoEl.classList.remove('d-none');
+    }
+
+    document.getElementById('btn-recuperar-rascunho').addEventListener('click', function () {
+        if (rascunhoExistente) { aplicarRascunho(rascunhoExistente); }
+        avisoRascunhoEl.classList.add('d-none');
+    });
+
+    document.getElementById('btn-descartar-rascunho').addEventListener('click', function () {
+        limparRascunho();
+        avisoRascunhoEl.classList.add('d-none');
+    });
+
+    if (listaAlunosEl) {
+        listaAlunosEl.addEventListener('change', function (evento) {
+            if (evento.target.classList.contains('status-radio')) {
+                atualizarResumo();
+                salvarRascunho();
+            }
+        });
+    }
+
+    document.getElementById('btn-abrir-confirmacao').addEventListener('click', function () {
+        var faltosos = idsFaltosos();
+        document.getElementById('modal-presentes').textContent = totalAlunos - faltosos.length;
+        document.getElementById('modal-faltosos').textContent = faltosos.length;
+
+        var listaNomesEl = document.getElementById('modal-nomes-faltosos');
+        var listaFaltososBloco = document.getElementById('modal-lista-faltosos');
+        listaNomesEl.innerHTML = '';
+        if (faltosos.length === 0) {
+            listaFaltososBloco.classList.add('d-none');
+        } else {
+            listaFaltososBloco.classList.remove('d-none');
+            faltosos.forEach(function (alunoId) {
+                var aluno = alunosPorId[alunoId];
+                var li = document.createElement('li');
+                li.textContent = aluno ? aluno.numero + ' - ' + aluno.nome : alunoId;
+                listaNomesEl.appendChild(li);
+            });
+        }
+
+        var statusEl = document.getElementById('modal-status-envio');
+        statusEl.classList.add('d-none');
+        statusEl.textContent = '';
+
+        var btnConfirmar = document.getElementById('btn-confirmar-chamada');
+        btnConfirmar.disabled = false;
+        btnConfirmar.textContent = 'CONFIRMAR CHAMADA';
+
+        modalConfirmar.show();
+    });
+
+    function mostrarStatusModal(tipo, mensagem) {
+        var statusEl = document.getElementById('modal-status-envio');
+        statusEl.className = 'alert mt-3 mb-0 alert-' + tipo;
+        statusEl.textContent = mensagem;
+    }
+
+    document.getElementById('btn-confirmar-chamada').addEventListener('click', function () {
+        if (enviando) { return; }
+        enviando = true;
+
+        var btnConfirmar = document.getElementById('btn-confirmar-chamada');
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = 'Salvando...';
+
+        var formData = new FormData();
+        formData.append('turma', TURMA_ID);
+        formData.append('data', DATA_CHAMADA);
+        idsFaltosos().forEach(function (alunoId) { formData.append('falta_ids', alunoId); });
+
+        fetch(URL_REGISTRAR, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN },
+            body: formData,
+        }).then(function (resposta) {
+            return resposta.json().then(function (dados) { return { ok: resposta.ok, dados: dados }; });
+        }).then(function (resultado) {
+            enviando = false;
+            if (resultado.ok && resultado.dados.status === 'ok') {
+                jaSalvo = true;
+                limparRascunho();
+                mostrarStatusModal('success', 'Chamada salva com sucesso! Presentes: ' + resultado.dados.presentes + ' | Faltosos: ' + resultado.dados.faltosos + '.');
+                btnConfirmar.textContent = 'CHAMADA SALVA';
+                setTimeout(function () { window.location.href = '{% url "chamada_v1_2_selecionar" %}'; }, 1800);
+            } else if (resultado.dados.status === 'duplicado') {
+                mostrarStatusModal('warning', resultado.dados.mensagem + ' Abra a tela de conferencia para editar.');
+                btnConfirmar.disabled = false;
+                btnConfirmar.textContent = 'CONFIRMAR CHAMADA';
+            } else {
+                mostrarStatusModal('danger', resultado.dados.mensagem || 'Nao foi possivel salvar a chamada. Tente novamente.');
+                btnConfirmar.disabled = false;
+                btnConfirmar.textContent = 'CONFIRMAR CHAMADA';
+            }
+        }).catch(function () {
+            enviando = false;
+            mostrarStatusModal(
+                'danger',
+                'Nao foi possivel confirmar se a chamada foi salva. Verifique a conexao e consulte a chamada antes de tentar novamente.'
+            );
+            btnConfirmar.disabled = false;
+            btnConfirmar.textContent = 'CONFIRMAR CHAMADA';
+        });
+    });
+
+    function abrirModalAtestado(alunoId, dataInicioPreenchida, dataFimPreenchida) {
+        var aluno = alunosPorId[alunoId];
+        document.getElementById('atestado-modal-aluno-id').value = alunoId;
+        document.getElementById('atestado-modal-nome-aluno').textContent = aluno ? aluno.numero + ' - ' + aluno.nome : alunoId;
+
+        var inputInicio = document.getElementById('atestado-data-inicio');
+        var inputFim = document.getElementById('atestado-data-fim');
+        inputInicio.value = dataInicioPreenchida || DATA_CHAMADA;
+        inputFim.value = dataFimPreenchida || '';
+        inputFim.min = inputInicio.value;
+
+        var statusEl = document.getElementById('atestado-status-envio');
+        statusEl.classList.add('d-none');
+        statusEl.textContent = '';
+
+        var btnConfirmarAtestado = document.getElementById('btn-confirmar-atestado');
+        btnConfirmarAtestado.disabled = false;
+        btnConfirmarAtestado.textContent = 'CONFIRMAR ATESTADO';
+
+        modalAtestado.show();
+    }
+
+    document.querySelectorAll('.btn-abrir-atestado').forEach(function (botao) {
+        botao.addEventListener('click', function () {
+            abrirModalAtestado(botao.getAttribute('data-aluno-id'));
+        });
+    });
+
+    function salvarRascunhoAtestadoPendente() {
+        atestadoPendente = {
+            alunoId: document.getElementById('atestado-modal-aluno-id').value,
+            dataInicio: document.getElementById('atestado-data-inicio').value,
+            dataFim: document.getElementById('atestado-data-fim').value,
+        };
+        salvarRascunho();
+    }
+
+    document.getElementById('atestado-data-inicio').addEventListener('change', function () {
+        document.getElementById('atestado-data-fim').min = this.value;
+        salvarRascunhoAtestadoPendente();
+    });
+    document.getElementById('atestado-data-fim').addEventListener('change', salvarRascunhoAtestadoPendente);
+
+    function mostrarStatusAtestado(tipo, mensagem) {
+        var statusEl = document.getElementById('atestado-status-envio');
+        statusEl.className = 'alert mt-3 mb-0 alert-' + tipo;
+        statusEl.textContent = mensagem;
+    }
+
+    var enviandoAtestado = false;
+
+    document.getElementById('btn-confirmar-atestado').addEventListener('click', function () {
+        if (enviandoAtestado) { return; }
+
+        var alunoId = document.getElementById('atestado-modal-aluno-id').value;
+        var dataInicio = document.getElementById('atestado-data-inicio').value;
+        var dataFim = document.getElementById('atestado-data-fim').value;
+
+        if (!dataInicio || !dataFim) {
+            mostrarStatusAtestado('danger', 'Informe data inicial e data final.');
+            return;
+        }
+        if (dataFim < dataInicio) {
+            mostrarStatusAtestado('danger', 'A data final nao pode ser anterior a data inicial.');
+            return;
+        }
+
+        enviandoAtestado = true;
+        var btnConfirmarAtestado = document.getElementById('btn-confirmar-atestado');
+        btnConfirmarAtestado.disabled = true;
+        btnConfirmarAtestado.textContent = 'Salvando...';
+
+        var formData = new FormData();
+        formData.append('turma', TURMA_ID);
+        formData.append('aluno', alunoId);
+        formData.append('data', DATA_CHAMADA);
+        formData.append('data_inicio', dataInicio);
+        formData.append('data_fim', dataFim);
+
+        fetch(URL_ATESTADO, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN },
+            body: formData,
+        }).then(function (resposta) {
+            return resposta.json().then(function (dados) { return { ok: resposta.ok, dados: dados }; });
+        }).then(function (resultado) {
+            enviandoAtestado = false;
+            if (resultado.ok && resultado.dados.status === 'ok') {
+                atestadoPendente = null;
+                salvarRascunho();
+
+                var linha = listaAlunosEl.querySelector('.chamada-linha-aluno[data-aluno-id="' + alunoId + '"]');
+                if (linha) {
+                    linha.classList.add('atestado');
+                    linha.setAttribute('data-atestado', '1');
+
+                    var presenteRadio = document.getElementById('presente_' + alunoId);
+                    var faltaRadio = document.getElementById('falta_' + alunoId);
+                    if (faltaRadio) { faltaRadio.checked = false; faltaRadio.disabled = true; }
+                    if (presenteRadio) { presenteRadio.disabled = true; }
+
+                    var botaoAtestadoLinha = linha.querySelector('.btn-abrir-atestado');
+                    if (botaoAtestadoLinha) { botaoAtestadoLinha.classList.add('d-none'); }
+
+                    var avisoAtestado = document.getElementById('aviso-atestado-' + alunoId);
+                    var avisoPeriodo = document.getElementById('aviso-atestado-periodo-' + alunoId);
+                    if (avisoPeriodo) {
+                        avisoPeriodo.textContent = 'De ' + formatarDataBr(resultado.dados.atestado.data_inicio) + ' até ' + formatarDataBr(resultado.dados.atestado.data_fim);
+                    }
+                    if (avisoAtestado) { avisoAtestado.classList.remove('d-none'); }
+                }
+
+                atualizarResumo();
+                mostrarStatusAtestado('success', resultado.dados.mensagem);
+                setTimeout(function () { modalAtestado.hide(); }, 1200);
+            } else {
+                mostrarStatusAtestado('danger', resultado.dados.mensagem || 'Nao foi possivel cadastrar o atestado.');
+                btnConfirmarAtestado.disabled = false;
+                btnConfirmarAtestado.textContent = 'CONFIRMAR ATESTADO';
+            }
+        }).catch(function () {
+            enviandoAtestado = false;
+            mostrarStatusAtestado(
+                'danger',
+                'Não foi possível confirmar o cadastro do atestado. Verifique a conexão antes de tentar novamente.'
+            );
+            btnConfirmarAtestado.disabled = false;
+            btnConfirmarAtestado.textContent = 'CONFIRMAR ATESTADO';
+        });
+    });
+
+    atualizarResumo();
+})();
+</script>
+{% endblock %}

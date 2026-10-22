@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Consulta do Cronograma{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-calendar-days me-2"></i>Consulta do Cronograma dos Laboratórios</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info small mb-4">
+                Esta é uma tela de <strong>consulta</strong>: mostra o cronograma ativo e o histórico de cada turno,
+                sem nenhuma opção de alteração. Para ver a grade completa (com Imprimir/PDF e Exportar para Excel),
+                clique em um dos links abaixo.
+            </div>
+
+            <div class="row g-3">
+                {% for item in turnos %}
+                <div class="col-12 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <strong>{{ item.rotulo }}</strong>
+                        </div>
+                        <div class="card-body">
+                            {% if item.ativa_inicio %}
+                                <p class="mb-2">
+                                    <span class="badge bg-success">🟢 Ativo</span>
+                                    desde {{ item.ativa_inicio|date:"d/m/Y" }}
+                                </p>
+                                <a href="{{ item.url_turno }}?data_inicio={{ item.ativa_inicio|date:'Y-m-d' }}" class="btn btn-sm btn-primary">
+                                    Ver cronograma ativo
+                                </a>
+                            {% else %}
+                                <p class="text-muted mb-2">Nenhum período ativo no momento.</p>
+                                <a href="{{ item.url_turno }}" class="btn btn-sm btn-outline-primary">
+                                    Ver cronograma
+                                </a>
+                            {% endif %}
+
+                            {% if item.historicas %}
+                                <hr>
+                                <p class="mb-1 small fw-bold text-muted">📁 Semanas históricas</p>
+                                <ul class="list-unstyled small mb-0">
+                                    {% for semana in item.historicas %}
+                                        <li class="mb-1">
+                                            <a href="{{ item.url_turno }}?data_inicio={{ semana.data_inicio|date:'Y-m-d' }}">
+                                                desde {{ semana.data_inicio|date:"d/m/Y" }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-4">
+                <a href="{% url 'home' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Agendar {{ laboratorio.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-calendar-plus"></i> Agendar {{ laboratorio.nome }} - {{ laboratorio.equipamento }}</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <div class="fw-bold mb-1">ℹ️ Os agendamentos podem ser cadastrados aos poucos.</div>
+                <div>
+                    Eles só serão exibidos aos professores e utilizados pelo sistema quando o cronograma correspondente
+                    for definido como ativo na tela Diagnóstico do Cronograma.
+                </div>
+                {% if cronograma_ativo_inicio and cronograma_ativo_fim %}
+                    <div class="mt-2">
+                        <strong>Cronograma ativo atual:</strong>
+                        {{ cronograma_ativo_inicio|date:"d/m/Y" }} a {{ cronograma_ativo_fim|date:"d/m/Y" }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <form method="post"{% if cronograma_ativo_inicio %} action="?data_inicio={{ cronograma_ativo_inicio|date:'Y-m-d' }}"{% endif %}>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Laboratorio</label>
+                    <select id="selecionarLaboratorio" class="form-select">
+                        {% for lab in laboratorios %}
+                            <option value="{% url 'agendamento_lab' lab.id %}{% if request.GET.data_inicio %}?data_inicio={{ request.GET.data_inicio }}{% endif %}" {% if lab.id == laboratorio.id %}selected{% endif %}>
+                                {{ lab.nome }} - {{ lab.equipamento }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold d-block">Dia da semana</label>
+                        {% for dia in dias_semana_agendamento %}
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="dia_semana"
+                                       id="diaSemana{{ dia.valor }}"
+                                       value="{{ dia.valor }}"
+                                       required>
+                                <label class="form-check-label" for="diaSemana{{ dia.valor }}">
+                                    {{ dia.nome }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Turno</label>
+                        <select name="turno" class="form-select" required>
+                            <option value="manha">Manha</option>
+                            <option value="tarde">Tarde</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Horario</label>
+                        <select name="horario" class="form-select" required>
+                            <option value="1">1 Aula</option>
+                            <option value="2">2 Aula</option>
+                            <option value="3">3 Aula</option>
+                            <option value="4">4 Aula</option>
+                            <option value="5">5 Aula</option>
+                            <option value="6">6 Aula</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Professor</label>
+                        <select name="professor" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            {% for p in professores %}
+                            <option value="{{ p.id }}">{{ p.nome_completo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Turma</label>
+                        <select name="turma" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            {% for t in turmas %}
+                            <option value="{{ t.id }}">{{ t.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Disciplina</label>
+                    <input type="text" name="disciplina" class="form-control" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Observacao</label>
+                    <textarea name="observacao" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Salvar Agendamento
+                    </button>
+                    <a href="{% url 'listar_laboratorios' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const seletor = document.getElementById('selecionarLaboratorio');
+        if (seletor) {
+            seletor.addEventListener('change', function() {
+                window.location.href = this.value;
+            });
+        }
+    });
+</script>
+{% endblock %}

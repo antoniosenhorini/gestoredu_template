@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Editar Registro de Falta{% endblock %}
+
+{% block content %}
+    <div class="container-fluid px-2 px-md-4 py-3">
+        <h2><i class="fas fa-edit me-2"></i>Editar Registro de Falta</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Professor</label>
+                <select name="professor" class="form-select" required>
+                    {% for professor in professores %}
+                    <option value="{{ professor.id }}" {% if professor.id == falta.professor.id %}selected{% endif %}>
+                        {{ professor.get_full_name|default:professor.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Data</label>
+                <input type="date" name="data" class="form-control" value="{{ falta.data|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Horário Previsto</label>
+                    <input type="time" name="horario_previsto" class="form-control" value="{{ falta.horario_previsto|time:'H:i' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Horário Real</label>
+                    <input type="time" name="horario_real" class="form-control" value="{{ falta.horario_real|time:'H:i' }}">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tipo</label>
+                <select name="tipo" class="form-select" required>
+                    <option value="presente" {% if falta.tipo == 'presente' %}selected{% endif %}>Presente</option>
+                    <option value="atraso" {% if falta.tipo == 'atraso' %}selected{% endif %}>Atraso</option>
+                    <option value="falta" {% if falta.tipo == 'falta' %}selected{% endif %}>Falta</option>
+                    <option value="justificada" {% if falta.tipo == 'justificada' %}selected{% endif %}>Justificada</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Observação</label>
+                <textarea name="observacao" class="form-control" rows="3">{{ falta.observacao }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{% url 'controle_faltas' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+
+{% endblock %}

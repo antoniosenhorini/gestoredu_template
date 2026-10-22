@@ -1,0 +1,137 @@
+﻿{% extends 'base.html' %}
+{% block title %}Controle de Faltas - Alunos{% endblock %}
+
+{% block extra_head %}
+<style>
+    .filter-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .table-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .btn-arquivar {
+        background-color: #28a745;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid px-2 px-md-4 py-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'painel_equipe' %}">Painel</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Controle de Faltas</li>
+            </ol>
+        </nav>
+        <div class="row mb-3">
+            <div class="col">
+                <h2><i class="fas fa-user-graduate me-2"></i>Controle de Faltas - Alunos</h2>
+                <p class="text-muted">MÃ³dulo de faltas de alunos</p>
+            </div>
+            <div class="col text-end">
+                <a href="{% url 'registrar_falta_aluno' %}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Nova Falta
+                </a>
+                <a href="{% url 'painel_equipe' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filter-card">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label fw-bold">MÃªs</label>
+                    <select name="mes" class="form-select">
+                        {% for m in meses %}
+                        <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label fw-bold">Ano</label>
+                    <select name="ano" class="form-select">
+                        {% for a in anos %}
+                        <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela de Faltas -->
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Turma</th>
+                            <th>Nº</th>
+                            <th>Aluno</th>
+                            <th>Pedagoga</th>
+                            <th>Faltas</th>
+                            <th>Justificada</th>
+                            <th>Responsavel</th>
+                            <th>Observacoes</th>
+                            <th>Acoes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for falta in faltas %}
+                    <tr>
+                        <td>{{ falta.data|date:"d/m/Y" }}</td>
+                        <td>{{ falta.aluno.turma.nome }}</td>
+                        <td>{{ falta.aluno.numero }}</td>
+                        <td>{{ falta.aluno.nome }}</td>
+                        <td>{{ falta.pedagoga|default:"-" }}</td>
+                        <td>{{ falta.quantidade_faltas }}</td>
+                        <td>{% if falta.justificada %}Sim{% else %}Nao{% endif %}</td>
+                        <td>{{ falta.responsavel_contatado|default:"-" }}</td>
+                        <td>{{ falta.observacoes|truncatechars:30 }}</td>
+                        <td>
+                            <a href="{% url 'editar_falta_aluno' falta.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'excluir_falta_aluno' falta.id %}" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-4">
+                            <i class="fas fa-info-circle fa-2x mb-2"></i><br>
+                            Nenhuma falta registrada neste periodo.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BotÃ£o para arquivar mÃªs -->
+        <div class="mt-3 text-end">
+            <a href="{% url 'relatorio_faltas_alunos' %}?mes={{ mes }}&ano={{ ano }}" class="btn btn-arquivar">
+                <i class="fas fa-file-excel me-2"></i>Arquivar MÃªs (gerar Excel)
+            </a>
+        </div>
+    </div>
+
+{% endblock %}
+

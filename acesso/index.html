@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso - Colégio Cívico Militar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 500px;
+            background: white;
+        }
+        .card-header {
+            background: #0d6efd;
+            color: white;
+            text-align: center;
+            padding: 25px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 15px 15px 0 0;
+        }
+        .card-body {
+            padding: 30px;
+        }
+        .btn-acesso {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .btn-acesso:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .btn-equipe {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-professores {
+            background: #0d6efd;
+            color: white;
+        }
+        .btn-acesso i {
+            margin-right: 10px;
+        }
+        .info {
+            text-align: center;
+            margin-top: 25px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-shield-alt me-2"></i>Colégio Cívico Militar
+        </div>
+        <div class="card-body">
+            <h3 class="text-center mb-4">Acesso ao Sistema</h3>
+            
+            <!-- BOTÃO EQUIPE DIRETIVA -->
+            <a href="http://177.7.54.212:8002/painel-equipe/" class="btn-acesso btn-equipe" target="_blank">
+                <i class="fas fa-users-cog"></i> Painel da Equipe Diretiva
+            </a>
+            
+            <!-- BOTÃO PROFESSORES -->
+            <a href="http://177.7.54.212:8002" class="btn-acesso btn-professores" target="_blank">
+                <i class="fas fa-chalkboard-teacher"></i> Site dos Professores
+            </a>
+            
+            <div class="info">
+                <small>
+                    <i class="fas fa-code me-1"></i>
+                    Desenvolvido pelo Prof. Antonio Odair Signorini<br>
+                    <span class="text-warning">com ajuda de IA</span>
+                </small>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

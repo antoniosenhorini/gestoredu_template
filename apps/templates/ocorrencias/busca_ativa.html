@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Busca Ativa{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-search me-2"></i>Busca Ativa - Faltas de Alunos</h4>
+        </div>
+        <div class="card-body">
+            <!-- Filtros -->
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-auto">
+                    <label class="form-label">Mês</label>
+                    <select name="mes" class="form-select">
+                        {% for m in meses %}
+                            <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">Ano</label>
+                    <select name="ano" class="form-select">
+                        {% for a in anos %}
+                            <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">Turma</label>
+                    <select name="turma" class="form-select">
+                        <option value="">Todas as turmas</option>
+                        {% for turma in turmas %}
+                            <option value="{{ turma.id }}" {% if turma.id|stringformat:"s" == turma_selecionada %}selected{% endif %}>{{ turma.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-auto align-self-end">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </div>
+                <div class="col-auto align-self-end">
+                    <a href="{% url 'exportar_busca_ativa' %}?mes={{ mes }}&ano={{ ano }}&turma={{ turma_selecionada }}" class="btn btn-success">
+                        <i class="fas fa-file-excel me-2"></i>Exportar Busca Ativa
+                    </a>
+                </div>
+                <div class="col-auto align-self-end">
+                    <a href="{% url 'painel_equipe' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i> Voltar ao Painel
+                    </a>
+                </div>
+            </form>
+
+            <!-- Resumo por turma -->
+            {% if turmas_resumo %}
+            <div class="alert alert-info mb-4">
+                <strong>📊 Resumo por turma:</strong><br>
+                {% for nome, dados in turmas_resumo.items %}
+                    <span class="badge bg-secondary ms-1 mt-1 p-2">
+                        {{ nome }}: {{ dados.realizadas }}/{{ dados.total }} realizadas
+                    </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+
+            <!-- Tabela de faltas -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Data</th>
+                            <th>Turma</th>
+                            <th>Nº</th>
+                            <th>Aluno</th>
+                            <th>Busca Ativa</th>
+                            <th class="text-center">Ações</th>
+                        </thead>
+                    <tbody>
+                        {% for occ in ocorrencias %}
+                        <tr>
+                            <td>{{ occ.data|date:"d/m/Y" }}</td>
+                            <td><strong>{{ occ.aluno.turma.nome }}</strong></td>
+                            <td>{{ occ.aluno.numero }}</td>
+                            <td>{{ occ.aluno.nome }}</td>
+                            <td>
+                                {% if occ.busca_ativa_realizada %}
+                                    <span class="badge bg-success">✅ Realizada</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">⏳ Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center align-middle">
+                                <a href="{% url 'editar_busca_ativa' occ.id %}?mes={{ mes }}&ano={{ ano }}&turma={{ turma_selecionada }}" class="btn btn-primary btn-sm px-3 text-nowrap" title="Editar Busca Ativa">
+                                    <i class="fas fa-edit me-1"></i> Editar
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i><br>
+                                Nenhuma falta registrada no período selecionado.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

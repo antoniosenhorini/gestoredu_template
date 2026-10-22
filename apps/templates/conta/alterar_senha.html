@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Alterar senha{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4 py-3">
+                    <h1 class="h4 mb-0"><i class="fas fa-key me-2"></i>Alterar minha senha</h1>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted">Crie uma senha pessoal, diferente da senha padrao, para proteger seu acesso.</p>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.old_password.id_for_label }}" class="form-label fw-semibold">Senha atual</label>
+                            <input type="password" name="{{ form.old_password.html_name }}" id="{{ form.old_password.id_for_label }}" class="form-control" autocomplete="current-password" required>
+                            {% for error in form.old_password.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.new_password1.id_for_label }}" class="form-label fw-semibold">Nova senha</label>
+                            <input type="password" name="{{ form.new_password1.html_name }}" id="{{ form.new_password1.id_for_label }}" class="form-control" autocomplete="new-password" required>
+                            {% if form.new_password1.help_text %}<div class="form-text">{{ form.new_password1.help_text|safe }}</div>{% endif %}
+                            {% for error in form.new_password1.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.new_password2.id_for_label }}" class="form-label fw-semibold">Confirmar nova senha</label>
+                            <input type="password" name="{{ form.new_password2.html_name }}" id="{{ form.new_password2.id_for_label }}" class="form-control" autocomplete="new-password" required>
+                            {% for error in form.new_password2.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Salvar nova senha
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary">Voltar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

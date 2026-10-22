@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Avisar ausencia ou atraso{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h4 mb-1"><i class="fas fa-person-circle-exclamation me-2"></i>Avisar ausencia ou atraso</h1>
+                    <p class="mb-0 small opacity-75">Informe a equipe diretiva sobre falta, atestado ou atraso.</p>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" class="row g-3" novalidate>
+                        {% csrf_token %}
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold" for="{{ form.professor_nome.id_for_label }}">{{ form.professor_nome.label }}</label>
+                            {{ form.professor_nome }}
+                            {{ form.professor_nome.errors }}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold" for="{{ form.disciplina.id_for_label }}">{{ form.disciplina.label }}</label>
+                            {{ form.disciplina }}
+                            {{ form.disciplina.errors }}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold" for="{{ form.data.id_for_label }}">{{ form.data.label }}</label>
+                            {{ form.data }}
+                            {{ form.data.errors }}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold" for="{{ form.tipo.id_for_label }}">{{ form.tipo.label }}</label>
+                            {{ form.tipo }}
+                            {{ form.tipo.errors }}
+                        </div>
+                        <div class="col-12 col-md-6 d-none" id="campo-atestado">
+                            <label class="form-label fw-semibold" for="{{ form.quantidade_dias_atestado.id_for_label }}">{{ form.quantidade_dias_atestado.label }}</label>
+                            {{ form.quantidade_dias_atestado }}
+                            {{ form.quantidade_dias_atestado.errors }}
+                        </div>
+                        <div class="col-12 col-md-6 d-none" id="campo-atraso">
+                            <label class="form-label fw-semibold" for="{{ form.horario_chegada.id_for_label }}">{{ form.horario_chegada.label }}</label>
+                            {{ form.horario_chegada }}
+                            {{ form.horario_chegada.errors }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="{{ form.observacao.id_for_label }}">{{ form.observacao.label }}</label>
+                            {{ form.observacao }}
+                            {{ form.observacao.errors }}
+                        </div>
+                        <div class="col-12 d-flex flex-column flex-sm-row gap-2 justify-content-end">
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i>Enviar aviso
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tipo = document.getElementById('id_tipo');
+    const campoAtestado = document.getElementById('campo-atestado');
+    const campoAtraso = document.getElementById('campo-atraso');
+    const dias = document.getElementById('id_quantidade_dias_atestado');
+    const horario = document.getElementById('id_horario_chegada');
+
+    function atualizarCampos() {
+        const valor = tipo.value;
+        campoAtestado.classList.toggle('d-none', valor !== 'ATESTADO');
+        campoAtraso.classList.toggle('d-none', valor !== 'ATRASO');
+        dias.required = valor === 'ATESTADO';
+        horario.required = valor === 'ATRASO';
+        if (valor !== 'ATESTADO') dias.value = '';
+        if (valor !== 'ATRASO') horario.value = '';
+    }
+
+    tipo.addEventListener('change', atualizarCampos);
+    atualizarCampos();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,362 @@
+<style>
+    .menu-principal {
+        /* Puxa a cor do Wizard. Se não tiver, usa o azul antigo como padrão */
+        background-color: {{ escola.cor_principal|default:'#0b2d5c' }} !important;
+        box-shadow: 0 6px 18px rgba(9, 35, 78, 0.22);
+    }
+
+    .menu-principal .container-fluid {
+        gap: 0.75rem;
+    }
+
+    .menu-principal .navbar-brand,
+    .menu-principal .nav-link,
+    .menu-principal .navbar-text {
+        color: #fff !important;
+    }
+
+    .menu-principal .navbar-brand {
+        align-items: center;
+        display: flex;
+        font-weight: 700;
+        letter-spacing: 0;
+        line-height: 1.2;
+        max-width: min(100%, 34rem);
+        min-width: 0;
+        white-space: normal;
+    }
+
+    .menu-principal .navbar-brand i,
+    .menu-principal .navbar-toggler {
+        flex-shrink: 0;
+    }
+
+    .menu-principal .navbar-brand-text {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .menu-principal .nav-link {
+        border-radius: 6px;
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+        transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .menu-principal .nav-link:hover,
+    .menu-principal .nav-link:focus {
+        background-color: rgba(255, 255, 255, 0.16);
+        color: #fff !important;
+        transform: translateY(-1px);
+    }
+
+    .menu-principal .dropdown-menu {
+        border: 0;
+        border-radius: 8px;
+        box-shadow: 0 10px 24px rgba(15, 47, 89, 0.18);
+    }
+
+    .menu-principal .dropdown-item {
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .menu-principal .dropdown-item:hover,
+    .menu-principal .dropdown-item:focus {
+        background-color: #eaf4ff;
+        color: #0b4f9f;
+    }
+
+    .menu-principal .dropdown-header {
+        color: #0b4f9f;
+        font-weight: 700;
+    }
+
+    .menu-principal .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.75);
+    }
+
+    .menu-principal .btn-outline-light:hover {
+        background-color: #fff;
+        color: #1559a8;
+    }
+
+    .menu-principal .menu-user-area {
+        flex: 0 1 auto;
+        max-width: min(100%, 18rem);
+        min-width: 0;
+    }
+
+    .menu-principal .navbar-user-name {
+        align-items: center;
+        display: flex;
+        flex: 1 1 auto;
+        line-height: 1.15;
+        max-width: 100%;
+        min-width: 0;
+        padding-bottom: 0.25rem;
+        padding-top: 0.25rem;
+        white-space: normal;
+    }
+
+    .menu-principal .navbar-user-name i {
+        align-self: center;
+        flex-shrink: 0;
+    }
+
+    .menu-principal .navbar-user-label {
+        display: -webkit-box;
+        line-height: 1.15;
+        max-height: 2.3em;
+        min-width: 0;
+        overflow: hidden;
+        overflow-wrap: break-word;
+        white-space: normal;
+        word-break: break-word;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .menu-principal .menu-user-area form,
+    .menu-principal .menu-user-area .btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 1399.98px) {
+        .menu-principal .navbar-brand {
+            flex: 1 1 auto;
+            max-width: calc(100% - 4rem);
+        }
+
+        .menu-principal .navbar-collapse {
+            border-top: 1px solid rgba(255, 255, 255, 0.18);
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            width: 100%;
+        }
+
+        .menu-principal .navbar-nav {
+            gap: 0.15rem;
+        }
+
+        .menu-principal .nav-link {
+            padding-left: 0.65rem;
+            padding-right: 0.65rem;
+        }
+
+        .menu-principal .dropdown-menu {
+            box-shadow: none;
+            margin-left: 0.75rem;
+            margin-right: 0.75rem;
+        }
+
+        .menu-principal .menu-user-area {
+            align-items: stretch !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.18);
+            flex: 1 1 100%;
+            margin-top: 0.75rem;
+            max-width: 100%;
+            padding-top: 0.75rem;
+            width: 100%;
+        }
+
+        .menu-principal .navbar-user-name {
+            width: 100%;
+        }
+
+        .menu-principal .menu-user-area .btn,
+        .menu-principal .menu-user-area form {
+            width: 100%;
+        }
+    }
+
+    @media (min-width: 1400px) {
+        .menu-principal .navbar-collapse {
+            align-items: center;
+            column-gap: 0.75rem;
+            flex-wrap: wrap;
+            min-width: 0;
+            row-gap: 0.35rem;
+        }
+
+        .menu-principal .navbar-nav {
+            flex: 1 1 42rem;
+            flex-wrap: wrap;
+            min-width: 0;
+            row-gap: 0.25rem;
+        }
+
+        .menu-principal .navbar-nav .nav-item {
+            flex: 0 1 auto;
+            min-width: 0;
+        }
+
+        .menu-principal .nav-link {
+            white-space: nowrap;
+        }
+
+        .menu-principal .menu-user-area {
+            flex: 0 1 18rem;
+            margin-left: auto;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .menu-principal .navbar-brand {
+            font-size: 0.95rem;
+        }
+
+        .menu-principal .container-fluid {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+    }
+</style>
+
+<nav class="navbar navbar-expand-xxl navbar-dark menu-principal">
+    <div class="container-fluid px-2 px-md-4">
+        <a class="navbar-brand" href="{% url 'home' %}">
+            <i class="fas fa-shield-alt me-2"></i>
+            <span class="navbar-brand-text">{{ escola.nome }}</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal" aria-controls="menuPrincipal" aria-expanded="false" aria-label="Alternar navegacao">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="menuPrincipal">
+            <ul class="navbar-nav me-auto mb-2 mb-xxl-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}">
+                        <i class="fas fa-home me-1"></i>In&iacute;cio
+                    </a>
+                </li>
+
+                {% if permissoes.pode_acessar_painel %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'painel_equipe' %}">
+                            <i class="fas fa-gauge-high me-1"></i>Painel da Equipe
+                        </a>
+                    </li>
+                    {% if permissoes.pode_acessar_avisos_professores %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'lista_avisos_professores' %}">
+                                <i class="fas fa-person-circle-exclamation me-1"></i>Avisos de Professores
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listar_professores' %}">
+                            <i class="fas fa-chalkboard-user me-1"></i>Professores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listar_alunos' %}">
+                            <i class="fas fa-user-graduate me-1"></i>Alunos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'atestados_alunos' %}">
+                            <i class="fas fa-hospital me-1"></i>Atestados de Alunos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listar_laboratorios' %}">
+                            <i class="fas fa-laptop me-1"></i>Laborat&oacute;rios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'diagnostico_cronograma_laboratorios' %}">
+                            <i class="fas fa-calendar-days me-1"></i>Cronograma de Laborat&oacute;rios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'diagnostico_cronograma_laboratorios' %}">
+                            <i class="fas fa-stethoscope me-1"></i>Diagn&oacute;stico do Cronograma
+                        </a>
+                    </li>
+                {% elif permissoes.pode_consultar_cronograma_laboratorios %}
+                    {# Perfil somente leitura (grupo "Consulta Cronograma"): so a consulta,
+                       nunca o Diagnostico administrativo (que tem os botoes de Criar/Ativar/
+                       Cancelar/Excluir semana) nem o restante do bloco acima. #}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'consulta_cronograma_laboratorios' %}">
+                            <i class="fas fa-calendar-days me-1"></i>Cronograma de Laborat&oacute;rios
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% if permissoes.pode_acessar_faltas %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="menuFaltas" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-clock me-1"></i>Faltas
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="menuFaltas">
+                            <li><h6 class="dropdown-header">Controle de Faltas</h6></li>
+                            {% if permissoes.pode_acessar_painel %}
+                                <li><a class="dropdown-item" href="{% url 'controle_faltas' %}">Faltas de Professores</a></li>
+                                <li><a class="dropdown-item" href="{% url 'controle_faltas_alunos' %}">Faltas de Alunos</a></li>
+                                <li><a class="dropdown-item" href="{% url 'registrar_falta' %}">Registrar Falta de Professor</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{% url 'registrar_falta_aluno' %}">Registrar Falta de Aluno</a></li>
+                            <li><a class="dropdown-item" href="{% url 'conferencia_faltas_alunos' %}">Confer&ecirc;ncia de Faltas</a></li>
+                            {% if permissoes.pode_justificar_faltas %}
+                                <li><a class="dropdown-item" href="{% url 'justificar_faltas_alunos' %}">Justificar Faltas</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Chamada v1.2 (experimental)</h6></li>
+                            <li><a class="dropdown-item" href="{% url 'chamada_v1_2_selecionar' %}">Chamada v1.2</a></li>
+                            {% if permissoes.pode_justificar_faltas %}
+                                <li><a class="dropdown-item" href="{% url 'chamada_v1_2_conferir' %}">Conferir/Editar Chamada v1.2</a></li>
+                            {% endif %}
+                            {% if permissoes.pode_acessar_relatorios %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'relatorio_faltas' %}">Relat&oacute;rio de Faltas</a></li>
+                                <li><a class="dropdown-item" href="{% url 'relatorio_faltas_por_aluno' %}">Faltas por Aluno</a></li>
+                                <li><a class="dropdown-item" href="{% url 'listar_relatorios_mensais' %}">Arquivos Mensais de Faltas</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                {% endif %}
+
+                {% if permissoes.pode_acessar_ocorrencias %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="menuOcorrencias" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-clipboard-list me-1"></i>Ocorr&ecirc;ncias
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="menuOcorrencias">
+                            <li><h6 class="dropdown-header">Ocorr&ecirc;ncias Disciplinares</h6></li>
+                            <li><a class="dropdown-item" href="{% url 'registrar_ocorrencia_aluno' %}">Registrar Ocorr&ecirc;ncia</a></li>
+                            <li><a class="dropdown-item" href="{% url 'conferencia_ocorrencias' %}">Confer&ecirc;ncia de Ocorr&ecirc;ncias</a></li>
+                            {% if permissoes.pode_acessar_painel %}
+                                <li><a class="dropdown-item" href="{% url 'busca_ativa' %}">Busca Ativa</a></li>
+                            {% endif %}
+                            {% if permissoes.pode_acessar_relatorios %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'relatorio_filtro' %}">Relat&oacute;rio de Ocorr&ecirc;ncias</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                {% endif %}
+            </ul>
+
+            <div class="menu-user-area d-flex align-items-xxl-center gap-2 flex-column flex-xxl-row">
+                {% if user.is_authenticated %}
+                    <span class="navbar-text navbar-user-name text-white">
+                        <i class="fas fa-user-circle me-1"></i>
+                        <span class="navbar-user-label">{{ user.get_full_name|default:user.get_username }}</span>
+                    </span>
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-out-alt me-1"></i>Sair
+                        </button>
+                    </form>
+                {% else %}
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'login' %}">
+                        <i class="fas fa-sign-in-alt me-1"></i>Entrar
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

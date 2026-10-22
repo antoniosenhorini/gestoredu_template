@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Editar Falta - Aluno{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4><i class="fas fa-edit me-2"></i>Editar Falta de Aluno</h4>
+                </div>
+                <div class="card-body">
+                    
+                    <div class="alert alert-info">
+                        <strong>Aluno:</strong> {{ falta.aluno.nome }} ({{ falta.aluno.turma.nome }} - Nº {{ falta.aluno.numero }})<br>
+                        <strong>Data original:</strong> {{ falta.data|date:"d/m/Y" }}
+                    </div>
+
+                    <form method="post" class="row g-3">
+                        {% csrf_token %}
+                        
+                        <!-- Quantidade de Faltas -->
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Quantidade de Faltas</label>
+                            <input type="number" name="quantidade" class="form-control" value="{{ falta.quantidade_faltas }}" min="1" max="10">
+                        </div>
+
+                        <!-- Justificada -->
+                        <div class="col-md-4">
+                            <div class="form-check mt-4">
+                                <input type="checkbox" name="justificada" class="form-check-input" id="justificada" 
+                                       {% if falta.justificada %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="justificada">
+                                    Falta justificada?
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Responsável Contatado -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Responsável Contatado</label>
+                            <input type="text" name="responsavel" class="form-control" value="{{ falta.responsavel_contatado }}" placeholder="Nome do responsável">
+                        </div>
+
+                        <!-- Observações -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Observações</label>
+                            <textarea name="observacoes" class="form-control" rows="3">{{ falta.observacoes }}</textarea>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Atualizar Registro
+                            </button>
+                            <a href="{% url 'controle_faltas_alunos' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

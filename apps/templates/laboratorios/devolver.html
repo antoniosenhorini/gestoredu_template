@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Devolver Equipamentos{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h4><i class="fas fa-undo"></i> Devolver Equipamentos</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Laboratório:</strong> {{ emprestimo.laboratorio.nome }} ({{ emprestimo.laboratorio.equipamento }})</p>
+            <p><strong>Data:</strong> {{ emprestimo.data_emprestimo|date:"d/m/Y H:i" }}</p>
+            <p><strong>Quantidade:</strong> {{ emprestimo.quantidade }}</p>
+            <p><strong>Solicitante:</strong> {% if emprestimo.professor %}Professor: {{ emprestimo.professor.nome_completo }}{% elif emprestimo.aluno %}Aluno: {{ emprestimo.aluno.nome }}{% elif emprestimo.turma %}Turma: {{ emprestimo.turma.nome }}{% endif %}</p>
+            <p><strong>Itens:</strong></p>
+            <ul>{% for item in emprestimo.itens.all %}<li>{{ emprestimo.laboratorio.equipamento }} Nº {{ item.numero|stringformat:"02d" }}</li>{% endfor %}</ul>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Confirme a devolução de todos os equipamentos.</div>
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirmar Devolução</button>
+                    <a href="{% url 'listar_emprestimos' %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Empréstimo - {{ laboratorio.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h4><i class="fas fa-hand-holding"></i> Empréstimo - {{ laboratorio.nome }} ({{ laboratorio.equipamento }})</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" id="formEmprestimo">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Tipo de Empréstimo</label>
+                        <select name="tipo_emprestimo" id="tipo_emprestimo" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <option value="professor">Professor</option>
+                            <option value="aluno">Aluno</option>
+                            <option value="turma">Turma inteira</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4" id="div_professor" style="display:none;">
+                        <label class="form-label fw-bold">Professor</label>
+                        <select name="professor_id" class="form-select">
+                            <option value="">Selecione...</option>
+                            {% for p in professores %}<option value="{{ p.id }}">{{ p.nome_completo }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4" id="div_aluno" style="display:none;">
+                        <label class="form-label fw-bold">Aluno</label>
+                        <select name="aluno_id" class="form-select">
+                            <option value="">Selecione...</option>
+                            {% for a in alunos %}<option value="{{ a.id }}">{{ a.nome }} ({{ a.turma.nome }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4" id="div_turma" style="display:none;">
+                        <label class="form-label fw-bold">Turma</label>
+                        <select name="turma_id" class="form-select">
+                            <option value="">Selecione...</option>
+                            {% for t in turmas %}<option value="{{ t.id }}">{{ t.nome }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Quantidade</label>
+                        <input type="number" name="quantidade" id="quantidade" class="form-control" min="1" max="{{ equipamentos.count }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Data prevista devolução</label>
+                        <input type="date" name="data_prevista_devolucao" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Aulas de utilização</label>
+                        <input type="text" name="aulas_utilizacao" class="form-control" placeholder="Ex: 2 aulas, dia todo">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo</label>
+                    <textarea name="motivo" class="form-control" rows="2" required></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Observação</label>
+                    <textarea name="observacao" class="form-control" rows="2"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Selecione os equipamentos ({{ equipamentos.count }} disponíveis)</label>
+                    <div class="border p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+                        {% for item in equipamentos %}
+                        <div class="form-check">
+                            <input class="form-check-input item-checkbox" type="checkbox" name="itens" value="{{ item.id }}">
+                            <label class="form-check-label">{{ laboratorio.equipamento }} Nº {{ item.numero|stringformat:"02d" }}</label>
+                        </div>
+                        {% empty %}<p class="text-danger">Nenhum equipamento disponível!</p>{% endfor %}
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-success" {% if not equipamentos %}disabled{% endif %}>
+                        <i class="fas fa-save"></i> Registrar Empréstimo
+                    </button>
+                    <a href="{% url 'listar_laboratorios' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('tipo_emprestimo').addEventListener('change', function() {
+    document.getElementById('div_professor').style.display = this.value === 'professor' ? 'block' : 'none';
+    document.getElementById('div_aluno').style.display = this.value === 'aluno' ? 'block' : 'none';
+    document.getElementById('div_turma').style.display = this.value === 'turma' ? 'block' : 'none';
+});
+</script>
+{% endblock %}

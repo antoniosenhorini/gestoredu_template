@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Recados Internos - Equipe Diretiva{% endblock %}
+
+{% block extra_head %}
+<style>
+    .recado-card { transition: all 0.3s; border-left: 4px solid #007bff; }
+    .recado-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .autor { font-weight: bold; color: #007bff; }
+    .data { font-size: 0.85rem; color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== BOTÕES DE NAVEGAÇÃO ===== -->
+<div style="background-color: #f8f9fa; padding: 15px; margin-bottom: 25px; border-radius: 8px; text-align: center; border: 2px solid #dee2e6; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+    
+    <!-- BOTÃO VERDE (PAINEL DA EQUIPE) -->
+    <a href="{% url 'painel_equipe' %}" style="background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; display: inline-block; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        🏠 PAINEL DA EQUIPE
+    </a>
+    
+    <!-- BOTÃO AZUL (ADMIN) -->
+    <a href="{% url 'admin:index' %}" style="background-color: #004085; color: white; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; display: inline-block; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        🏛️ ADMINISTRAÇÃO DO COLÉGIO
+    </a>
+    
+</div>
+<!-- =============================== -->
+
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <h1><i class="fas fa-comments me-2"></i>Recados Internos</h1>
+    </div>
+
+    <!-- FORMULÁRIO DE NOVO RECADO -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-plus-circle me-2"></i>Novo Recado
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Enviar Recado
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LISTA DE RECADOS -->
+    {% if recados %}
+        {% for recado in recados %}
+        <div class="card recado-card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title mb-1">{{ recado.mensagem|linebreaks }}</h5>
+                        <p class="mb-1">
+                            <span class="autor"><i class="fas fa-user-circle me-1"></i>{{ recado.criado_por.get_full_name|default:recado.criado_por.username }}</span>
+                        </p>
+                    </div>
+                    <span class="data"><i class="far fa-clock me-1"></i>{{ recado.criado_em|date:"d/m/Y H:i" }}</span>
+                </div>
+                
+                {% if recado.arquivo %}
+                <div class="mt-3">
+                    <a href="{{ recado.arquivo.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        <i class="fas fa-paperclip me-1"></i>Anexo
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info text-center py-5">
+            <i class="fas fa-comments fa-3x mb-3"></i>
+            <p>Nenhum recado interno encontrado.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

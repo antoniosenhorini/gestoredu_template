@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Chamada v1.2{% endblock %}
+
+{% block extra_head %}
+<style>
+    .card-body.d-flex.flex-wrap {
+        gap: 0.6rem;
+    }
+    .turma-botao {
+        flex: 1 1 6rem;
+        min-width: 5rem;
+        min-height: 3.25rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .bloco-turno-manha .card-header {
+        background: #fff3cd;
+        color: #664d03;
+    }
+    .bloco-turno-tarde .card-header {
+        background: #cfe2ff;
+        color: #084298;
+    }
+    @media (max-width: 400px) {
+        .turma-botao {
+            flex: 1 1 100%;
+            font-size: 0.98rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-8 col-xxl-6">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-primary text-white py-3">
+                    <h1 class="h4 mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>Chamada v1.2 <span class="badge bg-light text-primary ms-1">experimental</span>
+                    </h1>
+                </div>
+                <div class="card-body p-3 p-md-4">
+                    <p class="text-muted mb-0">
+                        Selecione a turma e a data para iniciar a chamada. Esta versao registra a presenca/falta
+                        de todos os alunos da turma de uma vez, mostrando apenas a data atual (o historico
+                        continua disponivel na tela de conferencia).
+                    </p>
+                </div>
+            </div>
+
+            <form method="get" action="{% url 'chamada_v1_2_registrar' %}" id="form-selecionar-chamada">
+                <input type="hidden" name="turma" id="turma-selecionada" value="" required>
+
+                {% if turmas_manha %}
+                    <div class="card border-0 shadow-sm mb-3 bloco-turno-manha">
+                        <div class="card-header py-2 fw-bold">
+                            <i class="fas fa-sun me-1"></i>TURNO DA MANHÃ
+                        </div>
+                        <div class="card-body d-flex flex-wrap gap-2">
+                            {% for turma in turmas_manha %}
+                                <button type="button" class="btn btn-outline-warning turma-botao flex-fill botao-turma" data-turma-id="{{ turma.id }}">
+                                    {{ turma.nome }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if turmas_tarde %}
+                    <div class="card border-0 shadow-sm mb-3 bloco-turno-tarde">
+                        <div class="card-header py-2 fw-bold">
+                            <i class="fas fa-cloud-sun me-1"></i>TURNO DA TARDE
+                        </div>
+                        <div class="card-body d-flex flex-wrap gap-2">
+                            {% for turma in turmas_tarde %}
+                                <button type="button" class="btn btn-outline-primary turma-botao flex-fill botao-turma" data-turma-id="{{ turma.id }}">
+                                    {{ turma.nome }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if not turmas_manha and not turmas_tarde %}
+                    <div class="alert alert-warning">Nenhuma turma ativa encontrada.</div>
+                {% endif %}
+
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body p-3 p-md-4">
+                        <label for="data" class="form-label fw-semibold">
+                            <i class="fas fa-calendar-day me-1"></i>Data da chamada
+                        </label>
+                        <input type="date" name="data" id="data" class="form-control form-control-lg" value="{{ hoje }}" required>
+                    </div>
+                </div>
+
+                <div class="d-grid mb-4">
+                    <button type="submit" id="btn-iniciar-chamada" class="btn btn-primary btn-lg" disabled>
+                        <i class="fas fa-arrow-right me-1"></i>Iniciar Chamada
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    'use strict';
+
+    var botoesTurma = document.querySelectorAll('.botao-turma');
+    var turmaSelecionadaInput = document.getElementById('turma-selecionada');
+    var btnIniciar = document.getElementById('btn-iniciar-chamada');
+
+    botoesTurma.forEach(function (botao) {
+        botao.addEventListener('click', function () {
+            botoesTurma.forEach(function (b) { b.classList.remove('active'); });
+            botao.classList.add('active');
+            turmaSelecionadaInput.value = botao.getAttribute('data-turma-id');
+            btnIniciar.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}

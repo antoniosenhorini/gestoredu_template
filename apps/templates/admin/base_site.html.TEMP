@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">Administração do Colégio</a>
+</h1>
+{% endblock %}
+
+{% block user-tools %}
+    {{ block.super }}
+{% endblock %}
+
+<script>
+fetch('/static/admin/botoes.html')
+    .then(response => response.text())
+    .then(data => {
+        document.body.insertAdjacentHTML('beforeend', data);
+    })
+    .catch(error => console.log('Botões não carregados:', error));
+</script>
+
+{% endblock %}

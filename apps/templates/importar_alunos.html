@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importar Alunos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .card {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 10px;
+        }
+        .card-header {
+            border-radius: 10px 10px 0 0 !important;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 15px 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+        }
+        .table-demo {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table-demo th {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body class="min-vh-100 d-flex flex-column">
+    {% include 'includes/menu_principal.html' %}
+    <main class="flex-grow-1">
+    <div class="container-fluid px-2 px-md-4 py-3">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                
+                <!-- Mensagens de feedback -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Card Principal -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-file-excel me-2"></i>Importar Alunos do Excel
+                        </h4>
+                        <a href="{% url 'controle_faltas_alunos' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </a>
+                    </div>
+                    
+                    <div class="card-body">
+                        
+                        <!-- Formulário de Upload -->
+                        <form method="post" enctype="multipart/form-data" class="mb-4">
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>Selecione o arquivo Excel
+                                </label>
+                                <input type="file" 
+                                       name="arquivo" 
+                                       class="form-control" 
+                                       accept=".xlsx,.xls" 
+                                       required>
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Formatos aceitos: .xlsx, .xls (máx. 10MB)
+                                </div>
+                            </div>
+
+                            <!-- Exemplo de Formato -->
+                            <div class="alert alert-info">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-table me-2"></i>Formato esperado da planilha:
+                                </h6>
+                                
+                                <div class="table-responsive table-demo">
+                                    <table class="table table-bordered mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-center">Coluna A<br><small class="text-muted">Turma</small></th>
+                                                <th class="text-center">Coluna B<br><small class="text-muted">Número</small></th>
+                                                <th class="text-center">Coluna C<br><small class="text-muted">Nome do Aluno</small></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="bg-white">
+                                                <td class="text-center fw-bold text-primary">3A</td>
+                                                <td class="text-center fw-bold">1</td>
+                                                <td>João Silva</td>
+                                            </tr>
+                                            <tr class="bg-white">
+                                                <td class="text-center fw-bold text-primary">3A</td>
+                                                <td class="text-center fw-bold">2</td>
+                                                <td>Maria Santos</td>
+                                            </tr>
+                                            <tr class="bg-white">
+                                                <td class="text-center fw-bold text-primary">3B</td>
+                                                <td class="text-center fw-bold">1</td>
+                                                <td>Pedro Oliveira</td>
+                                            </tr>
+                                            <tr class="bg-white">
+                                                <td class="text-center fw-bold text-primary">3B</td>
+                                                <td class="text-center fw-bold">2</td>
+                                                <td>Ana Souza</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="mt-3 small text-muted">
+                                    <i class="fas fa-lightbulb me-1 text-warning"></i>
+                                    <strong>Dicas importantes:</strong>
+                                    <ul class="mb-0 mt-1">
+                                        <li>A primeira linha (cabeçalho) é ignorada - comece os dados na linha 2</li>
+                                        <li>A turma será criada automaticamente se não existir</li>
+                                        <li>Números de alunos duplicados na mesma turma NÃO serão importados</li>
+                                        <li>O sistema extrai a série automaticamente (ex: 3A vira "3º Ano")</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Botões -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{% url 'controle_faltas_alunos' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                                <div>
+                                    <button type="button" class="btn btn-outline-primary me-2" onclick="baixarModelo()">
+                                        <i class="fas fa-download me-2"></i>Baixar Modelo
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-upload me-2"></i>Importar Alunos
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Instruções adicionais -->
+                        <div class="border-top pt-3 mt-3">
+                            <h6 class="fw-bold"><i class="fas fa-question-circle me-2 text-primary"></i>Como preparar sua planilha:</h6>
+                            <ol class="small text-muted">
+                                <li>Abra o Excel e crie uma planilha com 3 colunas</li>
+                                <li>Na <strong>Coluna A</strong>: coloque a turma (ex: 3A, 3B, 4A)</li>
+                                <li>Na <strong>Coluna B</strong>: coloque o número do aluno (1, 2, 3...)</li>
+                                <li>Na <strong>Coluna C</strong>: coloque o nome completo do aluno</li>
+                                <li>Salve como .xlsx e faça o upload</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card de ajuda -->
+                <div class="card mt-3 bg-light">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-headset fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <strong>Precisa de ajuda?</strong><br>
+                                <small>Se tiver problemas com a importação, verifique se:</small>
+                                <ul class="small mb-0 mt-1">
+                                    <li>O arquivo está no formato .xlsx</li>
+                                    <li>A primeira linha tem cabeçalho (será ignorada)</li>
+                                    <li>Não há células vazias nas colunas obrigatórias</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </main>
+    {% include 'includes/rodape_padrao.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function baixarModelo() {
+            // Cria um arquivo CSV de exemplo
+            const csv = 'Turma,Número,Nome do Aluno\n3A,1,João Silva\n3A,2,Maria Santos\n3B,1,Pedro Oliveira\n3B,2,Ana Souza\n4A,1,Lucas Ferreira\n4A,2,Julia Lima';
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'modelo_importacao_alunos.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Feedback visual
+            alert('Modelo baixado! Abra no Excel e preencha com seus dados.');
+        }
+    </script>
+</body>
+</html>

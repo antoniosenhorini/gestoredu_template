@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Relatório de Verificação do Cronograma{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                <h4 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Relatório de Verificação do Cronograma</h4>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'verificar_horario_pdf_upload' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-upload me-1"></i>Novo upload
+                    </a>
+                    <a href="{% url 'diagnostico_cronograma_laboratorios' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-md-6">
+                    <strong>PDF analisado:</strong> {{ upload.nome_original }}
+                </div>
+                <div class="col-6 col-md-3">
+                    <strong>Enviado em:</strong> {{ upload.enviado_em|date:"d/m/Y H:i" }}
+                </div>
+                <div class="col-6 col-md-3">
+                    <strong>Turno:</strong> {{ upload.get_turno_detectado_display }}
+                </div>
+            </div>
+
+            {% if upload.avisos_leitura %}
+                <div class="alert alert-warning small">
+                    <strong>Avisos da leitura do PDF:</strong>
+                    <pre class="mb-0 small">{{ upload.avisos_leitura }}</pre>
+                </div>
+            {% endif %}
+
+            {% if pendentes_professor or pendentes_turma %}
+                <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <span>
+                        <i class="fas fa-link me-1"></i>
+                        <strong>{{ pendentes_professor }}</strong> professor(es) e <strong>{{ pendentes_turma }}</strong>
+                        turma(s) do PDF ainda não vinculados a um cadastro — essas divergências aparecem como "Verificar".
+                    </span>
+                    <a href="{% url 'verificar_horario_pdf_aliases' %}" class="btn btn-sm btn-dark">Resolver vínculos</a>
+                </div>
+            {% endif %}
+
+            <div class="row g-3 mb-4 text-center">
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fs-4 fw-bold">{{ contagem_total }}</div>
+                        <div class="text-muted small">Verificadas</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 h-100 bg-success bg-opacity-10">
+                        <div class="fs-4 fw-bold text-success">{{ contagem_confere }}</div>
+                        <div class="text-muted small">Conferem</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 h-100 bg-warning bg-opacity-25">
+                        <div class="fs-4 fw-bold text-warning-emphasis">{{ contagem_verificar }}</div>
+                        <div class="text-muted small">Para verificar</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 h-100 bg-danger bg-opacity-10">
+                        <div class="fs-4 fw-bold text-danger">{{ contagem_conflito }}</div>
+                        <div class="text-muted small">Conflitos</div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="get" class="row g-2 align-items-end mb-3">
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Status</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="" {% if not status_filtro %}selected{% endif %}>Todos</option>
+                        <option value="conflito" {% if status_filtro == 'conflito' %}selected{% endif %}>Somente conflitos</option>
+                        <option value="verificar" {% if status_filtro == 'verificar' %}selected{% endif %}>Somente verificar</option>
+                        <option value="confere" {% if status_filtro == 'confere' %}selected{% endif %}>Somente compatíveis</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small mb-1">Professor</label>
+                    <select name="professor" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        {% for professor in professores_disponiveis %}
+                            <option value="{{ professor.id }}" {% if professor_filtro == professor.id|stringformat:"s" %}selected{% endif %}>{{ professor.nome_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small mb-1">Laboratório</label>
+                    <select name="laboratorio" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        {% for laboratorio in laboratorios_disponiveis %}
+                            <option value="{{ laboratorio.id }}" {% if laboratorio_filtro == laboratorio.id|stringformat:"s" %}selected{% endif %}>{{ laboratorio.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Dia</label>
+                    <select name="dia" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        {% for dia in dias_semana %}
+                            <option value="{{ dia }}" {% if dia_filtro == dia %}selected{% endif %}>{{ dia }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">Filtrar</button>
+                </div>
+            </form>
+
+            {% if not divergencias %}
+                <div class="alert alert-success mb-0">
+                    Nenhuma divergência encontrada para os filtros selecionados.
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Professor</th>
+                                <th>Dia</th>
+                                <th>Horário</th>
+                                <th>LAB</th>
+                                <th>Cronograma LAB</th>
+                                <th>PDF</th>
+                                <th>Decisão</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for divergencia in divergencias %}
+                                <tr class="{% if divergencia.status == 'conflito' %}table-danger{% elif divergencia.status == 'verificar' %}table-warning{% else %}table-success{% endif %}">
+                                    <td>
+                                        {% if divergencia.status == 'conflito' %}Conflito
+                                        {% elif divergencia.status == 'verificar' %}Verificar
+                                        {% else %}Confere{% endif %}
+                                    </td>
+                                    <td>{{ divergencia.professor_pdf_texto|default:"—" }}</td>
+                                    <td>{{ divergencia.dia_semana }}</td>
+                                    <td>{{ divergencia.horario }}ª aula</td>
+                                    <td>{{ divergencia.laboratorio.nome|default:"—" }}</td>
+                                    <td>{{ divergencia.agendamento_lab.turma.nome|default:"—" }}</td>
+                                    <td>{{ divergencia.turma_pdf_texto|default:divergencia.disciplina_pdf_texto|default:"—" }}</td>
+                                    <td>
+                                        {% if divergencia.decisao != 'pendente' %}
+                                            <span class="badge text-bg-secondary">{{ divergencia.get_decisao_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{% url 'verificar_horario_pdf_analisar' divergencia.id %}" class="btn btn-sm btn-outline-dark">Analisar</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

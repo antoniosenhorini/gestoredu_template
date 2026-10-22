@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block title %}Colégio Cívico Militar Vereador Luiz Zanchim{% endblock %}
+
+{% block extra_head %}
+<style>
+    .home-page .card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        height: 100%;
+    }
+    .home-page .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+    }
+    .home-page .card-header {
+        font-weight: 600;
+        border-bottom: none;
+    }
+    .home-page .btn-primary {
+        background-color: #0d6efd;
+        border: none;
+        padding: 0.375rem 1rem;
+    }
+    .home-page .btn-primary:hover {
+        background-color: #0b5ed7;
+    }
+    .home-page .btn-danger {
+        background-color: #dc3545;
+        border: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="home-page container-fluid px-2 px-md-4 py-3">
+    {% include 'includes/aviso_senha_padrao.html' %}
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <h2 class="h5 mb-1"><i class="fas fa-person-circle-exclamation text-primary me-2"></i>Avisar ausencia ou atraso</h2>
+                        <p class="text-muted mb-0">Professores podem informar falta, atestado ou atraso sem login.</p>
+                    </div>
+                    <a href="{% url 'aviso_professor' %}" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i>Enviar aviso
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <h2 class="h6 mb-1"><i class="fas fa-computer text-info me-2"></i>Laboratorios</h2>
+                        <p class="text-muted mb-0">Consulte seus horarios de laboratorio em uma pagina propria.</p>
+                    </div>
+                    <a href="{% url 'meus_horarios_laboratorio' %}" class="btn btn-outline-info btn-sm">
+                        <i class="far fa-calendar me-1"></i>Meus Horarios de Laboratorio
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-bullhorn me-2"></i>Recados Fixados
+                </div>
+                <div class="card-body">
+                    {% for recado in recados %}
+                    <div class="mb-2">
+                        <a href="{% url 'detalhe_recado' recado.id %}" class="text-decoration-none d-block p-2 border rounded hover-shadow">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                                <div>
+                                    <i class="fas fa-chevron-circle-right text-primary me-2"></i>
+                                    <strong>{{ recado.titulo }}</strong>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>{{ recado.criado_em|date:"d/m/Y" }}
+                                </small>
+                            </div>
+                        </a>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-3">
+                        <i class="fas fa-bullhorn me-2"></i>Nenhum recado fixado.
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-calendar-alt me-2"></i>Próximos Eventos
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% for evento in eventos %}
+                    <div class="mb-3">
+                        <div class="card h-100 shadow-sm border-0">
+                            {% if evento.imagem %}
+                            <img src="{{ evento.imagem.url }}" class="card-img-top" alt="{{ evento.titulo }}" style="height: 150px; object-fit: cover; border-radius: 10px 10px 0 0;">
+                            {% else %}
+                            <div class="bg-light text-center py-4" style="border-radius: 10px 10px 0 0;">
+                                <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                            </div>
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title text-success">{{ evento.titulo }}</h5>
+                                <p class="card-text small text-muted">
+                                    <i class="far fa-calendar me-1"></i>{{ evento.data|date:"d/m/Y H:i" }}<br>
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ evento.local }}
+                                </p>
+                                <a href="{% url 'detalhe_evento' evento.id %}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-info-circle me-1"></i>Ver detalhes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-3">
+                        <i class="fas fa-calendar-alt me-2"></i>Nenhum evento agendado.
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-folder-open me-2"></i>Documentos Recentes
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for documento in documentos %}
+                        <div class="col-12 col-sm-6 col-lg-4 mb-3">
+                            <div class="p-3 border rounded bg-white h-100">
+                                <i class="fas fa-file-pdf text-danger me-2"></i>
+                                <strong>{{ documento.titulo }}</strong>
+                                <p class="mb-1 small text-muted">{{ documento.categoria }}</p>
+                                <p class="small text-secondary">{{ documento.descricao|truncatewords:8 }}</p>
+                                <a href="{{ documento.arquivo.url }}" class="btn btn-sm btn-outline-primary mt-2" target="_blank">
+                                    <i class="fas fa-download me-1"></i>Abrir
+                                </a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">Nenhum documento disponível.</p>
+                        {% endfor %}
+
+                        <div class="col-12 col-sm-6 col-lg-4 mb-3">
+                            <div class="p-3 border rounded bg-white h-100 text-center">
+                                <i class="fas fa-calendar-alt fa-3x text-info mb-3"></i>
+                                <h6>Cronograma de Laboratórios</h6>
+                                <p class="small text-secondary">Agendamento semanal dos laboratórios de informática</p>
+                                <a href="{% url 'cronograma_semanal' %}" class="btn btn-sm btn-outline-info mt-2" target="_blank">
+                                    <i class="fas fa-print me-1"></i>Visualizar / Imprimir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <i class="fas fa-video me-2"></i>Vídeos Recentes
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for video in videos %}
+                        <div class="col-12 col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                {% if video.thumbnail %}
+                                <img src="{{ video.thumbnail.url }}" class="card-img-top" alt="{{ video.titulo }}" style="height: 150px; object-fit: cover; border-radius: 10px 10px 0 0;">
+                                {% else %}
+                                <div class="bg-light text-center py-4" style="border-radius: 10px 10px 0 0;">
+                                    <i class="fas fa-video fa-3x text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title text-danger">{{ video.titulo }}</h5>
+                                    <p class="card-text small text-muted">{{ video.descricao|truncatewords:10 }}</p>
+                                    <a href="{{ video.arquivo.url }}" class="btn btn-sm btn-outline-danger" target="_blank">
+                                        <i class="fas fa-play me-1"></i>Assistir
+                                    </a>
+                                </div>
+                                <div class="card-footer text-muted small">
+                                    <i class="fas fa-user me-1"></i>{{ video.criado_por.get_full_name|default:video.criado_por.username }}
+                                    <span class="float-end"><i class="far fa-clock me-1"></i>{{ video.criado_em|date:"d/m/Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center text-muted py-4">
+                            <i class="fas fa-video fa-3x mb-2"></i>
+                            <p>Nenhum vídeo disponível. A equipe diretiva pode enviar vídeos pelo admin.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Documentos Privados - Equipe Diretiva{% endblock %}
+{% block content %}
+
+<!-- ===== BOTÕES DE NAVEGAÇÃO ===== -->
+<div style="background-color: #f8f9fa; padding: 15px; margin-bottom: 25px; border-radius: 8px; text-align: center; border: 2px solid #dee2e6; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+    
+    <!-- BOTÃO VERDE (PAINEL DA EQUIPE) -->
+    <a href="{% url 'painel_equipe' %}" style="background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; display: inline-block; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        🏠 PAINEL DA EQUIPE
+    </a>
+    
+    <!-- BOTÃO AZUL (ADMIN) -->
+    <a href="{% url 'admin:index' %}" style="background-color: #004085; color: white; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; display: inline-block; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        🏛️ ADMINISTRAÇÃO DO COLÉGIO
+    </a>
+    
+</div>
+<!-- =============================== -->
+
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <h1><i class="fas fa-folder-open me-2"></i>Documentos Privados</h1>
+    </div>
+
+    <!-- FORMULÁRIO DE UPLOAD -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-upload me-2"></i>Enviar Documento
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i>Enviar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LISTA DE DOCUMENTOS -->
+    {% if documentos %}
+        <div class="row">
+            {% for doc in documentos %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-file-pdf text-danger me-2"></i>{{ doc.titulo }}
+                        </h5>
+                        <p class="text-muted small">{{ doc.categoria|default:"Sem categoria" }}</p>
+                        {% if doc.descricao %}
+                        <p class="card-text">{{ doc.descricao|truncatewords:20 }}</p>
+                        {% endif %}
+                        <p class="small text-muted">
+                            <i class="fas fa-user me-1"></i>{{ doc.criado_por.get_full_name|default:doc.criado_por.username }}<br>
+                            <i class="far fa-calendar-alt me-1"></i>{{ doc.criado_em|date:"d/m/Y H:i" }}
+                        </p>
+                        <a href="{{ doc.arquivo.url }}" class="btn btn-sm btn-primary" target="_blank">
+                            <i class="fas fa-download me-1"></i>Abrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center py-5">
+            <i class="fas fa-folder-open fa-3x mb-3"></i>
+            <p>Nenhum documento privado encontrado.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

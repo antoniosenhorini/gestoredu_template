@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Faltas - Colégio Cívico Militar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .badge-presente { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; }
+        .badge-atraso { background: #ffc107; color: #212529; padding: 5px 10px; border-radius: 20px; }
+        .badge-falta { background: #dc3545; color: white; padding: 5px 10px; border-radius: 20px; }
+        .badge-justificada { background: #6c757d; color: white; padding: 5px 10px; border-radius: 20px; }
+        .btn { transition: all 0.3s; }
+        .btn:hover { opacity: 0.8; transform: scale(1.02); cursor: pointer; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; }
+        .archive-section { margin-top: 30px; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="min-vh-100 d-flex flex-column">
+    {% include 'includes/menu_principal.html' %}
+    <main class="flex-grow-1">
+    <div class="container-fluid px-2 px-md-4 py-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'painel_equipe' %}">Painel</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Controle de Faltas</li>
+            </ol>
+        </nav>
+
+        <!-- CABEÇALHO COM BOTÕES NOVOS -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-user-clock me-2"></i>Controle de Faltas -
+                {% if mes == 1 %}Janeiro
+                {% elif mes == 2 %}Fevereiro
+                {% elif mes == 3 %}Março
+                {% elif mes == 4 %}Abril
+                {% elif mes == 5 %}Maio
+                {% elif mes == 6 %}Junho
+                {% elif mes == 7 %}Julho
+                {% elif mes == 8 %}Agosto
+                {% elif mes == 9 %}Setembro
+                {% elif mes == 10 %}Outubro
+                {% elif mes == 11 %}Novembro
+                {% else %}Dezembro
+                {% endif %}/{{ ano }}
+            </h2>
+            <div class="d-flex gap-2">
+                <a href="{% url 'arquivar_mes' %}" class="btn btn-primary" onclick="return confirm('Tem certeza que deseja arquivar o mês atual? Isso vai apagar todos os registros da tela e salvar um arquivo Excel.')">
+    📁 ARQUIVAR MÊS
+</a>
+               <a href="{% url 'exportar_excel_faltas' %}?mes={{ mes }}&ano={{ ano }}" class="btn btn-warning">
+    📥 EXPORTAR EXCEL
+</a>
+               <button class="btn btn-success" id="print-page" onclick="window.print()">🖨️ IMPRIMIR</button>
+<button class="btn btn-danger" id="clear-all" onclick="limparTodos()">🗑️ LIMPAR TUDO</button>
+<a href="{% url 'registrar_falta' %}" class="btn btn-success">
+    <i class="fas fa-plus me-2"></i>Novo Registro
+</a>
+<a href="{% url 'painel_equipe' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Voltar ao Painel
+</a>
+            </div>
+        </div>
+        <!-- DEBUG: mês atual = {{ mes }}, ano atual = {{ ano }} -->
+
+        <!-- Filtro de Mês/Ano -->
+<div class="row mb-4">
+    <div class="col-auto">
+        <label class="form-label">Mês</label>
+        <select name="mes" class="form-select" id="selectMes">
+    {% for m in meses %}
+        <option value="{{ m }}" {% if m|stringformat:"s" == mes|stringformat:"s" %}selected{% endif %}>{{ m }}</option>
+    {% endfor %}
+</select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Ano</label>
+        <select name="ano" class="form-select" id="selectAno">
+            {% for a in anos %}
+                <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto align-self-end">
+        <button class="btn btn-primary" onclick="aplicarFiltro()">Filtrar</button>
+    </div>
+</div>
+
+<script>
+function aplicarFiltro() {
+    var mes = document.getElementById('selectMes').value;
+    var ano = document.getElementById('selectAno').value;
+    window.location.href = `?mes=${mes}&ano=${ano}`;
+}
+</script>
+
+          <!-- ===== BARRA DE BUSCA E PAGINAÇÃO ===== -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" id="busca" class="form-control" placeholder="Buscar por professor, data, observação...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select id="registrosPorPagina" class="form-select">
+                <option value="10">10 registros</option>
+                <option value="25" selected>25 registros</option>
+                <option value="50">50 registros</option>
+                <option value="100">100 registros</option>
+            </select>
+        </div>
+        <div class="col-md-3 text-end">
+            <span id="info-paginacao" class="badge bg-secondary p-2"></span>
+        </div>
+    </div>
+
+    <!-- Botões de navegação -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <button class="btn btn-sm btn-outline-primary" onclick="paginaAnterior()">← Anterior</button>
+            <button class="btn btn-sm btn-outline-primary" onclick="proximaPagina()">Próxima →</button>
+        </div>
+    </div>
+    <!-- ===== FIM DA BARRA DE BUSCA ===== -->
+
+44- <!-- TABELA DE REGISTROS (com checkbox e ações) -->
+45- <div class="table-responsive">
+
+        <!-- TABELA DE REGISTROS (com checkbox e ações) -->
+        <div class="table-responsive">
+            <table class="table table-bordered bg-white" id="faltas-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th><input type="checkbox" id="select-all" onclick="marcarTodos(this)"></th>
+                        <th>Professor</th>
+                        <th>Data</th>
+                        <th>Dia</th>
+                        <th>Previsto</th>
+                        <th>Real</th>
+                        <th>Status</th>
+                        <th>Minutos</th>
+                        <th>Observação</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for falta in faltas %}
+                    <tr>
+                        <td><input type="checkbox" class="select-item" value="{{ falta.id }}" onchange="atualizarContador()"></td>
+                        <td>{{ falta.professor.get_full_name|default:falta.professor.username }}</td>
+                        <td>{{ falta.data|date:"d/m/Y" }}</td>
+                        <td>{{ falta.dia_semana }}</td>
+                        <td>{{ falta.horario_previsto|time:"H:i" }}</td>
+                        <td>{{ falta.horario_real|time:"H:i"|default:"-" }}</td>
+                        <td>
+                            {% if falta.tipo == 'presente' %}
+                                <span class="badge-presente">✅ Presente</span>
+                            {% elif falta.tipo == 'atraso' %}
+                                <span class="badge-atraso">⏰ Atraso</span>
+                            {% elif falta.tipo == 'falta' %}
+                                <span class="badge-falta">❌ Falta</span>
+                            {% elif falta.tipo == 'justificada' %}
+                                <span class="badge-justificada">📄 Justificada</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ falta.minutos_faltados }} min</td>
+                        <td>{{ falta.observacao|default:"-" }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editarFalta({{ falta.id }})">✏️</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="excluirFalta({{ falta.id }}, this)">🗑️</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-clock fa-2x mb-2"></i><br>
+                            Nenhum registro encontrado.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- AÇÕES EM MASSA -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <button class="btn btn-danger" onclick="excluirSelecionados()">🗑️ EXCLUIR SELECIONADOS</button>
+                <span class="ms-3" id="selected-count">0</span> itens selecionados
+            </div>
+        </div>
+
+         <!-- SEÇÃO DE ARQUIVOS MENSAIS -->
+        <div class="archive-section">
+            <h3><i class="fas fa-archive me-2"></i>📂 ARQUIVOS MENSAIS</h3>
+            <a href="{% url 'listar_relatorios_mensais' %}" class="btn btn-primary">
+                <i class="fas fa-folder-open me-2"></i>Ver todos os relatórios
+            </a>
+            <p class="text-muted mt-2"><small>* Os relatórios são gerados ao clicar em "ARQUIVAR MÊS".</small></p>
+        </div>
+    </div>
+
+    </main>
+    {% include 'includes/rodape_padrao.html' %}
+
+    <script>
+    // ===== FUNÇÃO PARA PEGAR O CSRF TOKEN =====
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // ===== FUNÇÕES DE SELEÇÃO =====
+    function marcarTodos(checkbox) {
+        document.querySelectorAll('.select-item').forEach(cb => cb.checked = checkbox.checked);
+        atualizarContador();
+    }
+
+    function atualizarContador() {
+        const selecionados = document.querySelectorAll('.select-item:checked').length;
+        document.getElementById('selected-count').textContent = selecionados;
+    }
+
+    // ===== EXCLUSÃO INDIVIDUAL (LIXEIRA) =====
+    function excluirFalta(id, botao) {
+        if (!confirm('Excluir este registro permanentemente?')) return;
+
+        fetch(`/excluir-falta/${id}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+        })
+        .then(response => {
+            if (response.ok) {
+                botao.closest('tr').remove();
+                atualizarContador();
+            } else {
+                alert('Erro ao excluir. Tente novamente.');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro de comunicação com o servidor.');
+        });
+    }
+
+    // ===== EXCLUSÃO EM MASSA (EXCLUIR SELECIONADOS) =====
+    function excluirSelecionados() {
+        const checkboxes = document.querySelectorAll('.select-item:checked');
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+
+        if (ids.length === 0) {
+            alert('Nenhum item selecionado!');
+            return;
+        }
+
+        if (!confirm(`Excluir ${ids.length} registro(s) permanentemente?`)) return;
+
+        const formData = new FormData();
+        ids.forEach(id => formData.append('ids', id));
+
+        fetch('/excluir-faltas-selecionadas/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            body: formData,
+        })
+        .then(response => {
+            if (response.ok) {
+                checkboxes.forEach(cb => cb.closest('tr').remove());
+                atualizarContador();
+            } else {
+                alert('Erro ao excluir os registros. Tente novamente.');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro de comunicação com o servidor.');
+        });
+    }
+
+    // ===== LIMPAR TUDO (BOTÃO VERMELHO NO TOPO) =====
+    function limparTodos() {
+        if (!confirm('LIMPAR TODOS os registros permanentemente?')) return;
+
+        fetch('/excluir-faltas-selecionadas/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            body: new URLSearchParams({ 'todos': 'true' }),
+        })
+        .then(response => {
+            if (response.ok) {
+                document.querySelector('tbody').innerHTML = '';
+                atualizarContador();
+            } else {
+                alert('Erro ao limpar. Tente novamente.');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro de comunicação com o servidor.');
+        });
+    }
+
+    // ===== EDIÇÃO =====
+    function editarFalta(id) {
+        window.location.href = `/editar-falta/${id}/`;
+    }
+</script>
+</body>
+</html>

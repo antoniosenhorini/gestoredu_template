@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Ocorrências Disciplinares{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'painel_equipe' %}">Painel</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'registrar_ocorrencia_aluno' %}">Ocorrências Disciplinares</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Registrar Ocorrência</li>
+        </ol>
+    </nav>
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h4><i class="fas fa-edit me-2"></i>Registrar Ocorrência</h4>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Linha 1: Turma e Número -->
+                <div class="row mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">{{ form.turma.label }}</label>
+                        {{ form.turma }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{{ form.numero_aluno.label }}</label>
+                        {{ form.numero_aluno }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{{ form.nome_aluno.label }}</label>
+                        {{ form.nome_aluno }}
+                    </div>
+                </div>
+
+                <!-- Data -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{{ form.data.label }}</label>
+                        <input type="date" name="data" value="{{ ocorrencia.data|date:'Y-m-d' }}" class="form-control" required>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Horário de Chegada, Faltou e Atendido por -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{{ form.horario_chegada.label }}</label>
+                        {{ form.horario_chegada }}
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check mt-4">
+                            {{ form.faltou }}
+                            <label class="form-check-label fw-bold" for="{{ form.faltou.id_for_label }}">
+                                Faltou
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.atendido_por.label }}</label>
+                        {{ form.atendido_por }}
+                    </div>
+                </div>
+
+                <!-- Motivo alegado pelo aluno -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">{{ form.motivo_alegado.label }}</label>
+                    {{ form.motivo_alegado }}
+                </div>
+
+                <hr>
+                <h5 class="text-primary">Contato com Responsável</h5>
+
+                <!-- Responsável e Horário -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.responsavel_contatado.label }}</label>
+                        {{ form.responsavel_contatado }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.horario_contato.label }}</label>
+                        {{ form.horario_contato }}
+                    </div>
+                </div>
+
+                <!-- Alegado pelo responsável -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">{{ form.alegado_responsavel.label }}</label>
+                    {{ form.alegado_responsavel }}
+                </div>
+
+                <!-- Botões -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i> Salvar Busca Ativa
+                        </button>
+
+                        <a href="{% url 'busca_ativa' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const faltouCheck = document.getElementById('{{ form.faltou.id_for_label }}');
+    const horarioInput = document.getElementById('{{ form.horario_chegada.id_for_label }}');
+    if (faltouCheck && horarioInput) {
+        faltouCheck.addEventListener('change', function() {
+            horarioInput.disabled = this.checked;
+            if (this.checked) horarioInput.value = '';
+        });
+        horarioInput.disabled = faltouCheck.checked;
+    }
+});
+</script>
+{% endblock %}
+

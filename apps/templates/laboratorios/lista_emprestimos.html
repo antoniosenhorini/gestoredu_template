@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Empréstimos Ativos{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h4><i class="fas fa-list"></i> Empréstimos Ativos</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr><th>Data</th><th>Laboratório</th><th>Solicitante</th><th>Qtd</th><th>Devolução</th><th>Status</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for e in emprestimos %}
+                        <tr>
+                            <td>{{ e.data_emprestimo|date:"d/m/Y H:i" }}</td>
+                            <td>{{ e.laboratorio.nome }}</td>
+                            <td>{% if e.professor %}Professor: {{ e.professor.nome_completo }}{% elif e.aluno %}Aluno: {{ e.aluno.nome }}{% elif e.turma %}Turma: {{ e.turma.nome }}{% endif %}</td>
+                            <td>{{ e.quantidade }}</td>
+                            <td>{{ e.data_prevista_devolucao|date:"d/m/Y" }}</td>
+                            <td>{% if e.status == 'emprestado' %}<span class="badge bg-warning">Emprestado</span>{% elif e.status == 'atrasado' %}<span class="badge bg-danger">Atrasado</span>{% else %}<span class="badge bg-success">Devolvido</span>{% endif %}</td>
+                            <td>{% if e.status == 'emprestado' %}<a href="{% url 'devolver_equipamento' e.id %}" class="btn btn-sm btn-success"><i class="fas fa-undo"></i> Devolver</a>{% endif %}</td>
+                        </tr>
+                        {% empty %}<tr><td colspan="7" class="text-center">Nenhum empréstimo ativo.</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4"><a href="{% url 'listar_laboratorios' %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Voltar</a></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatório de Ocorrências{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'painel_equipe' %}">Painel</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'registrar_ocorrencia_aluno' %}">Ocorrências Disciplinares</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Relatório de Ocorrências</li>
+        </ol>
+    </nav>
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h3><i class="fas fa-chart-bar"></i> Relatório de Ocorrências</h3>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'relatorio_por_tipo' %}" target="_blank">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Mês</label>
+                        <select name="mes" class="form-select">
+                            {% for m in meses %}
+                            <option value="{{ m }}" {% if m == mes_atual %}selected{% endif %}>
+                                {% if m == 1 %}Janeiro{% elif m == 2 %}Fevereiro{% elif m == 3 %}Março{% elif m == 4 %}Abril{% elif m == 5 %}Maio{% elif m == 6 %}Junho{% elif m == 7 %}Julho{% elif m == 8 %}Agosto{% elif m == 9 %}Setembro{% elif m == 10 %}Outubro{% elif m == 11 %}Novembro{% else %}Dezembro{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Ano</label>
+                        <select name="ano" class="form-select">
+                            {% for a in anos %}
+                            <option value="{{ a }}" {% if a == ano_atual %}selected{% endif %}>{{ a }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Tipo de Ocorrência</label>
+                        <select name="tipo" class="form-select">
+                            <option value="todas">📋 Todas as ocorrências</option>
+                            <option value="atraso">⏰ Atraso</option>
+                            <option value="piercing">💍 Piercing</option>
+                            <option value="cabelo">💇 Cabelo</option>
+                            <option value="uniforme">👕 Uniforme</option>
+                            <option value="desvio_normas">⚠️ Desvio de Normas (com ATA)</option>
+                            <option value="fora_sala">Fora da sala</option>
+                            <option value="matando_aula">Matando aula</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-file-excel"></i> Exportar Excel
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <hr>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Informações:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>O relatório será aberto em nova aba</li>
+                    <li>Desvio de Normas inclui coluna "ATA" com detalhes</li>
+                    <li>Demais tipos têm formato compacto (8 colunas)</li>
+                    <li>Formato A4 Paisagem para melhor visualização</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

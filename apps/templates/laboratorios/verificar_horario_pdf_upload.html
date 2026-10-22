@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Verificar Cronograma pelo PDF{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                <h4 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Verificar Cronograma pelo PDF de Horário</h4>
+                <a href="{% url 'diagnostico_cronograma_laboratorios' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                Envie o PDF mais recente de horário dos professores. O sistema vai <strong>ler e comparar</strong> com o
+                cronograma <strong>ativo</strong> dos laboratórios do turno correspondente e mostrar as diferenças.
+                <strong>Nenhuma reserva de laboratório é alterada automaticamente</strong> — toda alteração exige sua
+                confirmação individual, depois.
+            </div>
+
+            {% if pendentes_professor or pendentes_turma %}
+                <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <span>
+                        <i class="fas fa-link me-1"></i>
+                        Existem <strong>{{ pendentes_professor }}</strong> professor(es) e
+                        <strong>{{ pendentes_turma }}</strong> turma(s) do PDF ainda não vinculados a um cadastro.
+                        Enquanto pendentes, essas divergências aparecem como "Verificar".
+                    </span>
+                    <a href="{% url 'verificar_horario_pdf_aliases' %}" class="btn btn-sm btn-dark">Resolver vínculos</a>
+                </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" class="border rounded p-3 mb-4 bg-light">
+                {% csrf_token %}
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-6">
+                        <label for="arquivoPdf" class="form-label fw-bold">Arquivo PDF</label>
+                        <input type="file" class="form-control" id="arquivoPdf" name="arquivo" accept="application/pdf" required>
+                    </div>
+                    <div class="col-8 col-md-3">
+                        <label for="turnoManual" class="form-label fw-bold">Turno (se não for detectado)</label>
+                        <select class="form-select" id="turnoManual" name="turno">
+                            <option value="">Detectar automaticamente</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                        </select>
+                    </div>
+                    <div class="col-4 col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-upload me-1"></i>Enviar e conferir
+                        </button>
+                    </div>
+                </div>
+                <div class="form-text mt-2">
+                    O turno normalmente é identificado pelo próprio cabeçalho do PDF ("Quadro: MANHÃ"/"TARDE"). Só
+                    selecione manualmente se o sistema avisar que não conseguiu detectar.
+                </div>
+            </form>
+
+            <h5 class="mb-3">Uploads recentes</h5>
+            {% if uploads_recentes %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Arquivo</th>
+                                <th>Turno</th>
+                                <th>Enviado em</th>
+                                <th>Enviado por</th>
+                                <th>Horários lidos</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for upload in uploads_recentes %}
+                                <tr>
+                                    <td>{{ upload.nome_original }}</td>
+                                    <td>{{ upload.get_turno_detectado_display|default:"—" }}</td>
+                                    <td>{{ upload.enviado_em|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ upload.enviado_por|default:"—" }}</td>
+                                    <td>{{ upload.total_slots_lidos }}</td>
+                                    <td class="text-end">
+                                        <a href="{% url 'verificar_horario_pdf_relatorio' upload.id %}" class="btn btn-sm btn-outline-primary">
+                                            Ver relatório
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-secondary mb-0">Nenhum PDF enviado ainda.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

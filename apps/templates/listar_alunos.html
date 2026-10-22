@@ -1,0 +1,58 @@
+{% extends "base_painel.html" %}
+{% load static %}
+
+{% block title %}Lista de Alunos{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h3><i class="fas fa-users"></i> Alunos Cadastrados</h3>
+        </div>
+        <div class="card-body">
+            <a href="{% url 'cadastrar_aluno' %}" class="btn btn-success mb-3">
+                <i class="fas fa-plus"></i> Novo Aluno
+            </a>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Turma</th>
+                            <th>Nº</th>
+                            <th>Nome</th>
+                            <th>Ativo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aluno in alunos %}
+                        <tr>
+                            <td>{{ aluno.turma.nome }}</td>
+                            <td>{{ aluno.numero }}</td>
+                            <td>{{ aluno.nome }}</td>
+                            <td>
+                                {% if aluno.ativo %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'editar_aluno' aluno.id %}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">Nenhum aluno cadastrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

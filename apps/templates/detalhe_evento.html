@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}{{ evento.titulo }} - Colegio Civico Militar{% endblock %}
+
+{% block extra_head %}
+<style>
+    .evento-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .evento-imagem {
+        width: 100%;
+        max-height: 460px;
+        object-fit: cover;
+    }
+    .evento-body {
+        padding: 30px;
+    }
+    .evento-titulo {
+        color: #1e3c72;
+        font-weight: bold;
+    }
+    .evento-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+    .evento-info i {
+        color: #0d6efd;
+        width: 25px;
+    }
+    .btn-voltar {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 50px;
+        transition: 0.3s;
+    }
+    .btn-voltar:hover {
+        background: #5a6268;
+        color: white;
+        transform: translateX(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <a href="javascript:history.back()" class="btn btn-voltar mb-3">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+
+    <div class="evento-card">
+        {% if evento.imagem %}
+        <img src="{{ evento.imagem.url }}" class="evento-imagem" alt="{{ evento.titulo }}">
+        {% else %}
+        <div class="bg-light text-center py-5">
+            <i class="fas fa-calendar-alt fa-5x text-muted"></i>
+        </div>
+        {% endif %}
+
+        <div class="evento-body">
+            <h1 class="evento-titulo">{{ evento.titulo }}</h1>
+
+            <div class="evento-info">
+                <p class="mb-2">
+                    <i class="fas fa-calendar-day me-2"></i>
+                    <strong>Data:</strong> {{ evento.data|date:"d/m/Y" }}
+                </p>
+                <p class="mb-2">
+                    <i class="fas fa-clock me-2"></i>
+                    <strong>Horario:</strong> {{ evento.data|date:"H:i" }}
+                </p>
+                <p class="mb-2">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    <strong>Local:</strong> {{ evento.local }}
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    <strong>Criado por:</strong> {{ evento.criado_por.get_full_name|default:evento.criado_por.username }}
+                </p>
+            </div>
+
+            <div class="evento-descricao">
+                <h5>Sobre o evento:</h5>
+                <p>{{ evento.descricao|safe }}</p>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="javascript:history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

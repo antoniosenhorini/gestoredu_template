@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar Cronograma do Professor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: #f5f8fc;
+            color: #1f2937;
+        }
+
+        .public-schedule-page {
+            min-height: 100vh;
+        }
+
+        .public-schedule-shell {
+            max-width: 1120px;
+        }
+
+        .public-schedule-header {
+            border-bottom: 1px solid #dbeafe;
+            padding: 1.25rem 0;
+        }
+
+        .public-schedule-panel {
+            background: #fff;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            box-shadow: 0 8px 22px rgba(15, 47, 89, 0.08);
+        }
+
+        .professor-search {
+            position: relative;
+        }
+
+        .professor-suggestions {
+            background: #fff;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            box-shadow: 0 12px 24px rgba(15, 47, 89, 0.14);
+            display: none;
+            left: 0;
+            max-height: 18rem;
+            overflow-y: auto;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.25rem);
+            z-index: 10;
+        }
+
+        .professor-suggestions.is-visible {
+            display: block;
+        }
+
+        .professor-suggestion {
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid #edf2f7;
+            color: #1f2937;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .professor-suggestion:hover,
+        .professor-suggestion:focus {
+            background: #eef6ff;
+            outline: 0;
+        }
+
+        .schedule-card {
+            border: 1px solid #e5eef8;
+            border-radius: 8px;
+            height: 100%;
+        }
+
+        .schedule-day {
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .schedule-day-title {
+            background: #1d4ed8;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 0;
+            padding: 0.75rem 1rem;
+        }
+
+        .schedule-day-body {
+            background: #f8fbff;
+            padding: 1rem;
+        }
+
+        .schedule-empty {
+            align-items: center;
+            background: #fff;
+            border: 1px dashed #bfd7f4;
+            border-radius: 8px;
+            color: #64748b;
+            display: flex;
+            font-weight: 700;
+            justify-content: center;
+            min-height: 4.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .schedule-card dl {
+            display: grid;
+            gap: 0.35rem 0.75rem;
+            grid-template-columns: minmax(88px, 0.36fr) 1fr;
+            margin: 0;
+        }
+
+        .schedule-card dt {
+            color: #6c757d;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .schedule-card dd {
+            margin: 0;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .schedule-turn {
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.35rem 0.65rem;
+        }
+
+        .schedule-turn.manha {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .schedule-turn.tarde {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .schedule-update-banner {
+            align-items: center;
+            background: #fef3c7;
+            border-bottom: 1px solid #f59e0b;
+            color: #92400e;
+            display: none;
+            flex-wrap: wrap;
+            font-weight: 700;
+            gap: 0.75rem;
+            justify-content: center;
+            padding: 0.75rem 1rem;
+            text-align: center;
+        }
+
+        .schedule-update-banner.is-visible {
+            display: flex;
+        }
+
+        @media (max-width: 575.98px) {
+            body {
+                font-size: 1.05rem;
+            }
+
+            .public-schedule-header {
+                padding: 1rem 0;
+            }
+
+            .public-schedule-shell {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .public-schedule-panel {
+                border-radius: 8px;
+            }
+
+            .public-schedule-panel.p-3,
+            .public-schedule-panel.p-4 {
+                padding: 1.1rem !important;
+            }
+
+            .public-schedule-header h1 {
+                font-size: 1.35rem;
+                line-height: 1.25;
+            }
+
+            .form-control,
+            .input-group-text,
+            .professor-suggestion {
+                font-size: 1.05rem;
+                padding-bottom: 0.85rem;
+                padding-top: 0.85rem;
+            }
+
+            .schedule-day {
+                margin-left: -0.1rem;
+                margin-right: -0.1rem;
+            }
+
+            .schedule-day-title {
+                font-size: 1.08rem;
+                padding: 0.95rem 1rem;
+            }
+
+            .schedule-day-body {
+                padding: 1rem 0.85rem;
+            }
+
+            .schedule-card {
+                font-size: 1.03rem;
+                padding: 1.1rem !important;
+            }
+
+            .schedule-card dl {
+                grid-template-columns: 1fr;
+                gap: 0.2rem;
+            }
+
+            .schedule-card dt {
+                font-size: 0.9rem;
+            }
+
+            .schedule-turn,
+            .badge {
+                font-size: 0.9rem;
+            }
+
+            .schedule-empty {
+                font-size: 1.05rem;
+                min-height: 5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="avisoAtualizacaoHorario" class="schedule-update-banner" role="alert">
+        <span>Seu horário foi atualizado pela equipe.</span>
+        <button type="button" id="btnAtualizarHorario" class="btn btn-sm btn-warning">Atualizar agora</button>
+    </div>
+    <div class="public-schedule-page">
+        <header class="public-schedule-header bg-white">
+            <div class="container public-schedule-shell">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary-subtle text-primary" style="width: 2.75rem; height: 2.75rem;">
+                        <i class="fas fa-calendar-days"></i>
+                    </span>
+                    <div>
+                        <h1 class="h3 mb-1">Consultar Cronograma do Professor</h1>
+                        <p class="text-muted mb-0">Horários de laboratório por professor</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container public-schedule-shell py-4">
+            <section class="public-schedule-panel p-3 p-md-4 mb-4">
+                <form method="get" id="consultaProfessorForm" autocomplete="off">
+                    <input type="hidden" name="professor_id" id="professorId" value="{{ professor_id }}">
+                    <label for="professorBusca" class="form-label fw-bold">Nome do professor</label>
+                    <div class="professor-search">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                            <input
+                                type="search"
+                                id="professorBusca"
+                                class="form-control"
+                                placeholder="Digite parte do nome"
+                                value="{% if horarios_laboratorio_professor.professor %}{{ horarios_laboratorio_professor.professor.nome_completo }}{% endif %}"
+                                aria-describedby="professorBuscaAjuda"
+                            >
+                        </div>
+                        <div id="professorSugestoes" class="professor-suggestions"></div>
+                    </div>
+                    <div id="professorBuscaAjuda" class="form-text">Selecione um professor na lista para consultar os horários.</div>
+                </form>
+            </section>
+
+            <section class="public-schedule-panel p-3 p-md-4 mb-4">
+                <a class="btn btn-outline-primary" href="{% url 'disponibilidade_tablets_celulares_publica' %}">
+                    📱 Ver Tablets e Celulares disponíveis
+                </a>
+            </section>
+
+            {% if horarios_laboratorio_professor.professor %}
+                <section class="public-schedule-panel p-3 p-md-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-4">
+                        <div>
+                            <h2 class="h5 mb-1">{{ horarios_laboratorio_professor.professor.nome_completo }}</h2>
+                            {% if horarios_laboratorio_professor.mes_agendamento %}
+                                <p class="text-muted mb-0">
+                                    Agendamento do mês: {{ horarios_laboratorio_professor.mes_agendamento }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if horarios_laboratorio_professor.agendamentos %}
+                        <div class="d-grid gap-3">
+                            {% for dia in horarios_laboratorio_professor.dias_semana %}
+                                <section class="schedule-day">
+                                    <div class="schedule-day-title">{{ dia.titulo }}</div>
+                                    <div class="schedule-day-body">
+                                        {% if dia.agendamentos %}
+                                            <div class="row g-3">
+                                                {% for item in dia.agendamentos %}
+                                                    <div class="col-12 col-md-6 col-xl-4">
+                                                        <article class="schedule-card bg-white p-3">
+                                                            <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                                                                <div class="d-flex flex-wrap gap-2">
+                                                                    <span class="badge text-bg-primary">{{ item.aula }}</span>
+                                                                    <span class="schedule-turn {{ item.turno_codigo }}">{{ item.turno }}</span>
+                                                                </div>
+                                                            </div>
+                                                            <dl>
+                                                                <dt>Laboratório:</dt>
+                                                                <dd>{{ item.agendamento.laboratorio.nome }}</dd>
+                                                                <dt>Disciplina</dt>
+                                                                <dd>{{ item.agendamento.disciplina }}</dd>
+                                                                <dt>Turma</dt>
+                                                                <dd>{{ item.agendamento.turma.nome }}</dd>
+                                                                <dt>Dia</dt>
+                                                                <dd>{{ item.dia }}</dd>
+                                                                <dt>Horário</dt>
+                                                                <dd>{{ item.aula }} - {{ item.turno }}</dd>
+                                                                {% if item.agendamento.observacao.strip %}
+                                                                    <dt>Observação:</dt>
+                                                                    <dd>{{ item.agendamento.observacao|linebreaksbr }}</dd>
+                                                                {% endif %}
+                                                            </dl>
+                                                        </article>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="schedule-empty">Sem aula agendada</div>
+                                        {% endif %}
+                                    </div>
+                                </section>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="d-grid gap-3">
+                            {% for dia in horarios_laboratorio_professor.dias_semana %}
+                                <section class="schedule-day">
+                                    <div class="schedule-day-title">{{ dia.titulo }}</div>
+                                    <div class="schedule-day-body">
+                                        <div class="schedule-empty">Sem aula agendada</div>
+                                    </div>
+                                </section>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </section>
+            {% else %}
+                <section class="public-schedule-panel p-4 text-center">
+                    <i class="far fa-calendar-check text-primary fs-2 mb-3"></i>
+                    <p class="text-muted mb-0">Pesquise e selecione um professor para visualizar o cronograma.</p>
+                </section>
+            {% endif %}
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const busca = document.getElementById('professorBusca');
+            const professorId = document.getElementById('professorId');
+            const sugestoes = document.getElementById('professorSugestoes');
+            const form = document.getElementById('consultaProfessorForm');
+            let timeoutBusca = null;
+
+            function limparSugestoes() {
+                sugestoes.innerHTML = '';
+                sugestoes.classList.remove('is-visible');
+            }
+
+            function renderSugestoes(resultados) {
+                sugestoes.innerHTML = '';
+
+                if (!resultados.length) {
+                    const vazio = document.createElement('div');
+                    vazio.className = 'px-3 py-2 text-muted small';
+                    vazio.textContent = 'Nenhum professor encontrado.';
+                    sugestoes.appendChild(vazio);
+                    sugestoes.classList.add('is-visible');
+                    return;
+                }
+
+                resultados.forEach(function(professor) {
+                    const botao = document.createElement('button');
+                    botao.type = 'button';
+                    botao.className = 'professor-suggestion';
+                    botao.textContent = professor.nome;
+                    botao.addEventListener('click', function() {
+                        busca.value = professor.nome;
+                        professorId.value = professor.id;
+                        limparSugestoes();
+                        form.submit();
+                    });
+                    sugestoes.appendChild(botao);
+                });
+
+                sugestoes.classList.add('is-visible');
+            }
+
+            busca.addEventListener('input', function() {
+                const termo = busca.value.trim();
+                professorId.value = '';
+                window.clearTimeout(timeoutBusca);
+
+                if (!termo) {
+                    limparSugestoes();
+                    return;
+                }
+
+                timeoutBusca = window.setTimeout(function() {
+                    const url = "{% url 'autocomplete_professores_laboratorio' %}?q=" + encodeURIComponent(termo);
+                    fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+                        .then(function(response) {
+                            return response.json();
+                        })
+                        .then(function(data) {
+                            renderSugestoes(data.resultados || []);
+                        })
+                        .catch(function() {
+                            limparSugestoes();
+                        });
+                }, 180);
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.professor-search')) {
+                    limparSugestoes();
+                }
+            });
+        });
+    </script>
+    <script>
+        (function() {
+            var PROFESSOR_ID_INICIAL = "{{ professor_id }}";
+            if (!PROFESSOR_ID_INICIAL) {
+                return;
+            }
+
+            var URL_VERSAO_HORARIO_PUBLICO = "{% url 'versao_horario_professor_laboratorio_publico' %}?professor_id=" + encodeURIComponent(PROFESSOR_ID_INICIAL);
+            var versaoConhecidaHorarioPublico = "{{ versao_horario_publico }}";
+            var bannerAtualizacaoHorario = document.getElementById('avisoAtualizacaoHorario');
+            var botaoAtualizarHorario = document.getElementById('btnAtualizarHorario');
+
+            // Polling adaptativo: 1a verificacao em 60s, depois 2min, depois 5min (patamar final, repete).
+            var INTERVALOS_POLLING_HORARIO_PUBLICO = [60000, 120000, 300000];
+            var indiceIntervaloPollingHorario = 0;
+            var timerPollingHorarioPublico = null;
+            var avisoAtualizacaoHorarioExibido = false;
+
+            if (botaoAtualizarHorario) {
+                botaoAtualizarHorario.addEventListener('click', function() {
+                    window.location.reload();
+                });
+            }
+
+            function exibirAvisoAtualizacaoHorarioPublico() {
+                avisoAtualizacaoHorarioExibido = true;
+                pararPollingHorarioPublico();
+                if (bannerAtualizacaoHorario) {
+                    bannerAtualizacaoHorario.classList.add('is-visible');
+                }
+            }
+
+            function pararPollingHorarioPublico() {
+                if (timerPollingHorarioPublico) {
+                    window.clearTimeout(timerPollingHorarioPublico);
+                    timerPollingHorarioPublico = null;
+                }
+            }
+
+            function proximoIntervaloPollingHorarioPublico() {
+                var intervalo = INTERVALOS_POLLING_HORARIO_PUBLICO[indiceIntervaloPollingHorario];
+                if (indiceIntervaloPollingHorario < INTERVALOS_POLLING_HORARIO_PUBLICO.length - 1) {
+                    indiceIntervaloPollingHorario += 1;
+                }
+                return intervalo;
+            }
+
+            function agendarProximaVerificacaoHorarioPublico() {
+                if (avisoAtualizacaoHorarioExibido || document.hidden) {
+                    return;
+                }
+                timerPollingHorarioPublico = window.setTimeout(
+                    verificarVersaoHorarioPublico,
+                    proximoIntervaloPollingHorarioPublico()
+                );
+            }
+
+            function verificarVersaoHorarioPublico() {
+                fetch(URL_VERSAO_HORARIO_PUBLICO, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Resposta invalida ao consultar versao do horario.');
+                        }
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        if (data && data.versao && data.versao !== versaoConhecidaHorarioPublico) {
+                            exibirAvisoAtualizacaoHorarioPublico();
+                            return;
+                        }
+                        agendarProximaVerificacaoHorarioPublico();
+                    })
+                    .catch(function() {
+                        // Internet instavel: mantem o cronograma ja exibido intacto, sem erro
+                        // bloqueante, e deixa o proximo ciclo tentar de novo (sem acelerar retry).
+                        agendarProximaVerificacaoHorarioPublico();
+                    });
+            }
+
+            function reiniciarPollingHorarioPublico() {
+                indiceIntervaloPollingHorario = 0;
+                agendarProximaVerificacaoHorarioPublico();
+            }
+
+            document.addEventListener('visibilitychange', function() {
+                if (avisoAtualizacaoHorarioExibido) {
+                    return;
+                }
+                if (document.hidden) {
+                    // Aba invisivel: para totalmente o timer, nenhuma consulta enquanto invisivel.
+                    pararPollingHorarioPublico();
+                } else {
+                    // Volta a ficar visivel: uma verificacao imediata unica, depois reinicia
+                    // a estrategia adaptativa do zero (60s -> 2min -> 5min).
+                    pararPollingHorarioPublico();
+                    indiceIntervaloPollingHorario = 0;
+                    verificarVersaoHorarioPublico();
+                }
+            });
+
+            reiniciarPollingHorarioPublico();
+        })();
+    </script>
+</body>
+</html>

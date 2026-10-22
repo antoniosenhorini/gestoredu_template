@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Configuracao Inicial{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-school me-2"></i>Configuracao Inicial do Colegio</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Bem-vindo! Antes de comecar, preencha os dados da sua escola.</p>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3"><label class="form-label">Nome do Colegio</label>{{ form.nome }}</div>
+                        <div class="mb-3"><label class="form-label">Sigla (opcional)</label>{{ form.sigla }}</div>
+                        <div class="mb-3"><label class="form-label">Endereço</label>{{ form.endereco }}</div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Telefone</label>{{ form.telefone }}</div>
+                            <div class="col-md-6 mb-3"><label class="form-label">E-mail</label>{{ form.email }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Logo (opcional)</label>{{ form.logo }}</div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Cor Principal</label>{{ form.cor_primaria }}</div>
+                        </div>
+                        <div class="d-grid gap-2 mt-4"><button type="submit" class="btn btn-success btn-lg"><i class="fas fa-check me-2"></i>Salvar e Comecar a Usar</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

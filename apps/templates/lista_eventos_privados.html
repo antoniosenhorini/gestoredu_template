@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Eventos Privados - Equipe Diretiva{% endblock %}
+{% block content %}
+
+<!-- ===== BOTÕES DE NAVEGAÇÃO ===== -->
+<div style="background-color: #f8f9fa; padding: 15px; margin-bottom: 25px; border-radius: 8px; text-align: center; border: 2px solid #dee2e6; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+    
+    <!-- BOTÃO VERDE (PAINEL DA EQUIPE) -->
+    <a href="{% url 'painel_equipe' %}" style="background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; display: inline-block; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        🏠 PAINEL DA EQUIPE
+    </a>
+    
+    <!-- BOTÃO AZUL (ADMIN) -->
+    <a href="{% url 'admin:index' %}" style="background-color: #004085; color: white; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: bold; display: inline-block; border: 2px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        🏛️ ADMINISTRAÇÃO DO COLÉGIO
+    </a>
+    
+</div>
+<!-- =============================== -->
+
+<div class="container-fluid px-2 px-md-4 py-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <h1><i class="fas fa-calendar-check me-2"></i>Eventos Privados</h1>
+    </div>
+
+    <!-- FORMULÁRIO DE NOVO EVENTO -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-plus-circle me-2"></i>Novo Evento
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Criar Evento
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LISTA DE EVENTOS -->
+    {% if eventos %}
+        {% for evento in eventos %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ evento.titulo }}</h5>
+                {% if evento.descricao %}
+                <p class="card-text">{{ evento.descricao }}</p>
+                {% endif %}
+                <p class="mb-1">
+                    <span class="badge bg-primary me-2">
+                        <i class="far fa-calendar-alt me-1"></i>{{ evento.data_inicio|date:"d/m/Y H:i" }}
+                    </span>
+                    {% if evento.data_fim %}
+                    <span class="badge bg-secondary me-2">
+                        <i class="far fa-calendar-check me-1"></i>{{ evento.data_fim|date:"d/m/Y H:i" }}
+                    </span>
+                    {% endif %}
+                    {% if evento.local %}
+                    <span class="badge bg-info">
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ evento.local }}
+                    </span>
+                    {% endif %}
+                </p>
+                <p class="small text-muted mt-2">
+                    <i class="fas fa-user me-1"></i>Criado por: {{ evento.criado_por.get_full_name|default:evento.criado_por.username }}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info text-center py-5">
+            <i class="fas fa-calendar-check fa-3x mb-3"></i>
+            <p>Nenhum evento privado encontrado.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

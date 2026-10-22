@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Relatório de Faltas{% endblock %}
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'painel_equipe' %}">Painel</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'controle_faltas' %}">Controle de Faltas</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Relatório de Faltas</li>
+        </ol>
+    </nav>
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-print me-2"></i>Relatório de Faltas</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.turma.id_for_label }}" class="form-label">Turma</label>
+                        {{ form.turma }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.identificador.id_for_label }}" class="form-label">Número ou Nome</label>
+                        {{ form.identificador }}
+                    </div>
+                </div>
+                {% if erro %}
+                    <div class="alert alert-danger">{{ erro }}</div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">Buscar</button>
+                <a href="{% url 'painel_equipe' %}" class="btn btn-secondary">Voltar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

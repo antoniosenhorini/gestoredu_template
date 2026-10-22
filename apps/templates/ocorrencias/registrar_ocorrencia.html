@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Ocorrencia Disciplinar{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10 col-xxl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-between gap-2">
+                    <div>
+                        <h1 class="h4 mb-1">
+                            <i class="fas fa-clipboard-list me-2"></i>Registrar Ocorrencia Disciplinar
+                        </h1>
+                        <div class="small opacity-75">Lance a ocorrencia com aluno, tipo, descricao e pedagoga responsavel.</div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <a href="{% url 'conferencia_ocorrencias' %}" class="btn btn-light btn-sm text-primary">
+                            <i class="fas fa-clipboard-check me-1"></i>Conferencia
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="ocorrencia-form" class="row g-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="turno" value="{{ form.turno.value|default:'manha' }}">
+                        <input type="hidden" name="faltou" value="">
+                        <input type="hidden" name="enviar_whatsapp_reincidencia" id="enviar_whatsapp_reincidencia" value="">
+
+                        <div class="col-12 d-md-none">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-save me-1"></i>Salvar Ocorrencia
+                            </button>
+                        </div>
+
+                        <div class="col-12 col-md-7">
+                            <label for="pedagoga" class="form-label fw-semibold">
+                                <i class="fas fa-user-tie me-1"></i>Pedagoga
+                            </label>
+                            <input type="text" name="pedagoga" id="pedagoga" class="form-control" value="Nao definida">
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                            <label for="{{ form.turma.id_for_label }}" class="form-label fw-semibold">Turma</label>
+                            {{ form.turma }}
+                        </div>
+
+                        <div class="col-12 col-md-3">
+                            <label for="{{ form.numero_aluno.id_for_label }}" class="form-label fw-semibold">Numero</label>
+                            {{ form.numero_aluno }}
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="{{ form.nome_aluno.id_for_label }}" class="form-label fw-semibold">Aluno</label>
+                            {{ form.nome_aluno }}
+                            <div id="aluno-status" class="form-text"></div>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="{{ form.data.id_for_label }}" class="form-label fw-semibold">Data</label>
+                            {{ form.data }}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Tipo de ocorrencia</label>
+                            <div class="row g-2">
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_ocorrencia" id="tipo_atraso" value="atraso" {% if form.tipo_ocorrencia.value == 'atraso' %}checked{% endif %}>
+                                        <label class="form-check-label" for="tipo_atraso">Atraso</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_ocorrencia" id="tipo_piercing" value="piercing" {% if form.tipo_ocorrencia.value == 'piercing' %}checked{% endif %}>
+                                        <label class="form-check-label" for="tipo_piercing">Uso de piercing</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_ocorrencia" id="tipo_cabelo" value="cabelo" {% if form.tipo_ocorrencia.value == 'cabelo' %}checked{% endif %}>
+                                        <label class="form-check-label" for="tipo_cabelo">Cabelo</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_ocorrencia" id="tipo_uniforme" value="uniforme" {% if form.tipo_ocorrencia.value == 'uniforme' %}checked{% endif %}>
+                                        <label class="form-check-label" for="tipo_uniforme">Uniforme</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_ocorrencia" id="tipo_desvio" value="desvio_normas" {% if form.tipo_ocorrencia.value == 'desvio_normas' %}checked{% endif %}>
+                                        <label class="form-check-label" for="tipo_desvio">Desvio de normas</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_ocorrencia" id="tipo_fora_sala" value="fora_sala" {% if form.tipo_ocorrencia.value == 'fora_sala' %}checked{% endif %}>
+                                        <label class="form-check-label" for="tipo_fora_sala">Fora da sala</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_ocorrencia" id="tipo_matando_aula" value="matando_aula" {% if form.tipo_ocorrencia.value == 'matando_aula' %}checked{% endif %}>
+                                        <label class="form-check-label" for="tipo_matando_aula">Matando aula</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="{{ form.motivo_alegado.id_for_label }}" class="form-label fw-semibold">Descricao da ocorrencia</label>
+                            {{ form.motivo_alegado }}
+                        </div>
+
+                        <div class="col-12">
+                            <label for="{{ form.alegado_responsavel.id_for_label }}" class="form-label fw-semibold">Encaminhamento/providencia</label>
+                            {{ form.alegado_responsavel }}
+                        </div>
+
+                        <input type="hidden" name="observacoes_adicionais" id="observacoes_adicionais">
+                        <input type="hidden" name="responsavel_contatado" value="">
+                        <input type="hidden" name="horario_chegada" value="">
+                        <input type="hidden" name="horario_contato" value="">
+
+                        <div class="col-12 d-flex flex-column flex-md-row gap-2 justify-content-end">
+                            <a href="{% url 'painel_equipe' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Voltar
+                            </a>
+                            <a href="{% url 'conferencia_ocorrencias' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-clipboard-check me-1"></i>Conferencia
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>Salvar Ocorrencia
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const turmaSelect = document.getElementById('id_turma');
+    const numeroInput = document.getElementById('id_numero_aluno');
+    const nomeInput = document.getElementById('id_nome_aluno');
+    const status = document.getElementById('aluno-status');
+    const descricao = document.getElementById('id_motivo_alegado');
+    const observacoes = document.getElementById('observacoes_adicionais');
+    const pedagogaInput = document.getElementById('pedagoga');
+    const form = document.getElementById('ocorrencia-form');
+    const envioReincidencia = document.getElementById('enviar_whatsapp_reincidencia');
+    const tiposReincidencia = ['piercing', 'desvio_normas', 'cabelo', 'uniforme'];
+    const pedagogaNaoDefinida = 'Nao definida';
+
+    function definirPedagoga(pedagoga) {
+        const valor = pedagoga || pedagogaNaoDefinida;
+        pedagogaInput.value = valor;
+        pedagogaInput.readOnly = valor !== pedagogaNaoDefinida;
+    }
+
+    const selectedTipo = document.querySelector('input[name="tipo_ocorrencia"]:checked');
+    if (!selectedTipo) {
+        document.getElementById('tipo_atraso').checked = true;
+    }
+
+    function atualizarObservacoes() {
+        if (observacoes && descricao) {
+            observacoes.value = descricao.value;
+        }
+    }
+
+    function limparAluno(mensagem) {
+        nomeInput.value = '';
+        definirPedagoga(pedagogaNaoDefinida);
+        status.textContent = mensagem || '';
+        status.className = mensagem ? 'form-text text-danger' : 'form-text';
+    }
+
+    function buscarAluno() {
+        const turmaId = turmaSelect.value;
+        const numero = numeroInput.value.trim();
+
+        if (!turmaId || !numero) {
+            limparAluno('');
+            return;
+        }
+
+        fetch(`{% url "buscar_aluno_ajax" %}?turma_id=${encodeURIComponent(turmaId)}&numero=${encodeURIComponent(numero)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.encontrado) {
+                    nomeInput.value = data.nome;
+                    definirPedagoga(data.pedagoga);
+                    status.textContent = 'Aluno encontrado';
+                    status.className = 'form-text text-success';
+                } else {
+                    limparAluno(data.erro || 'Aluno nao encontrado');
+                }
+            })
+            .catch(() => limparAluno('Erro ao buscar aluno'));
+    }
+
+    turmaSelect.addEventListener('change', buscarAluno);
+    numeroInput.addEventListener('input', buscarAluno);
+    descricao.addEventListener('input', atualizarObservacoes);
+    form.addEventListener('submit', function (event) {
+        atualizarObservacoes();
+        if (form.dataset.reincidenciaVerificada === 'sim') {
+            return;
+        }
+
+        const tipoSelecionado = document.querySelector('input[name="tipo_ocorrencia"]:checked');
+        const tipo = tipoSelecionado ? tipoSelecionado.value : '';
+        if (!tiposReincidencia.includes(tipo)) {
+            return;
+        }
+
+        event.preventDefault();
+        const url = `{% url "buscar_aluno_ajax" %}?turma_id=${encodeURIComponent(turmaSelect.value)}&numero=${encodeURIComponent(numeroInput.value.trim())}&data=${encodeURIComponent(document.getElementById('id_data').value)}&tipo_ocorrencia=${encodeURIComponent(tipo)}`;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.reincidencia) {
+                    envioReincidencia.value = window.confirm('Esta e a segunda ocorrencia deste tipo hoje. Deseja enviar novo aviso pelo WhatsApp?') ? 'sim' : 'nao';
+                }
+                form.dataset.reincidenciaVerificada = 'sim';
+                form.submit();
+            })
+            .catch(() => {
+                form.dataset.reincidenciaVerificada = 'sim';
+                form.submit();
+            });
+    });
+    definirPedagoga(pedagogaNaoDefinida);
+});
+</script>
+{% endblock %}

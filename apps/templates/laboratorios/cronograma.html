@@ -1,0 +1,867 @@
+{% extends 'base.html' %}
+{% block title %}Cronograma Semanal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4 py-3 schedule-theme" data-schedule-theme="azul">
+	    <div class="card">
+	        <div class="card-header bg-primary text-white">
+	            <h4><i class="fas fa-calendar-alt"></i> Cronograma Semanal - Laboratorios</h4>
+	        </div>
+	        <div class="card-body">
+	            <div class="alert alert-light border d-flex flex-column flex-md-row align-items-md-center gap-2 mb-3">
+	                <label class="form-label fw-bold mb-0" for="cronogramaTema">Tema do cronograma:</label>
+	                <select id="cronogramaTema" class="form-select w-auto">
+	                    <option value="azul">Azul padrão</option>
+	                    <option value="claro">Claro</option>
+	                    <option value="verde">Verde</option>
+	                    <option value="cinza">Cinza</option>
+	                    <option value="roxo">Roxo</option>
+	                    <option value="branco">Branco (letras pretas)</option>
+	                </select>
+	            </div>
+
+	            <div class="schedule-toolbar mb-3">
+	                <div class="schedule-actions">
+	                    <a href="{% url 'cronograma_print' %}?data_inicio={{ data_inicio|date:'Y-m-d' }}{% if turno_filtro %}&turno={{ turno_filtro }}{% endif %}{% if laboratorio_filtro %}&laboratorio={{ laboratorio_filtro }}{% endif %}"
+	                       target="_blank"
+                       class="btn btn-info">
+                        <i class="fas fa-print"></i> Imprimir / PDF
+                    </a>
+                    <a href="{% url 'exportar_cronograma_excel' %}?data_inicio={{ data_inicio|date:'Y-m-d' }}{% if turno_filtro %}&turno={{ turno_filtro }}{% endif %}{% if laboratorio_filtro %}&laboratorio={{ laboratorio_filtro }}{% endif %}" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> Exportar para Excel
+                    </a>
+                </div>
+
+                <div class="schedule-filters">
+                    <div>
+                        <label class="form-label fw-bold mb-1" for="filtroLaboratorio">Laboratorio</label>
+                        <select name="laboratorio" id="filtroLaboratorio" class="form-select">
+                            <option value="">Todos</option>
+                            {% for lab in laboratorios_todos %}
+                                <option value="{{ lab.id }}" {% if laboratorio_filtro == lab.id|stringformat:"s" %}selected{% endif %}>{{ lab.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+	                    <div>
+	                        <label class="form-label fw-bold mb-1" for="filtroTurno">Turno</label>
+	                        {% if turno_bloqueado %}
+	                        <div class="form-control bg-light fw-bold d-flex align-items-center gap-2" data-turno-travado="{{ turno_bloqueado }}">
+	                            <i class="fas fa-lock text-muted"></i>
+	                            {% if turno_bloqueado == 'manha' %}Manhã{% else %}Tarde{% endif %}
+	                        </div>
+	                        <input type="hidden" id="filtroTurno" value="{{ turno_bloqueado }}">
+	                        <div class="form-text">Edição travada neste turno. Para editar o outro turno, volte ao diagnóstico e entre pelo botão correspondente.</div>
+	                        {% else %}
+	                        <select name="turno" id="filtroTurno" class="form-select">
+	                            <option value="">Todos</option>
+	                            <option value="manha" {% if turno_filtro == 'manha' %}selected{% endif %}>Manha</option>
+	                            <option value="tarde" {% if turno_filtro == 'tarde' %}selected{% endif %}>Tarde</option>
+	                        </select>
+	                        {% endif %}
+	                    </div>
+	                </div>
+	            </div>
+
+            <div class="d-flex justify-content-center mb-4">
+                <span class="schedule-week-label shadow-sm">{{ cronograma_titulo }}</span>
+            </div>
+
+            {% if laboratorios_disponiveis %}
+            <div class="schedule-available-labs shadow-sm mb-4">
+                <strong>Laboratórios disponíveis:</strong>
+                {% for item in laboratorios_disponiveis %}
+                    <span>{{ item.laboratorio.nome }} - {{ item.aulas|join:", " }}</span>{% if not forloop.last %};{% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="lab-mobile-list">
+                {% if agendamentos_cards %}
+                {% for grupo in grupos_turno_cronograma %}
+                    {% if not turno_filtro %}
+                    <div class="schedule-turno-separator {{ grupo.bg_class }} {{ grupo.text_class }} shadow-sm" data-turno-separator="{{ grupo.turno }}">
+                        {{ grupo.titulo }}
+                    </div>
+                    {% endif %}
+                    {% for item in grupo.cards %}
+                    {% with a=item.agendamento %}
+                    <article class="lab-mobile-card">
+                        <div class="lab-mobile-card__header">
+                            <strong>{{ a.laboratorio.nome }}</strong>
+                            <span>{{ item.dia }}</span>
+                        </div>
+                        <dl>
+                            <div><dt>Aula</dt><dd>{{ item.horario_label }}</dd></div>
+                            <div><dt>Turno</dt><dd>{{ item.turno_label }}</dd></div>
+                            <div><dt>Professor</dt><dd>{{ a.professor.nome_abreviado }}</dd></div>
+                            <div><dt>Turma</dt><dd>{{ a.turma.nome }}</dd></div>
+                            <div><dt>Disciplina</dt><dd>{{ a.disciplina }}</dd></div>
+                            {% if a.observacao %}
+                                <div><dt>Observacao</dt><dd>{{ a.observacao }}</dd></div>
+                            {% endif %}
+                        </dl>
+                    </article>
+                    {% endwith %}
+                    {% endfor %}
+                {% endfor %}
+                {% else %}
+                <div class="alert alert-info mb-0">Nenhum agendamento encontrado para os filtros selecionados.</div>
+                {% endif %}
+            </div>
+
+            <div class="lab-schedules">
+                {% if laboratorios %}
+                    {% for grupo in cronograma_grupos %}
+                        {% if not turno_filtro %}
+                        <div class="schedule-turno-separator {{ grupo.bg_class }} {{ grupo.text_class }} shadow-sm" data-turno-separator="{{ grupo.turno }}">
+                            {{ grupo.titulo }}
+                        </div>
+                        {% endif %}
+                        {% for lab_cronograma in grupo.laboratorios %}
+                            {% with lab=lab_cronograma.laboratorio %}
+                            <section class="lab-schedule mb-4">
+                                <div class="lab-schedule__title">
+                                    <div>
+                                        <span>{{ lab.nome }}</span>
+                                        <small>{{ lab.equipamento }}</small>
+                                    </div>
+                                    <a href="{% url 'agendamento_lab' lab.id %}?data_inicio={{ data_inicio|date:'Y-m-d' }}"
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-calendar-plus"></i> Agendar
+                                    </a>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered align-middle text-center mb-0">
+                                        <thead>
+                                            <tr class="table-dark">
+                                                <th class="schedule-time">Aula</th>
+                                                {% for dia in dias_cronograma %}
+                                                    <th>{{ dia.nome }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for linha in lab_cronograma.linhas %}
+                                                <tr>
+                                                    <td class="fw-bold bg-light">
+                                                        {{ linha.slot.horario_label }}<br>
+                                                        <small>{{ linha.slot.turno_label }}</small>
+                                                    </td>
+                                                    {% for celula in linha.celulas %}
+                                                        <td>
+                                                            {% if celula.agendamento %}
+                                                                {% with a=celula.agendamento %}
+                                                                <div class="schedule-entry">
+                                                                    <strong>{{ a.disciplina }}</strong>
+                                                                    <span>{{ a.turma.nome }}</span>
+                                                                    <small>{{ a.professor.nome_abreviado|truncatechars:28 }}</small>
+                                                                    {% if a.observacao %}
+                                                                        <small class="schedule-note">{{ a.observacao|truncatechars:80 }}</small>
+                                                                    {% endif %}
+                                                                    <div class="schedule-entry__actions">
+                                                                        {% if pode_editar_grade %}
+                                                                        <button type="button"
+                                                                                class="btn btn-light btn-sm"
+                                                                                data-bs-toggle="modal"
+                                                                                data-bs-target="#agendamentoModal"
+                                                                                data-agendamento-id="{{ a.id }}"
+                                                                                data-lab-id="{{ lab.id }}"
+                                                                                data-lab-nome="{{ lab.nome }}"
+                                                                                data-data="{{ celula.dia.data|date:'Y-m-d' }}"
+                                                                                data-dia="{{ celula.dia.nome }}"
+                                                                                data-turno="{{ linha.slot.turno }}"
+                                                                                data-turno-label="{{ linha.slot.turno_label }}"
+                                                                                data-horario="{{ linha.slot.horario }}"
+                                                                                data-horario-label="{{ linha.slot.horario_label }}"
+                                                                                data-professor-id="{{ a.professor_id }}"
+                                                                                data-turma-id="{{ a.turma_id }}"
+                                                                                data-disciplina="{{ a.disciplina }}"
+                                                                                data-observacao="{{ a.observacao|default:'' }}">
+                                                                            <i class="fas fa-edit"></i> Editar
+                                                                        </button>
+                                                                        <form method="post"
+                                                                              action="{% url 'excluir_agendamento' a.id %}"
+                                                                              class="d-inline"
+                                                                              data-preserve-scroll="true"
+                                                                              onsubmit="return confirm('Deseja realmente excluir este agendamento?')">
+                                                                            {% csrf_token %}
+                                                                            <input type="hidden" name="data_inicio" value="{{ data_inicio|date:'Y-m-d' }}">
+                                                                            <input type="hidden" name="turno" value="{{ turno_filtro }}">
+                                                                            <input type="hidden" name="laboratorio" value="{{ laboratorio_filtro }}">
+                                                                            <input type="hidden" name="turno_bloqueado" value="{{ turno_bloqueado|default:'' }}">
+                                                                            <input type="hidden" name="scroll_y" value="">
+                                                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                                                <i class="fas fa-trash-alt"></i> Excluir
+                                                                            </button>
+                                                                        </form>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                                {% endwith %}
+                                                            {% elif pode_editar_grade %}
+                                                                <button type="button"
+                                                                        class="btn btn-outline-primary btn-sm schedule-empty-action"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#agendamentoModal"
+                                                                        data-agendamento-id=""
+                                                                        data-lab-id="{{ lab.id }}"
+                                                                        data-lab-nome="{{ lab.nome }}"
+                                                                        data-data="{{ celula.dia.data|date:'Y-m-d' }}"
+                                                                        data-dia="{{ celula.dia.nome }}"
+                                                                        data-turno="{{ linha.slot.turno }}"
+                                                                        data-turno-label="{{ linha.slot.turno_label }}"
+                                                                        data-horario="{{ linha.slot.horario }}"
+                                                                        data-horario-label="{{ linha.slot.horario_label }}"
+                                                                        data-professor-id=""
+                                                                        data-turma-id=""
+                                                                        data-disciplina=""
+                                                                        data-observacao="">
+                                                                    <i class="fas fa-calendar-plus"></i> Cadastrar
+                                                                </button>
+                                                            {% else %}
+                                                                <span class="text-muted small">—</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    {% endfor %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                            {% endwith %}
+                        {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info mb-0">Nenhum laboratorio ativo encontrado.</div>
+                {% endif %}
+            </div>
+
+            <div class="mt-4">
+                <a href="{% url 'listar_laboratorios' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if pode_editar_grade %}
+<div class="modal fade" id="agendamentoModal" tabindex="-1" aria-labelledby="agendamentoModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" id="agendamentoModalDialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agendamentoModalLabel">Agendamento de Laboratório</h5>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="minimizarAgendamentoModal">
+                    <i class="fas fa-window-minimize"></i> Minimizar
+                </button>
+            </div>
+            <form method="post" id="agendamentoModalForm">
+                {% csrf_token %}
+                <input type="hidden" name="agendamento_id" id="modalAgendamentoId">
+                <input type="hidden" name="laboratorio_id" id="modalLaboratorioId">
+                <input type="hidden" name="data" id="modalData">
+                <input type="hidden" name="turno" id="modalTurno">
+                <input type="hidden" name="horario" id="modalHorario">
+                <input type="hidden" name="data_inicio" value="{{ data_inicio|date:'Y-m-d' }}">
+                <input type="hidden" name="turno_filtro" value="{{ turno_filtro }}">
+                <input type="hidden" name="laboratorio_filtro" value="{{ laboratorio_filtro }}">
+                <input type="hidden" name="scroll_y" id="modalScrollY" value="">
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold" for="modalLaboratorioNome">Laboratório</label>
+                            <input type="text" id="modalLaboratorioNome" class="form-control" readonly>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-bold" for="modalDiaNome">Dia da semana</label>
+                            <input type="text" id="modalDiaNome" class="form-control" readonly>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-bold" for="modalAulaNome">Aula</label>
+                            <input type="text" id="modalAulaNome" class="form-control" readonly>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold" for="modalProfessor">Professor</label>
+                            <select name="professor" id="modalProfessor" class="form-select" required>
+                                <option value="">Selecione</option>
+                                {% for professor in professores %}
+                                    <option value="{{ professor.id }}">{{ professor.nome_completo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold" for="modalTurma">Turma</label>
+                            <select name="turma" id="modalTurma" class="form-select" required>
+                                <option value="">Selecione</option>
+                                {% for turma in turmas %}
+                                    <option value="{{ turma.id }}">{{ turma.serie }} - {{ turma.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold" for="modalDisciplina">Disciplina</label>
+                            <input type="text" name="disciplina" id="modalDisciplina" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold" for="modalObservacao">Observação</label>
+                            <textarea name="observacao" id="modalObservacao" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Fechar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+	<style>
+	    .schedule-theme {
+	        --schedule-primary: #0d6efd;
+	        --schedule-primary-dark: #084298;
+	        --schedule-primary-soft: #f8fbff;
+	        --schedule-border: #dbeafe;
+	        --schedule-surface: #ffffff;
+	        --schedule-title-bg: #f1f5f9;
+	        --schedule-text: #1f2937;
+	        --schedule-muted: #6c757d;
+	    }
+
+	    .schedule-theme[data-schedule-theme="claro"] {
+	        --schedule-primary: #3b82f6;
+	        --schedule-primary-dark: #1d4ed8;
+	        --schedule-primary-soft: #ffffff;
+	        --schedule-border: #e5e7eb;
+	        --schedule-surface: #ffffff;
+	        --schedule-title-bg: #f9fafb;
+	        --schedule-text: #111827;
+	        --schedule-muted: #6b7280;
+	    }
+
+	    .schedule-theme[data-schedule-theme="verde"] {
+	        --schedule-primary: #198754;
+	        --schedule-primary-dark: #0f5132;
+	        --schedule-primary-soft: #f0fdf4;
+	        --schedule-border: #bbf7d0;
+	        --schedule-surface: #ffffff;
+	        --schedule-title-bg: #dcfce7;
+	        --schedule-text: #14532d;
+	        --schedule-muted: #4b6357;
+	    }
+
+	    .schedule-theme[data-schedule-theme="cinza"] {
+	        --schedule-primary: #495057;
+	        --schedule-primary-dark: #212529;
+	        --schedule-primary-soft: #f8f9fa;
+	        --schedule-border: #ced4da;
+	        --schedule-surface: #ffffff;
+	        --schedule-title-bg: #e9ecef;
+	        --schedule-text: #212529;
+	        --schedule-muted: #6c757d;
+	    }
+
+	    .schedule-theme[data-schedule-theme="roxo"] {
+	        --schedule-primary: #6f42c1;
+	        --schedule-primary-dark: #432874;
+	        --schedule-primary-soft: #f6f0ff;
+	        --schedule-border: #d8c4ff;
+	        --schedule-surface: #ffffff;
+	        --schedule-title-bg: #eee4ff;
+	        --schedule-text: #2f1c55;
+	        --schedule-muted: #6f5d8c;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] {
+	        --schedule-primary: #0d6efd;
+	        --schedule-primary-dark: #084298;
+	        --schedule-primary-soft: #ffffff;
+	        --schedule-border: #dee2e6;
+	        --schedule-surface: #ffffff;
+	        --schedule-title-bg: #ffffff;
+	        --schedule-text: #000000;
+	        --schedule-muted: #000000;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"],
+	    .schedule-theme[data-schedule-theme="branco"] .card,
+	    .schedule-theme[data-schedule-theme="branco"] .card-body,
+	    .schedule-theme[data-schedule-theme="branco"] .schedule-toolbar,
+	    .schedule-theme[data-schedule-theme="branco"] .schedule-filters,
+	    .schedule-theme[data-schedule-theme="branco"] .table,
+	    .schedule-theme[data-schedule-theme="branco"] .table-responsive {
+	        background: #ffffff;
+	        color: #000000;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .card-header {
+	        background: #ffffff !important;
+	        border-bottom: 1px solid #dee2e6;
+	        color: #000000 !important;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .card-header h4,
+	    .schedule-theme[data-schedule-theme="branco"] .form-label,
+	    .schedule-theme[data-schedule-theme="branco"] .form-select,
+	    .schedule-theme[data-schedule-theme="branco"] .schedule-week-label,
+	    .schedule-theme[data-schedule-theme="branco"] .schedule-available-labs,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-schedule,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-schedule__title,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-schedule__title small,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-mobile-card,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-mobile-card__header,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-mobile-card dt,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-mobile-card dd {
+	        color: #000000 !important;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .form-select,
+	    .schedule-theme[data-schedule-theme="branco"] .schedule-week-label,
+	    .schedule-theme[data-schedule-theme="branco"] .schedule-available-labs,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-schedule,
+	    .schedule-theme[data-schedule-theme="branco"] .lab-mobile-card {
+	        background-color: #ffffff;
+	        border-color: #dee2e6;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .table > :not(caption) > * > * {
+	        background-color: #ffffff;
+	        border-color: #dee2e6;
+	        color: #000000;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .table thead tr,
+	    .schedule-theme[data-schedule-theme="branco"] .table thead th,
+	    .schedule-theme[data-schedule-theme="branco"] .table-dark,
+	    .schedule-theme[data-schedule-theme="branco"] .table-dark > th,
+	    .schedule-theme[data-schedule-theme="branco"] .table-dark > td {
+	        background-color: #ffffff !important;
+	        border-color: #dee2e6 !important;
+	        color: #000000 !important;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .table .bg-light,
+	    .schedule-theme[data-schedule-theme="branco"] .table td.bg-light {
+	        background-color: #ffffff !important;
+	        color: #000000 !important;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .schedule-entry {
+	        background: #ffffff;
+	        border: 1px solid #dee2e6;
+	        color: #000000;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .btn-primary {
+	        background-color: #0d6efd;
+	        border-color: #0d6efd;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .btn-primary:hover,
+	    .schedule-theme[data-schedule-theme="branco"] .btn-primary:focus {
+	        background-color: #0b5ed7;
+	        border-color: #0a58ca;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .btn-outline-primary {
+	        color: #0d6efd;
+	        border-color: #0d6efd;
+	    }
+
+	    .schedule-theme[data-schedule-theme="branco"] .btn-outline-primary:hover,
+	    .schedule-theme[data-schedule-theme="branco"] .btn-outline-primary:focus {
+	        color: #fff;
+	        background-color: #0d6efd;
+	        border-color: #0d6efd;
+	    }
+
+	    .schedule-theme .card-header {
+	        background: var(--schedule-primary) !important;
+	    }
+
+	    .schedule-theme .btn-primary {
+	        background-color: var(--schedule-primary);
+	        border-color: var(--schedule-primary);
+	    }
+
+	    .schedule-theme .btn-primary:hover,
+	    .schedule-theme .btn-primary:focus {
+	        background-color: var(--schedule-primary-dark);
+	        border-color: var(--schedule-primary-dark);
+	    }
+
+	    .schedule-theme .btn-outline-primary {
+	        color: var(--schedule-primary);
+	        border-color: var(--schedule-primary);
+	    }
+
+	    .schedule-theme .btn-outline-primary:hover,
+	    .schedule-theme .btn-outline-primary:focus {
+	        color: #fff;
+	        background-color: var(--schedule-primary);
+	        border-color: var(--schedule-primary);
+	    }
+
+	    .schedule-toolbar {
+	        display: flex;
+	        justify-content: space-between;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .schedule-actions,
+    .schedule-filters {
+        display: flex;
+        gap: .75rem;
+        flex-wrap: wrap;
+    }
+
+    .schedule-filters > div {
+        min-width: 180px;
+    }
+
+	    .schedule-week-label {
+	        display: inline-flex;
+	        justify-content: center;
+	        border: 1px solid var(--schedule-border);
+	        border-radius: 8px;
+	        background: var(--schedule-primary-soft);
+	        padding: .65rem 1rem;
+	        color: var(--schedule-text);
+	        font-weight: 700;
+	        text-align: center;
+	    }
+
+	    .schedule-available-labs {
+	        border: 1px solid var(--schedule-border);
+	        border-radius: 8px;
+	        background: var(--schedule-primary-soft);
+	        color: var(--schedule-text);
+	        padding: .75rem 1rem;
+	        text-align: center;
+	    }
+
+    .schedule-available-labs span {
+        display: inline-block;
+        margin: 0 .2rem;
+    }
+
+    .schedule-turno-separator {
+        border-radius: 8px;
+        margin: 1rem 0;
+        padding: .7rem 1rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-align: center;
+    }
+
+	    .lab-schedule {
+	        border: 1px solid var(--schedule-border);
+	        border-radius: 8px;
+	        overflow: hidden;
+	        background: var(--schedule-surface);
+	    }
+
+    .lab-schedule__title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+	        gap: .5rem;
+	        padding: .75rem 1rem;
+	        background: var(--schedule-title-bg);
+	        border-bottom: 1px solid var(--schedule-border);
+	        font-weight: 700;
+	        color: var(--schedule-text);
+	    }
+
+	    .lab-schedule__title small {
+	        color: var(--schedule-muted);
+	        font-weight: 500;
+	    }
+
+    .schedule-time {
+        width: 96px;
+    }
+
+    .schedule-entry {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+	        min-width: 130px;
+	        padding: .45rem;
+	        border-radius: 6px;
+	        background: var(--schedule-primary);
+	        color: #fff;
+	        line-height: 1.2;
+    }
+
+    .schedule-note {
+        padding-top: .2rem;
+        opacity: .9;
+    }
+
+    .schedule-entry a,
+    .schedule-entry button {
+        align-self: center;
+    }
+
+    .schedule-entry__actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .4rem;
+        margin-top: .35rem;
+    }
+
+    .schedule-empty-action {
+        min-width: 112px;
+    }
+
+    #agendamentoModalDialog.schedule-modal-minimized {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        width: min(420px, calc(100% - 2rem));
+        max-width: none;
+        margin: 0;
+        transform: none !important;
+    }
+
+    #agendamentoModalDialog.schedule-modal-minimized .modal-body {
+        display: none;
+    }
+
+    #agendamentoModalDialog.schedule-modal-minimized .modal-footer {
+        justify-content: flex-end;
+        padding: .75rem;
+    }
+
+    .lab-mobile-list {
+        display: none;
+    }
+
+    @media (max-width: 767.98px) {
+        .card-body {
+            padding: .75rem;
+        }
+
+        .schedule-toolbar,
+        .schedule-actions,
+        .schedule-filters {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .schedule-filters > div {
+            min-width: 0;
+        }
+
+        .lab-schedules {
+            display: none;
+        }
+
+        .lab-mobile-list {
+            display: grid;
+            gap: .75rem;
+        }
+
+	        .lab-mobile-card {
+	            border: 1px solid var(--schedule-border);
+	            border-radius: 8px;
+	            padding: .8rem;
+	            background: var(--schedule-surface);
+	        }
+
+        .lab-mobile-card__header {
+            display: flex;
+	            justify-content: space-between;
+	            gap: .5rem;
+	            margin-bottom: .65rem;
+	            color: var(--schedule-primary);
+	        }
+
+        .lab-mobile-card dl,
+        .lab-mobile-card dd {
+            margin: 0;
+        }
+
+        .lab-mobile-card dl {
+            display: grid;
+            gap: .45rem;
+        }
+
+        .lab-mobile-card dl div {
+            display: grid;
+            grid-template-columns: 96px 1fr;
+            gap: .5rem;
+        }
+
+	        .lab-mobile-card dt {
+	            color: var(--schedule-muted);
+	            font-weight: 700;
+	        }
+    }
+
+    @media print {
+        .btn, .card-header, .mt-4, .mb-3, .mb-4, .navbar, footer, .schedule-toolbar, .lab-mobile-list {
+            display: none !important;
+        }
+
+        .lab-schedules {
+            display: block !important;
+        }
+
+        @page {
+            size: landscape;
+            margin: 0.5cm;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+	        const filtroTurno = document.getElementById('filtroTurno');
+	        const filtroLaboratorio = document.getElementById('filtroLaboratorio');
+	        const cronogramaTema = document.getElementById('cronogramaTema');
+	        const scheduleThemeRoot = document.querySelector('.schedule-theme');
+	        const temasCronograma = ['azul', 'claro', 'verde', 'cinza', 'roxo', 'branco'];
+	        const temaStorageKey = 'cronogramaLaboratoriosTema';
+
+	        function aplicarTemaCronograma(tema) {
+	            const temaSeguro = temasCronograma.includes(tema) ? tema : 'azul';
+	            if (scheduleThemeRoot) {
+	                scheduleThemeRoot.dataset.scheduleTheme = temaSeguro;
+	            }
+	            if (cronogramaTema) {
+	                cronogramaTema.value = temaSeguro;
+	            }
+	            localStorage.setItem(temaStorageKey, temaSeguro);
+	        }
+
+	        aplicarTemaCronograma(localStorage.getItem(temaStorageKey) || 'azul');
+
+	        if (cronogramaTema) {
+	            cronogramaTema.addEventListener('change', function() {
+	                aplicarTemaCronograma(cronogramaTema.value);
+	            });
+	        }
+
+	        function aplicarFiltros() {
+            const url = new URL(window.location.href);
+            if (filtroTurno.value) {
+                url.searchParams.set('turno', filtroTurno.value);
+            } else {
+                url.searchParams.delete('turno');
+            }
+            if (filtroLaboratorio.value) {
+                url.searchParams.set('laboratorio', filtroLaboratorio.value);
+            } else {
+                url.searchParams.delete('laboratorio');
+            }
+            window.location.href = url;
+        }
+
+        if (filtroTurno) {
+            filtroTurno.addEventListener('change', aplicarFiltros);
+        }
+        if (filtroLaboratorio) {
+            filtroLaboratorio.addEventListener('change', aplicarFiltros);
+        }
+
+        {% if pode_editar_grade %}
+        const agendamentoModal = document.getElementById('agendamentoModal');
+        const agendamentoDialog = document.getElementById('agendamentoModalDialog');
+        const minimizarButton = document.getElementById('minimizarAgendamentoModal');
+        const modalTitulo = document.getElementById('agendamentoModalLabel');
+        const modalAgendamentoId = document.getElementById('modalAgendamentoId');
+        const modalLaboratorioId = document.getElementById('modalLaboratorioId');
+        const modalLaboratorioNome = document.getElementById('modalLaboratorioNome');
+        const modalData = document.getElementById('modalData');
+        const modalDiaNome = document.getElementById('modalDiaNome');
+        const modalTurno = document.getElementById('modalTurno');
+        const modalHorario = document.getElementById('modalHorario');
+        const modalAulaNome = document.getElementById('modalAulaNome');
+        const modalProfessor = document.getElementById('modalProfessor');
+        const modalTurma = document.getElementById('modalTurma');
+        const modalDisciplina = document.getElementById('modalDisciplina');
+        const modalObservacao = document.getElementById('modalObservacao');
+        const modalForm = document.getElementById('agendamentoModalForm');
+        const modalScrollY = document.getElementById('modalScrollY');
+        const scrollYParam = new URLSearchParams(window.location.search).get('scroll_y');
+
+        if (scrollYParam !== null) {
+            const scrollY = Number(scrollYParam);
+            if (!Number.isNaN(scrollY)) {
+                window.requestAnimationFrame(function() {
+                    window.scrollTo(0, scrollY);
+                });
+            }
+        }
+
+        function restaurarModal() {
+            agendamentoDialog.classList.remove('schedule-modal-minimized');
+            minimizarButton.innerHTML = '<i class="fas fa-window-minimize"></i> Minimizar';
+        }
+
+        if (agendamentoModal) {
+            agendamentoModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                if (!button) {
+                    return;
+                }
+
+                restaurarModal();
+                const agendamentoId = button.dataset.agendamentoId || '';
+                modalTitulo.textContent = agendamentoId ? 'Editar Agendamento' : 'Cadastrar Agendamento';
+                modalAgendamentoId.value = agendamentoId;
+                modalLaboratorioId.value = button.dataset.labId || '';
+                modalLaboratorioNome.value = button.dataset.labNome || '';
+                modalData.value = button.dataset.data || '';
+                modalDiaNome.value = button.dataset.dia || '';
+                modalTurno.value = button.dataset.turno || '';
+                modalHorario.value = button.dataset.horario || '';
+                modalAulaNome.value = `${button.dataset.horarioLabel || ''} - ${button.dataset.turnoLabel || ''}`.trim();
+                modalProfessor.value = button.dataset.professorId || '';
+                modalTurma.value = button.dataset.turmaId || '';
+                modalDisciplina.value = button.dataset.disciplina || '';
+                modalObservacao.value = button.dataset.observacao || '';
+            });
+
+            agendamentoModal.addEventListener('hidden.bs.modal', restaurarModal);
+        }
+
+        if (minimizarButton) {
+            minimizarButton.addEventListener('click', function() {
+                const minimizado = agendamentoDialog.classList.toggle('schedule-modal-minimized');
+                minimizarButton.innerHTML = minimizado
+                    ? '<i class="fas fa-window-restore"></i> Restaurar'
+                    : '<i class="fas fa-window-minimize"></i> Minimizar';
+            });
+        }
+
+        if (modalForm && modalScrollY) {
+            modalForm.addEventListener('submit', function() {
+                modalScrollY.value = String(Math.round(window.scrollY || 0));
+            });
+        }
+        {% endif %}
+
+        document.querySelectorAll('form[data-preserve-scroll="true"]').forEach(function(form) {
+            form.addEventListener('submit', function() {
+                const scrollInput = form.querySelector('input[name="scroll_y"]');
+                if (scrollInput) {
+                    scrollInput.value = String(Math.round(window.scrollY || 0));
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
