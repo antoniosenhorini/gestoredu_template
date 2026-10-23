@@ -1,11 +1,13 @@
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.views import LogoutView
 from django.urls import path, re_path
+from apps.views.importar import importar_alunos
 
 from apps import views
 
 
 urlpatterns = [
+    path('importar-alunos/', importar_alunos, name='importar_alunos'),
     path('accounts/login/', views.CustomLoginView.as_view(), name='login'),
     path('accounts/logout/', LogoutView.as_view(), name='logout'),
     path(

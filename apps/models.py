@@ -381,6 +381,7 @@ class Aluno(models.Model):
     turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='alunos')
     ativo = models.BooleanField(default=True)
     telefone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Telefone")
+    curso = models.CharField(max_length=100, blank=True, null=True, verbose_name="Curso")  # <-- ADICIONE ESTA LINHA
 
     class Meta:
         ordering = ['turma', 'numero']
