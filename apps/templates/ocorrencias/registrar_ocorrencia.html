@@ -37,7 +37,7 @@
                             <label for="pedagoga" class="form-label fw-semibold">
                                 <i class="fas fa-user-tie me-1"></i>Pedagoga
                             </label>
-                            <input type="text" name="pedagoga" id="pedagoga" class="form-control" value="Nao definida">
+                            <input type="text" name="pedagoga" id="pedagoga" class="form-control" value="  ">
                         </div>
 
                         <div class="col-12 col-md-5">
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('ocorrencia-form');
     const envioReincidencia = document.getElementById('enviar_whatsapp_reincidencia');
     const tiposReincidencia = ['piercing', 'desvio_normas', 'cabelo', 'uniforme'];
-    const pedagogaNaoDefinida = 'Nao definida';
+    const pedagogaNaoDefinida = '  ';
 
     function definirPedagoga(pedagoga) {
         const valor = pedagoga || pedagogaNaoDefinida;

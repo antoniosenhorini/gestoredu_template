@@ -33,60 +33,21 @@ def tipo_ocorrencia_permitido(tipo_ocorrencia):
     return normalizar_tipo_ocorrencia(tipo_ocorrencia) in TIPOS_OCORRENCIA_PERMITIDOS
 
 
-PEDAGOGA_NAO_DEFINIDA = 'Nao definida'
-
-
-def _normalizar_texto_mapeamento(valor):
-    texto = str(valor or '').replace('º', ' ').replace('ª', ' ')
-    texto = unicodedata.normalize('NFKD', texto)
-    texto = ''.join(char for char in texto if not unicodedata.combining(char))
-    texto = re.sub(r'[^0-9a-zA-Z]+', ' ', texto).strip().lower()
-    return re.sub(r'\s+', ' ', texto)
+# Deixamos vazio para o coordenador digitar o nome de quem atendeu
+PEDAGOGA_NAO_DEFINIDA = ''
 
 
 def normalizar_turma_mapeamento(turma):
-    partes = [
-        _normalizar_texto_mapeamento(getattr(turma, 'nome', '')),
-        _normalizar_texto_mapeamento(getattr(turma, 'serie', '')),
-    ]
-    return ' '.join(parte for parte in partes if parte).strip()
-
-
-def _turma_tem_serie(chave, serie, letra=None):
-    if letra:
-        return bool(re.search(rf'(^|\s){serie}\s*{letra}\b', chave))
-    return bool(re.search(rf'(^|\s){serie}(\s|[a-z]|$)', chave))
+    return str(getattr(turma, 'nome', ''))
 
 
 def pedagoga_por_turma(turma):
-    chave = normalizar_turma_mapeamento(turma)
-    chave_compacta = chave.replace(' ', '').upper()
-
-    if _turma_tem_serie(chave, '1', 'c') and 'agro' in chave:
-        return 'WANDA'
-    if _turma_tem_serie(chave, '1'):
-        return 'SONIA'
-    if _turma_tem_serie(chave, '2'):
-        return 'VERONICA'
-    if _turma_tem_serie(chave, '3'):
-        return 'ELAINE'
-
-    if any(chave_compacta.startswith(codigo) for codigo in {'8A', '8B', '8C', '8E', '9D', '9E', '7D'}):
-        return 'ELAINE'
-    if any(chave_compacta.startswith(codigo) for codigo in {'9A', '9B', '9C'}):
-        return 'WANDA'
-    if any(chave_compacta.startswith(codigo) for codigo in {'6A', '6B', '6C', '6D', '6E', '8D'}):
-        return 'SONIA'
-    if any(chave_compacta.startswith(codigo) for codigo in {'6F', '7A', '7B', '7C', '7E', '7F'}):
-        return 'ZINGARA'
-    return PEDAGOGA_NAO_DEFINIDA
+    # Retorna vazio para não puxar nomes antigos
+    return ''
 
 
 def resolver_pedagoga_turma(turma, pedagoga_informada=''):
-    pedagoga_mapeada = pedagoga_por_turma(turma)
-    if pedagoga_mapeada != PEDAGOGA_NAO_DEFINIDA:
-        return pedagoga_mapeada
-
+    # Se o coordenador digitou um nome, mantém. Se não, fica vazio.
     pedagoga_manual = str(pedagoga_informada or '').strip()
     return pedagoga_manual or PEDAGOGA_NAO_DEFINIDA
 

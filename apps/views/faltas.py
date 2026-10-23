@@ -701,6 +701,12 @@ def registrar_ocorrencia_aluno(request):
             ultima_turma = None
 
     if request.method == 'POST':
+        # === MÁGICA AQUI: Salva a turma e turno na memória ANTES de qualquer validação ===
+        turma_post_id = request.POST.get('turma')
+        if turma_post_id:
+            request.session['ultima_turma_ocorrencia_id'] = turma_post_id
+        request.session['ultimo_turno'] = request.POST.get('turno', 'manha')
+
         pedagoga = request.POST.get('pedagoga', '').strip()
 
         form = RegistroOcorrenciaForm(request.POST)
@@ -728,7 +734,7 @@ def registrar_ocorrencia_aluno(request):
             ocorrencia.tipo_ocorrencia = tipo_normalizado
             ocorrencia.observacoes_adicionais = request.POST.get('observacoes_adicionais', '')
             ocorrencia.atendido_por = pedagoga
-            ocorrencia.turno = aluno.turma.turno
+            ocorrencia.turno = request.POST.get('turno', 'integral')
             ocorrencia.faltou = False
 
             if ocorrencia.horario_chegada == '':
@@ -741,15 +747,15 @@ def registrar_ocorrencia_aluno(request):
                 ocorrencia.registrado_por = request.user
                 with transaction.atomic():
                     ocorrencia.save()
-            except IntegrityError:
-                messages.error(request, 'Ja existe um registro para este aluno nesta data com o mesmo tipo de ocorrencia. Nao e possivel duplicar sem alterar a restricao atual do banco.')
+            except IntegrityError as e:
+                # Vai mostrar o erro real do banco na tela
+                messages.error(request, f'ERRO DE BANCO DE DADOS: {e}')
                 return redirect('registrar_ocorrencia_aluno')
 
+            # Atualiza o restante da sessão após salvar com sucesso
             request.session['ultima_data_ocorrencia'] = ocorrencia.data.isoformat()
-            request.session['ultima_turma_ocorrencia_id'] = turma.id
             request.session['ultima_turma_ocorrencia_nome'] = turma.nome
             request.session['ultimo_tipo_ocorrencia'] = tipo_normalizado
-            request.session['ultimo_turno'] = request.POST.get('turno', 'manha')
 
             messages.success(request, f'{MENSAGEM_OCORRENCIA_RELATORIO_SEMANAL} Aluno: {aluno.nome} - Turma: {turma.nome}, No {numero}.')
             return redirect('registrar_ocorrencia_aluno')
@@ -770,9 +776,11 @@ def registrar_ocorrencia_aluno(request):
             'tipo_ocorrencia': ultimo_tipo,
             'turno': ultimo_turno,
         }
-        form = RegistroOcorrenciaForm(initial=initial_data)
+        
         if ultima_turma:
-            form.fields['turma'].initial = ultima_turma
+            initial_data['turma'] = ultima_turma
+
+        form = RegistroOcorrenciaForm(initial=initial_data)
 
     ultimas_ocorrencias = RegistroOcorrenciaAluno.objects.select_related('aluno', 'aluno__turma').order_by('-data', '-horario_chegada')[:10]
 
@@ -781,7 +789,6 @@ def registrar_ocorrencia_aluno(request):
         'ultimas_ocorrencias': ultimas_ocorrencias
     }
     return render(request, 'ocorrencias/registrar_ocorrencia.html', contexto)
-
 def buscar_aluno_ajax(request):
     turma_id = request.GET.get('turma_id')
     numero = request.GET.get('numero', '')
@@ -804,8 +811,8 @@ def buscar_aluno_ajax(request):
                 'nome': aluno.nome,
                 'turma': turma.nome,
                 'numero': aluno.numero,
-                'pedagoga': pedagoga_por_turma(turma),
-                'pedagoga_nao_definida': PEDAGOGA_NAO_DEFINIDA,
+                'pedagoga': '',
+                'pedagoga_nao_definida': '',
                 'reincidencia': reincidencia,
             })
         except (Turma.DoesNotExist, Aluno.DoesNotExist):

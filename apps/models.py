@@ -204,7 +204,7 @@ class AvisoProfessor(models.Model):
 class PeriodoAula(models.Model):
     """Tabela fixa com os períodos do dia"""
     TURNO_CHOICES = [
-        ('manha', 'Manhã'),
+        ('manha', 'Manhã'), ('integral', 'Integral'),
         ('tarde', 'Tarde'),
     ]
 
@@ -351,7 +351,7 @@ class RegistroPonto(models.Model):
 
 class Turma(models.Model):
     TURNO_CHOICES = [
-        ('manha', 'Manhã'),
+        ('manha', 'Manhã'), ('integral', 'Integral'),
         ('tarde', 'Tarde'),
     ]
 
@@ -371,7 +371,10 @@ class Turma(models.Model):
         ordering = ['nome']
 
     def __str__(self):
-        return f"{self.serie} - {self.nome}"
+        # Pega o curso do primeiro aluno da turma
+        primeiro_aluno = self.alunos.first()
+        curso = f" - {primeiro_aluno.curso}" if primeiro_aluno and primeiro_aluno.curso else ""
+        return f"{self.nome}{curso}"
 
 
 class Aluno(models.Model):
@@ -456,7 +459,7 @@ class RegistroOcorrenciaAluno(models.Model):
 
     # NOVO: Turno choices
     TURNO_CHOICES = [
-        ('manha', 'Manhã'),
+        ('manha', 'Manhã'), ('integral', 'Integral'),
         ('tarde', 'Tarde'),
     ]
 
@@ -616,12 +619,12 @@ class ItemEquipamento(models.Model):
 class AgendamentoLab(models.Model):
     """Para laboratórios fixos (Lab 01, 02, 03) - agendamento por aula"""
     HORARIO_CHOICES = [(str(i), f'{i}ª Aula') for i in range(1, 7)]
-    TURNO_CHOICES = [('manha', 'Manhã'), ('tarde', 'Tarde')]
+    TURNO_CHOICES = [('manha', 'Manhã'), ('integral', 'Integral'), ('tarde', 'Tarde')]
 
     laboratorio = models.ForeignKey(Laboratorio, on_delete=models.CASCADE, limit_choices_to={'tipo': 'fixo'})
     data = models.DateField()
     horario = models.CharField(max_length=1, choices=HORARIO_CHOICES)
-    turno = models.CharField(max_length=5, choices=TURNO_CHOICES)
+    turno = models.CharField(max_length=10, choices=TURNO_CHOICES)
 
     professor = models.ForeignKey('Professor', on_delete=models.CASCADE)
     disciplina = models.CharField(max_length=100)
@@ -689,7 +692,7 @@ class SemanaCronogramaLaboratorio(models.Model):
         ('cancelada', 'Cancelada'),
     ]
 
-    turno = models.CharField(max_length=5, choices=AgendamentoLab.TURNO_CHOICES)
+    turno = models.CharField(max_length=10, choices=AgendamentoLab.TURNO_CHOICES)
     data_inicio = models.DateField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='editando')
 
@@ -781,8 +784,9 @@ class Emprestimo(models.Model):
 # =============================================================================
 
 TURNO_CHOICES_LAB = [
-    ('manha', 'Manha'),
+    ('manha', 'Manha'), ('integral', 'Integral'),
     ('tarde', 'Tarde'),
+    ('integral', 'Integral'), # <-- ADICIONE ESTA LINHA
 ]
 
 
