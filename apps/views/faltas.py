@@ -6,14 +6,14 @@ from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
-MENSAGEM_FALTA_RELATORIO_SEMANAL = (
-    '✅ Falta registrada com sucesso. O responsável será incluído no relatório semanal, '
-    'caso o aluno atinja o critério de envio.'
+# Mensagens atualizadas para Notificação Diária
+MENSAGEM_FALTA_DIARIA = (
+    '✅ Falta registrada com sucesso. O responsável será notificado via WhatsApp.'
 )
-MENSAGEM_OCORRENCIA_RELATORIO_SEMANAL = (
-    '✅ Ocorrência registrada com sucesso. O responsável será incluído no relatório semanal, '
-    'caso o aluno atinja o critério de envio.'
+MENSAGEM_OCORRENCIA_DIARIA = (
+    '✅ Ocorrência registrada com sucesso. O responsável será notificado via WhatsApp.'
 )
+
 TIPOS_OCORRENCIA_WHATSAPP = {'atraso', 'piercing', 'desvio_normas', 'cabelo', 'uniforme', 'fora_sala', 'matando_aula'}
 TIPOS_OCORRENCIA_REINCIDENCIA = {'piercing', 'desvio_normas', 'cabelo', 'uniforme'}
 TIPOS_OCORRENCIA_LABELS = {
@@ -44,7 +44,7 @@ def _tipo_ocorrencia_whatsapp(tipo_ocorrencia):
 
 
 def _enviar_aviso_ocorrencia_whatsapp(request, aluno, tipo_ocorrencia, data_ocorrencia, mensagem_sucesso=None):
-    messages.success(request, mensagem_sucesso or MENSAGEM_OCORRENCIA_RELATORIO_SEMANAL)
+    messages.success(request, mensagem_sucesso or MENSAGEM_OCORRENCIA_DIARIA)
 
 
 # ===== NOVAS VIEWS PARA CONTROLE DE FALTAS =====
@@ -387,32 +387,52 @@ def registrar_falta_aluno(request):
 
         try:
             aluno = Aluno.objects.get(id=aluno_id)
-            request.session['ultimo_turno_falta_aluno'] = aluno.turma.turno
+            # Força o turno integral para não dar erro no banco
+            request.session['ultimo_turno_falta_aluno'] = 'integral'
             request.session['ultima_turma_falta_aluno'] = str(aluno.turma_id)
             request.session.modified = True
+
             aluno_turma_msg = f'Aluno: {aluno.nome} - Turma: {aluno.turma}.'
             logger.info('Turma normalizada para mapeamento de pedagoga: %s', normalizar_turma_mapeamento(aluno.turma))
             pedagoga = resolver_pedagoga_turma(aluno.turma, pedagoga)
+
+            # Converte a data para objeto date real (ESSENCIAL para as travas)
             data_falta_obj = datetime.strptime(data, '%Y-%m-%d').date()
+
             atestado_ativo = AtestadoAluno.objects.filter(
                 aluno=aluno,
                 ativo=True,
                 data_inicio__lte=data_falta_obj,
                 data_fim__gte=data_falta_obj,
             ).first()
+
             if atestado_ativo:
                 dias_restantes = max((atestado_ativo.data_fim - data_falta_obj).days, 0)
                 messages.warning(request, f'⚠️ Aluno em atestado. Faltam {dias_restantes} dias para o término do atestado.')
                 return redirect('registrar_falta_aluno')
 
-            if RegistroFaltaAluno.objects.filter(aluno=aluno, data=data).exists():
-                messages.warning(request, f'Este aluno ja possui falta registrada nesta data. {aluno_turma_msg}')
+            # TRAVA 1: Já existe falta no mesmo dia? (usando data_falta_obj)
+            if RegistroFaltaAluno.objects.filter(aluno=aluno, data=data_falta_obj).exists():
+                messages.warning(request, f'Este aluno já possui FALTA registrada nesta data. {aluno_turma_msg}')
                 return redirect('registrar_falta_aluno')
 
-            # Registra falta
+            # TRAVA 2: Já existe um atraso no mesmo dia? (usando data_falta_obj)
+            if RegistroOcorrenciaAluno.objects.filter(
+                aluno=aluno,
+                data=data_falta_obj,
+                tipo_ocorrencia='atraso'
+            ).exists():
+                messages.error(
+                    request,
+                    f'⛔ BLOQUEADO: Este aluno já foi registrado como ATRASADO hoje. '
+                    f'Ele está presente! {aluno_turma_msg}'
+                )
+                return redirect('registrar_falta_aluno')
+
+            # Registra falta (usando data_falta_obj)
             falta = RegistroFaltaAluno.objects.create(
                 aluno=aluno,
-                data=data,
+                data=data_falta_obj,
                 quantidade_faltas=quantidade,
                 justificada=justificada,
                 responsavel_contatado=responsavel,
@@ -422,31 +442,31 @@ def registrar_falta_aluno(request):
             )
 
             if possui_atestado:
-                messages.success(request, f'{MENSAGEM_FALTA_RELATORIO_SEMANAL} {aluno_turma_msg}')
+                messages.success(request, f'{MENSAGEM_FALTA_DIARIA} {aluno_turma_msg}')
                 return redirect('registrar_falta_aluno')
 
-            messages.success(request, f'{MENSAGEM_FALTA_RELATORIO_SEMANAL} {aluno_turma_msg}')
+            messages.success(request, f'{MENSAGEM_FALTA_DIARIA} {aluno_turma_msg}')
 
         except Exception as e:
-            messages.error(request, f'Erro: {str(e)}')
+            messages.error(request, f'Erro real: {str(e)}')
 
         return redirect('registrar_falta_aluno')
 
-    # GET - exibe formulÃƒÂ¡rio
+    # GET - exibe formulário
     turmas = Turma.objects.filter(ativa=True).order_by('turno', 'nome')
     alunos = Aluno.objects.filter(ativo=True).select_related('turma').order_by('turma__nome', 'numero')
-    
-    # Recuperar turno/turma salvos na sessão
-    ultimo_turno = request.session.get('ultimo_turno_falta_aluno', '')
+
+    ultimo_turno = request.session.get('ultimo_turno_falta_aluno', 'integral')
     ultima_turma_id = request.session.get('ultima_turma_falta_aluno', '')
-    
+
     contexto = {
         'turmas': [
             {
                 'id': turma.id,
                 'nome': turma.nome,
                 'serie': turma.serie,
-                'turno': turma.turno or '',
+                'turno': turma.turno or 'integral',
+                'label': str(turma),
             }
             for turma in turmas
         ],
@@ -459,7 +479,7 @@ def registrar_falta_aluno(request):
                 'turma_nome': aluno.turma.nome,
                 'turma_serie': aluno.turma.serie,
                 'turma_label': str(aluno.turma),
-                'turno': aluno.turma.turno or '',
+                'turno': aluno.turma.turno or 'integral',
                 'pedagoga': pedagoga_por_turma(aluno.turma),
             }
             for aluno in alunos
@@ -467,6 +487,7 @@ def registrar_falta_aluno(request):
         'pedagoga_nao_definida': PEDAGOGA_NAO_DEFINIDA,
         'ultimo_turno_falta_aluno': ultimo_turno,
         'ultima_turma_falta_aluno': ultima_turma_id,
+        'ultima_turma_id': ultima_turma_id,
     }
     return render(request, 'faltas/registrar_falta_aluno.html', contexto)
 
@@ -680,57 +701,47 @@ def excluir_falta_aluno(request, falta_id):
 @ocorrencias_required
 def registrar_ocorrencia_aluno(request):
     tipos_ocorrencia_permitidos = TIPOS_OCORRENCIA_PERMITIDOS
-
-    # Recupera ultima data da sessao
-    ultima_data_str = request.session.get('ultima_data_ocorrencia')
-    if ultima_data_str:
-        try:
-            ultima_data = datetime.strptime(ultima_data_str, '%Y-%m-%d').date()
-        except ValueError:
-            ultima_data = timezone.now().date()
-    else:
-        ultima_data = timezone.now().date()
-
-    # Recupera ultima turma da sessao
-    ultima_turma_id = request.session.get('ultima_turma_ocorrencia_id')
-    ultima_turma = None
-    if ultima_turma_id:
-        try:
-            ultima_turma = Turma.objects.get(id=ultima_turma_id)
-        except Turma.DoesNotExist:
-            ultima_turma = None
+    ultimas_ocorrencias = RegistroOcorrenciaAluno.objects.select_related('aluno', 'aluno__turma').order_by('-data', '-horario_chegada')[:10]
 
     if request.method == 'POST':
-        # === MÁGICA AQUI: Salva a turma e turno na memória ANTES de qualquer validação ===
+        # Salva a turma e turno na memória
         turma_post_id = request.POST.get('turma')
         if turma_post_id:
             request.session['ultima_turma_ocorrencia_id'] = turma_post_id
-        request.session['ultimo_turno'] = request.POST.get('turno', 'manha')
 
         pedagoga = request.POST.get('pedagoga', '').strip()
-
         form = RegistroOcorrenciaForm(request.POST)
+
         if form.is_valid():
             turma = form.cleaned_data['turma']
             numero = form.cleaned_data['numero_aluno']
+            data_form = form.cleaned_data['data']
 
             aluno = Aluno.objects.filter(turma=turma, numero=numero).first()
             if not aluno:
                 messages.error(request, f'Aluno numero {numero} nao encontrado na turma {turma.nome}!')
-                contexto = {
-                    'form': form,
-                    'ultimas_ocorrencias': RegistroOcorrenciaAluno.objects.select_related('aluno', 'aluno__turma').order_by('-data', '-horario_chegada')[:10]
-                }
-                return render(request, 'ocorrencias/registrar_ocorrencia.html', contexto)
+                return render(request, 'ocorrencias/registrar_ocorrencia.html', {'form': form, 'ultimas_ocorrencias': ultimas_ocorrencias})
 
             logger.info('Turma normalizada para mapeamento de pedagoga: %s', normalizar_turma_mapeamento(aluno.turma))
             pedagoga = resolver_pedagoga_turma(aluno.turma, pedagoga)
             ocorrencia = form.save(commit=False)
-            tipo_ocorrencia = request.POST.get('tipo_ocorrencia', 'atraso')
-            tipo_normalizado = normalizar_tipo_ocorrencia(tipo_ocorrencia)
+            tipo_normalizado = normalizar_tipo_ocorrencia(request.POST.get('tipo_ocorrencia', 'atraso'))
+
             if tipo_normalizado not in tipos_ocorrencia_permitidos:
                 messages.error(request, 'Tipo de ocorrencia invalido. Faltas devem ser registradas em Faltas de Alunos.')
-                return redirect('registrar_ocorrencia_aluno')
+                return render(request, 'ocorrencias/registrar_ocorrencia.html', {'form': form, 'ultimas_ocorrencias': ultimas_ocorrencias})
+
+            # ===== TRAVA 3: Bloqueia atraso se já houver falta no mesmo dia =====
+            if tipo_normalizado == 'atraso':
+                if RegistroFaltaAluno.objects.filter(aluno=aluno, data=data_form).exists():
+                    messages.error(request, f'⛔ BLOQUEADO: {aluno.nome} já possui FALTA registrada hoje. Não é possível registrar Atraso.')
+                    return render(request, 'ocorrencias/registrar_ocorrencia.html', {'form': form, 'ultimas_ocorrencias': ultimas_ocorrencias})
+
+            # ===== TRAVA 4: Bloqueia ocorrência duplicada (mesmo tipo no mesmo dia) =====
+            if RegistroOcorrenciaAluno.objects.filter(aluno=aluno, data=data_form, tipo_ocorrencia=tipo_normalizado).exists():
+                messages.warning(request, f'Atenção: Já existe uma ocorrência do tipo "{tipo_normalizado}" registrada para {aluno.nome} nesta data.')
+                return render(request, 'ocorrencias/registrar_ocorrencia.html', {'form': form, 'ultimas_ocorrencias': ultimas_ocorrencias})
+
             ocorrencia.tipo_ocorrencia = tipo_normalizado
             ocorrencia.observacoes_adicionais = request.POST.get('observacoes_adicionais', '')
             ocorrencia.atendido_por = pedagoga
@@ -747,48 +758,49 @@ def registrar_ocorrencia_aluno(request):
                 ocorrencia.registrado_por = request.user
                 with transaction.atomic():
                     ocorrencia.save()
-            except IntegrityError as e:
-                # Vai mostrar o erro real do banco na tela
-                messages.error(request, f'ERRO DE BANCO DE DADOS: {e}')
-                return redirect('registrar_ocorrencia_aluno')
+            except IntegrityError:
+                messages.error(request, 'Erro: Registro duplicado no banco de dados.')
+                return render(request, 'ocorrencias/registrar_ocorrencia.html', {'form': form, 'ultimas_ocorrencias': ultimas_ocorrencias})
 
-            # Atualiza o restante da sessão após salvar com sucesso
-            request.session['ultima_data_ocorrencia'] = ocorrencia.data.isoformat()
             request.session['ultima_turma_ocorrencia_nome'] = turma.nome
             request.session['ultimo_tipo_ocorrencia'] = tipo_normalizado
 
-            messages.success(request, f'{MENSAGEM_OCORRENCIA_RELATORIO_SEMANAL} Aluno: {aluno.nome} - Turma: {turma.nome}, No {numero}.')
+            messages.success(request, f'{MENSAGEM_OCORRENCIA_DIARIA} Aluno: {aluno.nome} - Turma: {turma.nome}, No {numero}.')
             return redirect('registrar_ocorrencia_aluno')
         else:
             messages.error(request, 'Erro no formulario. Verifique os dados.')
-            return redirect('registrar_ocorrencia_aluno')
+            return render(request, 'ocorrencias/registrar_ocorrencia.html', {'form': form, 'ultimas_ocorrencias': ultimas_ocorrencias})
 
     else:
-        # Recupera o ultimo tipo e turno da sessao.
+        # ===== A MÁGICA PARA DESTRAVAR A DATA ACONTECE AQUI =====
+        # Apaga a data antiga que estava salva no navegador
+        if 'ultima_data_ocorrencia' in request.session:
+            del request.session['ultima_data_ocorrencia']
+
+        ultima_turma_id = request.session.get('ultima_turma_ocorrencia_id')
+        ultima_turma = Turma.objects.filter(id=ultima_turma_id).first() if ultima_turma_id else None
+
         ultimo_tipo = request.session.get('ultimo_tipo_ocorrencia', 'atraso')
         if ultimo_tipo not in tipos_ocorrencia_permitidos:
             ultimo_tipo = 'atraso'
-        ultimo_turno = request.session.get('ultimo_turno', 'manha')
 
         initial_data = {
-            'data': ultima_data.isoformat(),
+            'data': timezone.now().date().isoformat(), # <--- FORÇA A DATA DE HOJE
             'faltou': False,
             'tipo_ocorrencia': ultimo_tipo,
-            'turno': ultimo_turno,
+            'turno': request.session.get('ultimo_turno', 'integral'),
         }
-        
         if ultima_turma:
             initial_data['turma'] = ultima_turma
 
         form = RegistroOcorrenciaForm(initial=initial_data)
-
-    ultimas_ocorrencias = RegistroOcorrenciaAluno.objects.select_related('aluno', 'aluno__turma').order_by('-data', '-horario_chegada')[:10]
 
     contexto = {
         'form': form,
         'ultimas_ocorrencias': ultimas_ocorrencias
     }
     return render(request, 'ocorrencias/registrar_ocorrencia.html', contexto)
+
 def buscar_aluno_ajax(request):
     turma_id = request.GET.get('turma_id')
     numero = request.GET.get('numero', '')

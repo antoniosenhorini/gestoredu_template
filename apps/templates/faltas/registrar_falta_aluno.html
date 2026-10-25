@@ -17,39 +17,24 @@
                         {% csrf_token %}
                         <input type="hidden" name="aluno" id="aluno_id">
                         <input type="hidden" name="quantidade" value="1">
-                        <input type="hidden" name="turno_opcao" id="turno_opcao_hidden" value="">
+                        <input type="hidden" name="turno_opcao" id="turno_opcao_hidden" value="integral">
                         <input type="hidden" name="turma" id="turma_hidden" value="">
 
-                        <div class="col-12">
-                            <label class="form-label fw-semibold d-block mb-2">
-                                <i class="fas fa-clock me-1"></i>Turno
-                            </label>
-                            <div class="d-flex flex-column flex-sm-row gap-2">
-                                <input type="radio" class="btn-check" name="turno_opcao_visual" id="turno_manha" value="manha" autocomplete="off">
-                                <label class="btn btn-outline-primary text-start" for="turno_manha">
-                                    <i class="fas fa-sun me-1"></i>Manhã
-                                </label>
-
-                                <input type="radio" class="btn-check" name="turno_opcao_visual" id="turno_tarde" value="tarde" autocomplete="off">
-                                <label class="btn btn-outline-primary text-start" for="turno_tarde">
-                                    <i class="fas fa-cloud-sun me-1"></i>Tarde
-                                </label>
-                            </div>
-                        </div>
-
+                        <!-- CAMPO PEDAGOGA (Inicia vazio) -->
                         <div class="col-12 col-md-7">
                             <label for="pedagoga" class="form-label fw-semibold">
                                 <i class="fas fa-user-tie me-1"></i>Pedagoga
                             </label>
-                            <input type="text" name="pedagoga" id="pedagoga" class="form-control" value="{{ pedagoga_nao_definida }}">
+                            <input type="text" name="pedagoga" id="pedagoga" class="form-control" value="">
                         </div>
 
+                        <!-- CAMPO TURMA (Sem filtro de turno, já habilitado) -->
                         <div class="col-12 col-md-7">
                             <label for="turma" class="form-label fw-semibold">
                                 <i class="fas fa-users me-1"></i>Turma
                             </label>
-                            <select id="turma" class="form-control" required disabled>
-                                <option value="">Selecione o turno primeiro</option>
+                            <select id="turma" class="form-control" required>
+                                <option value="">Selecione a turma</option>
                             </select>
                         </div>
 
@@ -128,11 +113,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const turmas = JSON.parse(document.getElementById('turmas-data').textContent);
     const alunos = JSON.parse(document.getElementById('alunos-data').textContent);
     
-    // Variáveis de sessão Django
-    const ultimoTurnoSalvo = '{{ ultimo_turno_falta_aluno|escapejs }}';
     const ultimaTurmaSalva = '{{ ultima_turma_falta_aluno|escapejs }}';
 
-    const turnoRadios = document.querySelectorAll('input[name="turno_opcao_visual"]');
     const turmaSelect = document.getElementById('turma');
     const numeroInput = document.getElementById('numero_aluno');
     const alunoIdInput = document.getElementById('aluno_id');
@@ -143,130 +125,36 @@ document.addEventListener('DOMContentLoaded', function () {
     const salvarButton = document.getElementById('btn-salvar');
     const form = document.getElementById('form-falta-aluno');
     const pedagogaInput = document.getElementById('pedagoga');
-    const pedagogaNaoDefinida = '{{ pedagoga_nao_definida }}';
-    const turnoOpcaoHidden = document.getElementById('turno_opcao_hidden');
     const turmaHidden = document.getElementById('turma_hidden');
     let alunoLocalizado = null;
 
-    function definirPedagoga(pedagoga) {
-        const valor = pedagoga || pedagogaNaoDefinida;
-        pedagogaInput.value = valor;
-        pedagogaInput.readOnly = valor !== pedagogaNaoDefinida;
-    }
-
-    function turnoSelecionado() {
-        const radio = document.querySelector('input[name="turno_opcao_visual"]:checked');
-        return radio ? radio.value : '';
-    }
-
-    function atualizarHiddenInputs() {
-        const turmaId = alunoLocalizado ? alunoLocalizado.turma_id : turmaSelect.value;
-        const alunoTurno = alunoLocalizado ? alunoLocalizado.turno : '';
-        turnoOpcaoHidden.value = alunoTurno || turnoSelecionado();
-        turmaHidden.value = turmaId || '';
-    }
-
-    function restaurarTurmaDoSessao() {
-        if (!ultimoTurnoSalvo || !ultimaTurmaSalva) {
-            return; // Primeira visita, nada a restaurar
-        }
-
-        console.log('Turma salva da sessão:', ultimaTurmaSalva);
-
-        const radioTurno = document.querySelector(`input[name="turno_opcao_visual"][value="${ultimoTurnoSalvo}"]`);
-        if (radioTurno) {
-            radioTurno.checked = true;
-            preencherTurmas();
-        }
-
-        const turmaOption = Array.from(turmaSelect.options).find(option => option.value === ultimaTurmaSalva);
-        if (turmaOption) {
+    // 1. Carrega TODAS as turmas de uma vez (sem filtro de turno)
+    function preencherTurmas() {
+        turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
+        turmas.forEach(turma => {
+            const option = document.createElement('option');
+            option.value = turma.id;
+            option.textContent = turma.label;
+            turmaSelect.appendChild(option);
+        });
+        
+        // Restaura a última turma usada, se existir
+        if (ultimaTurmaSalva) {
             turmaSelect.value = ultimaTurmaSalva;
+            if (turmaSelect.value) {
+                turmaSelect.dispatchEvent(new Event('change'));
+            }
         }
-
-        console.log('Turma selecionada após restaurar:', turmaSelect.value);
-        turmaSelect.dispatchEvent(new Event('change'));
-    }
-
-    function selecionarTurnoAutomatico() {
-        const agora = new Date();
-        const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
-        const inicioManha = 7 * 60 + 20;
-        const fimManha = 12 * 60 + 45;
-        const inicioTarde = 13 * 60 + 20;
-        let turnoAutomatico = '';
-
-        if (minutosAtuais >= inicioManha && minutosAtuais <= fimManha) {
-            turnoAutomatico = 'manha';
-        } else if (minutosAtuais >= inicioTarde) {
-            turnoAutomatico = 'tarde';
-        }
-
-        if (!turnoAutomatico) {
-            return;
-        }
-
-        const radio = document.querySelector(`input[name="turno_opcao_visual"][value="${turnoAutomatico}"]`);
-        if (radio && !radio.checked) {
-            radio.checked = true;
-            preencherTurmas();
-        }
-    }
-
-    function mostrarAviso(tipo, mensagem, detalhe) {
-        alunoIdInput.value = '';
-        alunoLocalizado = null;
-        salvarButton.disabled = true;
-        definirPedagoga(pedagogaNaoDefinida);
-        alunoNome.textContent = mensagem || '';
-        alunoTurma.textContent = detalhe || '';
-
-        if (!mensagem) {
-            alerta.className = 'alert alert-info d-none mb-0';
-            return;
-        }
-
-        const classe = tipo === 'sucesso' ? 'alert alert-success mb-0' : 'alert alert-warning mb-0';
-        const icone = tipo === 'sucesso' ? 'fas fa-user-graduate mt-1' : 'fas fa-circle-exclamation mt-1';
-        alerta.className = classe;
-        alertaIcone.className = icone;
     }
 
     function limparAluno() {
-        mostrarAviso('', '', '');
-    }
-
-    function preencherTurmas() {
-        const turno = turnoSelecionado();
-        turmaSelect.innerHTML = '';
-        numeroInput.value = '';
-        numeroInput.disabled = true;
-        limparAluno();
-
-        if (!turno) {
-            turmaSelect.disabled = true;
-            turmaSelect.innerHTML = '<option value="">Selecione o turno primeiro</option>';
-            return;
-        }
-
-        const turmasFiltradas = turmas.filter(turma => turma.turno === turno);
-        turmaSelect.disabled = false;
-        turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
-
-        turmasFiltradas.forEach(turma => {
-            const option = document.createElement('option');
-            option.value = turma.id;
-            option.textContent = `${turma.serie} - ${turma.nome}`;
-            turmaSelect.appendChild(option);
-        });
-
-        if (!turmasFiltradas.length) {
-            turmaSelect.innerHTML = '<option value="">Nenhuma turma neste turno</option>';
-            turmaSelect.disabled = true;
-            mostrarAviso('erro', 'Nenhuma turma encontrada para este turno.', '');
-        }
-        
-        atualizarHiddenInputs();
+        alunoIdInput.value = '';
+        alunoLocalizado = null;
+        salvarButton.disabled = true;
+        pedagogaInput.value = '';
+        alunoNome.textContent = '';
+        alunoTurma.textContent = '';
+        alerta.className = 'alert alert-info d-none mb-0';
     }
 
     function localizarAluno() {
@@ -281,33 +169,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const aluno = alunos.find(item => Number(item.turma_id) === turmaId && Number(item.numero) === numero);
         if (!aluno) {
-            mostrarAviso('erro', 'Aluno não encontrado.', 'Confira a turma e o número de chamada.');
+            alunoNome.textContent = 'Aluno não encontrado.';
+            alunoTurma.textContent = 'Confira a turma e o número de chamada.';
+            alerta.className = 'alert alert-warning mb-0';
+            alertaIcone.className = 'fas fa-circle-exclamation mt-1';
             return;
         }
 
+        // Aluno encontrado
         alunoIdInput.value = aluno.id;
         alunoLocalizado = aluno;
-        atualizarHiddenInputs();
+        turmaHidden.value = aluno.turma_id;
+        
         alunoNome.textContent = aluno.nome;
         alunoTurma.textContent = aluno.turma_label;
-        definirPedagoga(aluno.pedagoga);
         alerta.className = 'alert alert-success mb-0';
         alertaIcone.className = 'fas fa-user-graduate mt-1';
+        
         salvarButton.disabled = false;
     }
-
-    turnoRadios.forEach(radio => {
-        radio.addEventListener('change', function () {
-            atualizarHiddenInputs();
-            preencherTurmas();
-        });
-    });
 
     turmaSelect.addEventListener('change', function () {
         numeroInput.value = '';
         numeroInput.disabled = !turmaSelect.value;
         limparAluno();
-        atualizarHiddenInputs();
         if (!numeroInput.disabled) {
             numeroInput.focus();
         }
@@ -316,31 +201,23 @@ document.addEventListener('DOMContentLoaded', function () {
     numeroInput.addEventListener('input', localizarAluno);
 
     form.addEventListener('submit', function (event) {
-        atualizarHiddenInputs();
-
         if (!alunoIdInput.value || !alunoLocalizado) {
             event.preventDefault();
-            mostrarAviso('erro', 'Localize o aluno antes de salvar.', 'Selecione turno, turma e informe o número de chamada.');
-            numeroInput.focus();
+            alert('Localize o aluno antes de salvar.');
             return;
         }
 
         alunoIdInput.value = alunoLocalizado.id;
         turmaHidden.value = alunoLocalizado.turma_id;
-        turnoOpcaoHidden.value = alunoLocalizado.turno || turnoSelecionado();
 
         const confirmado = window.confirm(`Deseja realmente lançar falta para ${alunoLocalizado.nome} da turma ${alunoLocalizado.turma_label}?`);
         if (!confirmado) {
             event.preventDefault();
         }
     });
-    definirPedagoga(pedagogaNaoDefinida);
-    if (ultimaTurmaSalva) {
-        restaurarTurmaDoSessao();
-    } else {
-        selecionarTurnoAutomatico();
-    }
-    atualizarHiddenInputs();
+
+    // Inicializa o formulário
+    preencherTurmas();
 });
 </script>
 {% endblock %}
