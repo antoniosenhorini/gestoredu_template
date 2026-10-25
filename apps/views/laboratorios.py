@@ -18,7 +18,7 @@ import hashlib
 
 
 DIAS_SEMANA_LAB = ['Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira']
-HORARIOS_LAB = ['1', '2', '3', '4', '5', '6']
+HORARIOS_LAB = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 TURNOS_LAB = [
     ('manha', 'Manha'),
     ('tarde', 'Tarde'),
