@@ -150,7 +150,7 @@ function aplicarFiltro() {
                     {% for falta in faltas %}
                     <tr>
                         <td><input type="checkbox" class="select-item" value="{{ falta.id }}" onchange="atualizarContador()"></td>
-                        <td>{{ falta.professor.get_full_name|default:falta.professor.username }}</td>
+                        <td>{{ falta.professor.nome_completo }}</td>
                         <td>{{ falta.data|date:"d/m/Y" }}</td>
                         <td>{{ falta.dia_semana }}</td>
                         <td>{{ falta.horario_previsto|time:"H:i" }}</td>

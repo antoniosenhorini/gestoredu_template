@@ -50,7 +50,7 @@
                                 <select name="professor" class="form-select" required>
                                     <option value="">Selecione...</option>
                                     {% for prof in professores %}
-                                    <option value="{{ prof.id }}">{{ prof.get_full_name|default:prof.username }}</option>
+                                    <option value="{{ prof.id }}">{{ prof.nome_completo }}</option>
                                     {% endfor %}
                                 </select>
                             </div>

@@ -52,7 +52,7 @@ def _enviar_aviso_ocorrencia_whatsapp(request, aluno, tipo_ocorrencia, data_ocor
 @login_required
 @user_passes_test(pertence_ao_grupo_equipe_diretiva, login_url='/')
 def controle_faltas(request):
-    professores = User.objects.filter(groups__name__iexact='Equipe Diretiva').exclude(id=request.user.id).order_by('first_name')
+    professores = Professor.objects.all().order_by('nome_completo')
 
     # Captura e converte os valores da URL
     mes_str = request.GET.get('mes')
@@ -71,18 +71,20 @@ def controle_faltas(request):
     faltas = RegistroFalta.objects.filter(data__month=mes, data__year=ano).select_related('professor').order_by('-data')
     periodos = PeriodoAula.objects.all().order_by('ordem')
     resumo = []
+    
     for professor in professores:
         faltas_prof = [f for f in faltas if f.professor.id == professor.id]
         total_minutos = sum(f.minutos_faltados() for f in faltas_prof)
         total_faltas = len([f for f in faltas_prof if f.tipo == 'falta'])
         total_atrasos = len([f for f in faltas_prof if f.tipo == 'atraso'])
         resumo.append({
-            'nome': professor.get_full_name() or professor.username,
+            'nome': professor.nome_completo, # <--- Agora puxa o nome direto da tabela Professor
             'total_minutos': total_minutos,
             'total_horas': round(total_minutos / 60, 1),
             'total_faltas': total_faltas,
             'total_atrasos': total_atrasos,
         })
+        
     resumo = sorted(resumo, key=lambda x: x['nome'])
     context = {
         'professores': professores,
@@ -99,7 +101,7 @@ def controle_faltas(request):
 @login_required
 @user_passes_test(pertence_ao_grupo_equipe_diretiva, login_url='/')
 def registrar_falta(request):
-    professores = User.objects.filter(groups__name__iexact='Professores')
+    professores = Professor.objects.all().order_by('nome_completo')
     if request.method == 'GET':
         return render(request, 'faltas/registrar_falta.html', {'professores': professores})
     if request.method == 'POST':
@@ -110,7 +112,7 @@ def registrar_falta(request):
         tipo = request.POST.get('tipo')
         observacao = request.POST.get('observacao', '')
         try:
-            professor = User.objects.get(id=professor_id)
+            professor = Professor.objects.get(id=professor_id)
             data_obj = datetime.strptime(data, '%Y-%m-%d').date()
             previsto_obj = datetime.strptime(horario_previsto, '%H:%M').time()
             real_obj = None
@@ -267,7 +269,7 @@ def excluir_ocorrencia_aluno(request, pk):
 @user_passes_test(pertence_ao_grupo_equipe_diretiva, login_url='/')
 def editar_falta(request, falta_id):
     falta = get_object_or_404(RegistroFalta, id=falta_id)
-    professores = User.objects.filter(groups__name__iexact='Professores')
+    professores = Professor.objects.all().order_by('nome_completo')
 
     if request.method == 'POST':
         professor_id = request.POST.get('professor')
@@ -278,7 +280,7 @@ def editar_falta(request, falta_id):
         observacao = request.POST.get('observacao', '')
 
         try:
-            professor = User.objects.get(id=professor_id)
+            professor = Professor.objects.get(id=professor_id)
             falta.professor = professor
             falta.data = datetime.strptime(data, '%Y-%m-%d').date()
             falta.horario_previsto = datetime.strptime(horario_previsto, '%H:%M').time()
@@ -345,7 +347,7 @@ from ..models import Turma, Aluno, RegistroFaltaAluno, AtestadoAluno
 @login_required
 @user_passes_test(pertence_ao_grupo_equipe_diretiva, login_url='/')
 def controle_faltas_alunos_antigo(request):
-    turmas = Turma.objects.filter(ativa=True).order_by('nome')
+    turmas = Turma.objects.filter(ativa=True).order_by('nome_completo')
     mes = request.GET.get('mes', timezone.now().month)
     ano = request.GET.get('ano', timezone.now().year)
 
@@ -860,7 +862,7 @@ def busca_ativa(request):
         faltas = faltas.filter(aluno__turma_id=turma_id)
 
     # Lista de turmas para o dropdown
-    turmas = Turma.objects.filter(ativa=True).order_by('nome')
+    turmas = Turma.objects.filter(ativa=True).order_by('nome_completo')
 
     # Resumo por turma
     turmas_resumo = {}
