@@ -21,7 +21,7 @@
                 <select name="professor" class="form-select" required>
                     {% for professor in professores %}
                     <option value="{{ professor.id }}" {% if professor.id == falta.professor.id %}selected{% endif %}>
-                        {{ professor.get_full_name|default:professor.username }}
+                        {{ professor.nome_completo }}
                     </option>
                     {% endfor %}
                 </select>

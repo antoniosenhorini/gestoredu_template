@@ -288,7 +288,8 @@ def atestados_alunos(request):
                 'id': turma.id,
                 'nome': turma.nome,
                 'serie': turma.serie,
-                'turno': turma.turno or '',
+                'turno': turma.turno or 'integral', # Força o integral se estiver vazio
+                'label': str(turma),               # Puxa o nome completo com o curso
             }
             for turma in turmas
         ],
@@ -309,14 +310,18 @@ def buscar_aluno_atestado(request):
     if not aluno:
         return JsonResponse({'encontrado': False, 'erro': 'Aluno ativo nao encontrado nesta turma.'})
 
+    # Força o turno para 'integral' se estiver vazio no banco
+    turno_real = aluno.turma.turno or 'integral'
+    turno_label = aluno.turma.get_turno_display() if aluno.turma.turno else 'Integral'
+
     return JsonResponse({
         'encontrado': True,
         'nome': aluno.nome,
         'numero': aluno.numero,
         'turma': aluno.turma.nome,
         'turma_label': str(aluno.turma),
-        'turno': aluno.turma.turno or '',
-        'turno_label': aluno.turma.get_turno_display() if aluno.turma.turno else '-',
+        'turno': turno_real,
+        'turno_label': turno_label,
     })
 
 

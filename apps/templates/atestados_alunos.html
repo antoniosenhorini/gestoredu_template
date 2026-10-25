@@ -17,7 +17,12 @@
                 <div class="col-12">
                     <label class="form-label fw-bold d-block">Turno</label>
                     <div class="d-flex flex-column flex-sm-row gap-2">
-                        <input type="radio" class="btn-check" name="turno_opcao" id="turno_manha" value="manha" autocomplete="off">
+                        <input type="radio" class="btn-check" name="turno_opcao" id="turno_integral" value="integral" autocomplete="off" checked>
+<label class="btn btn-outline-primary text-start" for="turno_integral">
+    <i class="fas fa-clock"></i> Integral
+</label>
+
+<input type="radio" class="btn-check" name="turno_opcao" id="turno_manha" value="manha" autocomplete="off">
                         <label class="btn btn-outline-primary text-start" for="turno_manha">
                             <i class="fas fa-sun"></i> Manhã
                         </label>
@@ -217,14 +222,17 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const turmasFiltradas = turmas.filter(turma => turma.turno === turno);
+        const turmasFiltradas = turmas.filter(turma => {
+    const t = (turma.turno || 'integral').toLowerCase();
+    return t === turno;
+});
         turmaSelect.disabled = false;
         turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
 
         turmasFiltradas.forEach(turma => {
             const option = document.createElement('option');
             option.value = turma.id;
-            option.textContent = `${turma.serie} - ${turma.nome}`;
+            option.textContent = turma.label || `${turma.serie} - ${turma.nome}`;
             turmaSelect.appendChild(option);
         });
 
@@ -290,6 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
     });
+     preencherTurmas();
 });
 </script>
 {% endblock %}
