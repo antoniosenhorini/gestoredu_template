@@ -770,7 +770,7 @@ def registrar_ocorrencia_aluno(request):
             messages.success(request, f'{MENSAGEM_OCORRENCIA_DIARIA} Aluno: {aluno.nome} - Turma: {turma.nome}, No {numero}.')
             return redirect('registrar_ocorrencia_aluno')
         else:
-            messages.error(request, 'Erro no formulario. Verifique os dados.')
+            messages.error(request, f'Erro no formulario: {form.errors}')
             return render(request, 'ocorrencias/registrar_ocorrencia.html', {'form': form, 'ultimas_ocorrencias': ultimas_ocorrencias})
 
     else:

@@ -137,7 +137,6 @@
     <div class="card border-0 shadow-sm mb-3">
         <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h1 class="h5 mb-0">
-                <i class="fas fa-clipboard-check me-2"></i>Chamada v1.2 <span class="badge bg-light text-primary ms-1">experimental</span>
             </h1>
             <a href="{% url 'chamada_v1_2_selecionar' %}" class="btn btn-sm btn-outline-light">
                 <i class="fas fa-arrow-left me-1"></i>Trocar turma/data
@@ -146,7 +145,7 @@
         <div class="card-body py-2">
             <div class="row">
                 <div class="col-6 col-md-3"><strong>Turma:</strong> {{ turma.nome }}</div>
-                <div class="col-6 col-md-3"><strong>Turno:</strong> {{ turma.get_turno_display }}</div>
+                <div class="col-6 col-md-3"><strong>Turno:</strong> {{ turma.get_turno_display|default:"Integral" }}</div>
                 <div class="col-12 col-md-6"><strong>Data da chamada:</strong> {{ data|date:"d/m/Y" }}</div>
             </div>
             <p class="chamada-orientacao text-muted mb-0 mt-2">

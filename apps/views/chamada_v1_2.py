@@ -88,8 +88,10 @@ def chamada_v1_2_selecionar(request):
     turmas_ativas = Turma.objects.filter(ativa=True).order_by('nome')
     hoje = timezone.now().date().isoformat()
     return render(request, 'chamada_v1_2/selecionar.html', {
-        'turmas_manha': turmas_ativas.filter(turno='manha'),
-        'turmas_tarde': turmas_ativas.filter(turno='tarde'),
+        # Joga TODAS as turmas na lista da manhã para o sistema listar
+        'turmas_manha': turmas_ativas, 
+        # Deixa a da tarde vazia para não duplicar na tela
+        'turmas_tarde': Turma.objects.none(), 
         'hoje': hoje,
     })
 
@@ -173,11 +175,15 @@ def chamada_v1_2_registrar(request):
     atestado_ids = set(atestados_por_aluno.keys())
     _anotar_alunos_com_atestado(alunos, atestados_por_aluno)
 
+    # Força o turno a aparecer como Integral se estiver vazio no banco
+    turno_exibicao = turma.turno if turma.turno else 'Integral'
+
     return render(request, 'chamada_v1_2/registrar.html', {
         'turma': turma,
         'data': data,
         'alunos': alunos,
         'atestado_ids': atestado_ids,
+        'turno_label': turno_exibicao, # <--- Enviamos a variável nova
         'alunos_json': [
             {'id': str(aluno.id), 'numero': aluno.numero, 'nome': aluno.nome}
             for aluno in alunos
