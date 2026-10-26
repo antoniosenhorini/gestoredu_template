@@ -135,8 +135,8 @@ def registrar_falta(request):
             )
             messages.success(request, 'Registro salvo com sucesso!')
             return redirect('controle_faltas')
-        except User.DoesNotExist:
-            messages.error(request, 'Professor nÃƒÂ£o encontrado!')
+        except Professor.DoesNotExist:
+            messages.error(request, 'Professor não encontrado!')
         except Exception as e:
             messages.error(request, f'Erro ao salvar: {str(e)}')
         return redirect('controle_faltas')
@@ -347,7 +347,7 @@ from ..models import Turma, Aluno, RegistroFaltaAluno, AtestadoAluno
 @login_required
 @user_passes_test(pertence_ao_grupo_equipe_diretiva, login_url='/')
 def controle_faltas_alunos_antigo(request):
-    turmas = Turma.objects.filter(ativa=True).order_by('nome_completo')
+    turmas = Turma.objects.filter(ativa=True).order_by('nome')
     mes = request.GET.get('mes', timezone.now().month)
     ano = request.GET.get('ano', timezone.now().year)
 
@@ -862,7 +862,7 @@ def busca_ativa(request):
         faltas = faltas.filter(aluno__turma_id=turma_id)
 
     # Lista de turmas para o dropdown
-    turmas = Turma.objects.filter(ativa=True).order_by('nome_completo')
+    turmas = Turma.objects.filter(ativa=True).order_by('nome')
 
     # Resumo por turma
     turmas_resumo = {}
