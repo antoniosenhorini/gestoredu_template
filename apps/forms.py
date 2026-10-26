@@ -177,9 +177,10 @@ class RegistroOcorrenciaForm(forms.ModelForm):
         choices=[
             ('manha', '🌅 Manhã'),
             ('tarde', '🌙 Tarde'),
+            ('integral', '⏰ Integral'), # <--- ADICIONE ESTA LINHA (não esqueça da vírgula no final da linha de cima)
         ],
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
-        initial='manha',
+        initial='integral', # <--- MUDE DE 'manha' PARA 'integral'
         label="Turno"
     )
 
