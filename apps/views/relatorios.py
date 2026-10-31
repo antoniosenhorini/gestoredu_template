@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from .utilitarios import *
 from ..forms import RelatorioFaltasForm
-from django.db.models import Sum
+from django.db.models import Sum, Q
 
 # ===== NOVA VIEW: RELATÓRIO DE FALTAS POR ALUNO =====
 @relatorios_required
@@ -77,10 +77,10 @@ def relatorio_faltas_por_aluno(request):
 
 @relatorios_required
 def relatorio_alunos_mais_faltosos(request):
-    turnos_validos = ['manha', 'tarde']
-    turno_filtro = request.GET.get('turno', 'manha')
+    turnos_validos = ['manha', 'tarde', 'integral']
+    turno_filtro = request.GET.get('turno', 'integral')
     if turno_filtro not in turnos_validos:
-        turno_filtro = 'manha'
+        turno_filtro = 'integral'
 
     turma_filtro = request.GET.get('turma', '')
     data_inicial = request.GET.get('data_inicial', '')
@@ -103,11 +103,16 @@ def relatorio_alunos_mais_faltosos(request):
         except ValueError:
             data_final = ''
 
-    turmas = Turma.objects.filter(ativa=True, turno=turno_filtro).order_by('nome')
-
-    faltas = RegistroFaltaAluno.objects.filter(
-        aluno__turma__turno=turno_filtro
-    ).select_related('aluno', 'aluno__turma')
+    if turno_filtro == 'integral':
+        turmas = Turma.objects.filter(Q(turno='integral') | Q(turno=None) | Q(turno=''), ativa=True).order_by('nome')
+        faltas = RegistroFaltaAluno.objects.filter(
+            Q(aluno__turma__turno='integral') | Q(aluno__turma__turno=None) | Q(aluno__turma__turno='')
+        ).select_related('aluno', 'aluno__turma')
+    else:
+        turmas = Turma.objects.filter(ativa=True, turno=turno_filtro).order_by('nome')
+        faltas = RegistroFaltaAluno.objects.filter(
+            aluno__turma__turno=turno_filtro
+        ).select_related('aluno', 'aluno__turma')
 
     if turma_filtro:
         faltas = faltas.filter(aluno__turma_id=turma_filtro)
@@ -813,12 +818,12 @@ def relatorio_ocorrencias_alunos(request):
     # Cria o arquivo Excel
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = f"OcorrÃªncias {mes}-{ano}"
+    ws.title = f"Ocorrencias {mes}-{ano}"
 
-    # Cabeçalho - COM COLUNA TIPO
+    # Cabeçalho - COM COLUNA TIPO, CHEGADA E SAÍDA
     headers = [
         'Data', 'Turma', 'Nº', 'Aluno', 'Tipo',
-        'Horário Chegada', 'Atendido por', 'Motivo (aluno)',
+        'Horário Chegada', 'Horário Saída', 'Atendido por', 'Motivo (aluno)',
         'Responsável contatado', 'Hora contato', 'Alegado (responsável)'
     ]
     for col_num, header in enumerate(headers, 1):
@@ -833,15 +838,14 @@ def relatorio_ocorrencias_alunos(request):
         ws.cell(row=row_num, column=2, value=occ.aluno.turma.nome)
         ws.cell(row=row_num, column=3, value=occ.aluno.numero)
         ws.cell(row=row_num, column=4, value=occ.aluno.nome)
-        # COLUNA TIPO (nova)
         ws.cell(row=row_num, column=5, value=occ.get_tipo_ocorrencia_display())
-        # Horário Chegada (sem "FALTA")
         ws.cell(row=row_num, column=6, value=occ.horario_chegada.strftime('%H:%M') if occ.horario_chegada else '')
-        ws.cell(row=row_num, column=7, value=occ.atendido_por or '')
-        ws.cell(row=row_num, column=8, value=occ.motivo_alegado or '')
-        ws.cell(row=row_num, column=9, value=occ.responsavel_contatado or '')
-        ws.cell(row=row_num, column=10, value=occ.horario_contato.strftime('%H:%M') if occ.horario_contato else '')
-        ws.cell(row=row_num, column=11, value=occ.alegado_responsavel or '')
+        ws.cell(row=row_num, column=7, value=occ.horario_saida.strftime('%H:%M') if occ.horario_saida else '')
+        ws.cell(row=row_num, column=8, value=occ.atendido_por or '')
+        ws.cell(row=row_num, column=9, value=occ.motivo_alegado or '')
+        ws.cell(row=row_num, column=10, value=occ.responsavel_contatado or '')
+        ws.cell(row=row_num, column=11, value=occ.horario_contato.strftime('%H:%M') if occ.horario_contato else '')
+        ws.cell(row=row_num, column=12, value=occ.alegado_responsavel or '')
 
     # Ajusta largura das colunas
     for col in ws.columns:
@@ -901,13 +905,17 @@ def relatorio_ocorrencias_por_tipo(request):
     tipo_nomes = {
         'todas': 'Todas as ocorrências',
         'atraso': 'Atraso',
-        'piercing': 'Uso de Piercing',
-        'cabelo': 'Cabelo',
         'uniforme': 'Uniforme',
-        'desvio_normas': 'Desvio de Normas',
-        'fora_sala': 'Fora da sala',
-        'matando_aula': 'Matando aula',
+        'matando_aula': 'Matando Aula',
+        'indisciplina': 'Indisciplina',
+        'desacato': 'Desacato',
+        'dano_patrimonio': 'Dano ao Patrimônio Público',
+        'bullying': 'Bullying',
+        'ato_infracional': 'Ato Infracional',
+        'saida_sem_autorizacao': 'Saída sem Autorização',
+        'foi_embora': 'Foi Embora',
     }
+
     if tipo in TIPOS_OCORRENCIA_LEGADOS_FALTA or tipo not in tipo_nomes:
         messages.warning(request, 'Tipo de ocorrência inválido para relatórios de ocorrência.')
         return redirect('painel_equipe')
@@ -928,14 +936,14 @@ def relatorio_ocorrencias_por_tipo(request):
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = f"{tipo_nomes.get(tipo, tipo)}_{mes}_{ano}"
+    ws.title = f"{tipo_nomes.get(tipo, tipo)[:30]}_{mes}_{ano}"
 
-    # HEADERS COM COLUNA TIPO
-    if tipo == 'desvio_normas':
-        headers = ['Data', 'Turma', 'Nº', 'Aluno', 'Tipo', 'Atendido por',
+    # HEADERS COM COLUNA TIPO, CHEGADA E SAÍDA
+    if tipo == 'desvio_normas' or tipo == 'dano_patrimonio' or tipo == 'ato_infracional':
+        headers = ['Data', 'Turma', 'Nº', 'Aluno', 'Tipo', 'Horário Chegada', 'Horário Saída', 'Atendido por',
                    'Motivo', 'Responsável', 'Alegado', 'ATA']
     else:
-        headers = ['Data', 'Turma', 'Nº', 'Aluno', 'Tipo', 'Atendido por',
+        headers = ['Data', 'Turma', 'Nº', 'Aluno', 'Tipo', 'Horário Chegada', 'Horário Saída', 'Atendido por',
                    'Motivo', 'Responsável', 'Alegado']
 
     for col_num, header in enumerate(headers, 1):
@@ -949,17 +957,19 @@ def relatorio_ocorrencias_por_tipo(request):
         ws.cell(row=row_num, column=2, value=occ.aluno.turma.nome)
         ws.cell(row=row_num, column=3, value=occ.aluno.numero)
         ws.cell(row=row_num, column=4, value=occ.aluno.nome)
-        ws.cell(row=row_num, column=5, value=occ.get_tipo_ocorrencia_display())  # TIPO
-        ws.cell(row=row_num, column=6, value=occ.atendido_por or '')
-        ws.cell(row=row_num, column=7, value=occ.motivo_alegado or '')
-        ws.cell(row=row_num, column=8, value=occ.responsavel_contatado or '')
-        ws.cell(row=row_num, column=9, value=occ.alegado_responsavel or '')
+        ws.cell(row=row_num, column=5, value=occ.get_tipo_ocorrencia_display())
+        ws.cell(row=row_num, column=6, value=occ.horario_chegada.strftime('%H:%M') if occ.horario_chegada else '')
+        ws.cell(row=row_num, column=7, value=occ.horario_saida.strftime('%H:%M') if occ.horario_saida else '')
+        ws.cell(row=row_num, column=8, value=occ.atendido_por or '')
+        ws.cell(row=row_num, column=9, value=occ.motivo_alegado or '')
+        ws.cell(row=row_num, column=10, value=occ.responsavel_contatado or '')
+        ws.cell(row=row_num, column=11, value=occ.alegado_responsavel or '')
 
-        if tipo == 'desvio_normas':
+        if tipo == 'desvio_normas' or tipo == 'dano_patrimonio' or tipo == 'ato_infracional':
             ata_texto = occ.observacoes_adicionais or ''
             if len(ata_texto) > 200:
                 ata_texto = ata_texto[:200] + '...'
-            ws.cell(row=row_num, column=10, value=ata_texto)
+            ws.cell(row=row_num, column=12, value=ata_texto)
 
     for col in ws.columns:
         max_length = 0

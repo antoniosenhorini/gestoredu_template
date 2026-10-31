@@ -110,7 +110,7 @@
                     <select name="turma" id="turma" class="form-select" required>
                         <option value="">Selecione a turma</option>
                         {% for t in turmas %}
-                            <option value="{{ t.id }}" {% if turma_selecionada and t.id == turma_selecionada.id %}selected{% endif %}>{{ t.nome }} - {{ t.get_turno_display }}</option>
+                            <option value="{{ t.id }}" {% if turma_selecionada and t.id == turma_selecionada.id %}selected{% endif %}>{{ t.nome }} - {{ t.get_turno_display|default:"Integral" }}</option>
                         {% endfor %}
                     </select>
                 </div>

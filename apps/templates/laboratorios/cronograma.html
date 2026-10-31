@@ -46,11 +46,10 @@
 	                        <label class="form-label fw-bold mb-1" for="filtroTurno">Turno</label>
 	                        {% if turno_bloqueado %}
 	                        <div class="form-control bg-light fw-bold d-flex align-items-center gap-2" data-turno-travado="{{ turno_bloqueado }}">
-	                            <i class="fas fa-lock text-muted"></i>
-	                            {% if turno_bloqueado == 'manha' %}Manhã{% else %}Tarde{% endif %}
-	                        </div>
+                                <i class="fas fa-lock text-muted"></i>
+                                Integral
+                            </div>
 	                        <input type="hidden" id="filtroTurno" value="{{ turno_bloqueado }}">
-	                        <div class="form-text">Edição travada neste turno. Para editar o outro turno, volte ao diagnóstico e entre pelo botão correspondente.</div>
 	                        {% else %}
 	                        <select name="turno" id="filtroTurno" class="form-select">
 	                            <option value="">Todos</option>

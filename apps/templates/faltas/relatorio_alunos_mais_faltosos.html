@@ -204,7 +204,7 @@
                         <i class="fas fa-trophy me-2"></i>Relatório de Alunos Mais Faltosos
                     </h1>
                     <div class="small opacity-75">
-                        {% if turno_filtro == 'manha' %}Turno: Manhã{% else %}Turno: Tarde{% endif %}
+                        {% if turno_filtro == 'manha' %}Turno: Manhã{% elif turno_filtro == 'tarde' %}Turno: Tarde{% else %}Turno: Integral{% endif %}
                         {% if data_inicial %} | De {{ data_inicial }}{% endif %}
                         {% if data_final %} até {{ data_final }}{% endif %}
                     </div>
@@ -222,6 +222,7 @@
                     <select name="turno" id="turno" class="form-select">
                         <option value="manha" {% if turno_filtro == 'manha' %}selected{% endif %}>Manhã</option>
                         <option value="tarde" {% if turno_filtro == 'tarde' %}selected{% endif %}>Tarde</option>
+                        <option value="integral" {% if turno_filtro == 'integral' %}selected{% endif %}>Integral</option>
                     </select>
                 </div>
 

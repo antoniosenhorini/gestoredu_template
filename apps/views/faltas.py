@@ -14,16 +14,18 @@ MENSAGEM_OCORRENCIA_DIARIA = (
     '✅ Ocorrência registrada com sucesso. O responsável será notificado via WhatsApp.'
 )
 
-TIPOS_OCORRENCIA_WHATSAPP = {'atraso', 'piercing', 'desvio_normas', 'cabelo', 'uniforme', 'fora_sala', 'matando_aula'}
+TIPOS_OCORRENCIA_WHATSAPP = {'atraso', 'uniforme', 'matando_aula', 'indisciplina', 'desacato', 'dano_patrimonio', 'bullying', 'ato_infracional', 'saida_sem_autorizacao'}
 TIPOS_OCORRENCIA_REINCIDENCIA = {'piercing', 'desvio_normas', 'cabelo', 'uniforme'}
 TIPOS_OCORRENCIA_LABELS = {
     'atraso': 'Atraso',
-    'piercing': 'Uso de Piercing',
-    'desvio_normas': 'Desvio de Normas',
-    'cabelo': 'Cabelo',
     'uniforme': 'Uniforme',
-    'fora_sala': 'Fora da sala',
-    'matando_aula': 'Matando aula',
+    'matando_aula': 'Matando Aula',
+    'indisciplina': 'Indisciplina',
+    'desacato': 'Desacato',
+    'dano_patrimonio': 'Dano ao Patrimônio Público',
+    'bullying': 'Bullying',
+    'ato_infracional': 'Ato Infracional',
+    'saida_sem_autorizacao': 'Saída sem autorização',
 }
 
 
@@ -71,7 +73,7 @@ def controle_faltas(request):
     faltas = RegistroFalta.objects.filter(data__month=mes, data__year=ano).select_related('professor').order_by('-data')
     periodos = PeriodoAula.objects.all().order_by('ordem')
     resumo = []
-    
+
     for professor in professores:
         faltas_prof = [f for f in faltas if f.professor.id == professor.id]
         total_minutos = sum(f.minutos_faltados() for f in faltas_prof)
@@ -84,7 +86,7 @@ def controle_faltas(request):
             'total_faltas': total_faltas,
             'total_atrasos': total_atrasos,
         })
-        
+
     resumo = sorted(resumo, key=lambda x: x['nome'])
     context = {
         'professores': professores,
@@ -858,7 +860,7 @@ def busca_ativa(request):
     ).select_related('aluno', 'aluno__turma').order_by('-data', 'aluno__turma__nome', 'aluno__numero')
 
     # Filtra por turma se selecionada
-    if turma_id:
+    if turma_id and turma_id != 'None':
         faltas = faltas.filter(aluno__turma_id=turma_id)
 
     # Lista de turmas para o dropdown

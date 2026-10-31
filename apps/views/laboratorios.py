@@ -20,8 +20,7 @@ import hashlib
 DIAS_SEMANA_LAB = ['Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira']
 HORARIOS_LAB = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 TURNOS_LAB = [
-    ('manha', 'Manha'),
-    ('tarde', 'Tarde'),
+    ('integral', 'Integral'),
 ]
 MESES_PT_BR = [
     '',
@@ -76,7 +75,7 @@ def _laboratorios_filtrados(laboratorio_id):
 
 
 def _slots_cronograma(turno_filtro):
-    turnos = [turno for turno in TURNOS_LAB if turno[0] == turno_filtro] if turno_filtro in ['manha', 'tarde'] else TURNOS_LAB
+    turnos = [turno for turno in TURNOS_LAB if turno[0] == turno_filtro] if turno_filtro in ['integral'] else TURNOS_LAB
     return [
         {
             'turno': turno,
@@ -171,14 +170,14 @@ def _mes_ano_cronograma(data):
 def _turno_usa_semana_nova(turno):
     """True quando o turno ja tem pelo menos 1 linha em
     SemanaCronogramaLaboratorio (ja "adotou" a nova estrutura)."""
-    if turno not in ('manha', 'tarde'):
+    if turno not in ('integral'):
         return False
     return SemanaCronogramaLaboratorio.objects.filter(turno=turno).exists()
 
 
 def _semana_ativa_obj(turno):
     """SemanaCronogramaLaboratorio com status='ativa' do turno, se existir."""
-    if turno not in ('manha', 'tarde'):
+    if turno not in ('integral'):
         return None
     return SemanaCronogramaLaboratorio.objects.filter(turno=turno, status='ativa').first()
 
@@ -209,7 +208,7 @@ def _semanas_canceladas_qs(turno):
 
 
 def _semana_por_turno_e_data(turno, data_inicio):
-    if turno not in ('manha', 'tarde') or not data_inicio:
+    if turno not in ('integral') or not data_inicio:
         return None
     return SemanaCronogramaLaboratorio.objects.filter(turno=turno, data_inicio=data_inicio).first()
 
@@ -223,7 +222,7 @@ def _estado_semana_para_exibicao(turno, data_inicio, ativo_inicio):
     marcador unico _semana_editando) - ver nota acima sobre a estrategia de
     transicao por turno.
     """
-    if turno in ('manha', 'tarde') and _turno_usa_semana_nova(turno):
+    if turno in ('integral') and _turno_usa_semana_nova(turno):
         semana = _semana_por_turno_e_data(turno, data_inicio)
         if semana:
             return semana.status, semana
@@ -231,7 +230,7 @@ def _estado_semana_para_exibicao(turno, data_inicio, ativo_inicio):
 
     if data_inicio == ativo_inicio:
         return 'ativa', None
-    if turno in ('manha', 'tarde') and data_inicio == _semana_editando(turno):
+    if turno in ('integral') and data_inicio == _semana_editando(turno):
         return 'editando', None
     return None, None
 
@@ -286,7 +285,7 @@ def obter_cronograma_ativo(turno=''):
     ativo - uma semana 'editando'/'historica'/'cancelada' daquele turno
     nunca deve ser usada no lugar dela).
     """
-    if turno in ('manha', 'tarde') and _turno_usa_semana_nova(turno):
+    if turno in ('integral') and _turno_usa_semana_nova(turno):
         semana = _semana_ativa_obj(turno)
         if semana:
             return semana.data_inicio, semana.data_fim
@@ -366,7 +365,7 @@ def _versao_ativa_turno(turno):
     de uma versao anterior (ex.: historica com a mesma data_inicio da nova
     ativa) ainda seja detectada pelo fingerprint de polling.
     """
-    if turno not in ('manha', 'tarde'):
+    if turno not in ('integral'):
         return None, None
 
     if _turno_usa_semana_nova(turno):
@@ -389,9 +388,10 @@ def _periodo_cronograma(request, turno_forcado=None):
         data_inicio = datetime.strptime(data_inicio_manual, '%Y-%m-%d').date()
         return data_inicio, data_inicio + timedelta(days=6)
 
-    turno_filtro = turno_forcado if turno_forcado else request.GET.get('turno', '')
+    # Força o turno integral como padrão
+    turno_filtro = turno_forcado if turno_forcado else request.GET.get('turno', 'integral')
 
-    if turno_filtro in ['manha', 'tarde']:
+    if turno_filtro == 'integral':
         data_inicio, data_fim = obter_cronograma_ativo(turno_filtro)
         if data_inicio:
             return data_inicio, data_fim
@@ -413,7 +413,7 @@ def _data_inicio_cronograma(request, laboratorio_id='', turno_filtro=''):
     agendamentos = AgendamentoLab.objects.all()
     if laboratorio_id:
         agendamentos = agendamentos.filter(laboratorio_id=laboratorio_id)
-    if turno_filtro in ['manha', 'tarde']:
+    if turno_filtro in ['integral']:
         agendamentos = agendamentos.filter(turno=turno_filtro)
 
     data_recente = agendamentos.aggregate(data=Max('data'))['data']
@@ -448,10 +448,11 @@ def _agendamentos_cards(agendamentos):
 
 
 def _grupos_turno_cronograma(turno_filtro, agendamentos_cards):
-    turnos = [turno for turno in TURNOS_LAB if turno[0] == turno_filtro] if turno_filtro in ['manha', 'tarde'] else TURNOS_LAB
+    turnos = [turno for turno in TURNOS_LAB if turno[0] == turno_filtro] if turno_filtro in ['integral'] else TURNOS_LAB
     estilos = {
         'manha': ('bg-primary', 'text-white'),
         'tarde': ('bg-warning', 'text-dark'),
+        'integral': ('bg-success', 'text-white'),
     }
     grupos = []
     for turno, turno_label in turnos:
@@ -503,7 +504,7 @@ def _horarios_laboratorio_professor_obj(professor, turno_filtro=''):
     e os agendamentos do professor sao filtrados dentro da janela correta
     do proprio turno de cada um.
     """
-    if turno_filtro not in ['manha', 'tarde']:
+    if turno_filtro not in ['integral']:
         turno_filtro = ''
 
     if not professor:
@@ -515,7 +516,7 @@ def _horarios_laboratorio_professor_obj(professor, turno_filtro=''):
             'turno_filtro': turno_filtro,
         }
 
-    turnos_a_considerar = [turno_filtro] if turno_filtro else ['manha', 'tarde']
+    turnos_a_considerar = [turno_filtro] if turno_filtro else ['integral']
     turno_labels = dict(TURNOS_LAB)
     janela_por_turno = {}
     itens = []
@@ -601,7 +602,7 @@ def _semana_geral_completa_laboratorios(turno=''):
     """
     agendamentos_considerados = _agendamentos_labs_considerados()
 
-    if turno in ('manha', 'tarde'):
+    if turno in ('integral'):
         data_recente = agendamentos_considerados.filter(turno=turno).aggregate(
             data=Max('data')
         )['data']
@@ -1021,25 +1022,18 @@ def diagnostico_cronograma_laboratorios(request):
             semana['turmas'].add(agendamento.turma_id)
 
     cronograma_configurado = configuracao_cronograma is not None
-    semana_ativa_manha_inicio, semana_ativa_manha_fim = obter_cronograma_ativo('manha')
-    semana_ativa_tarde_inicio, semana_ativa_tarde_fim = obter_cronograma_ativo('tarde')
-    semana_ativa_manha_obj = _semana_ativa_obj('manha')
-    semana_ativa_tarde_obj = _semana_ativa_obj('tarde')
-    semanas_historicas_manha = list(_semanas_historicas_qs('manha'))
-    semanas_historicas_tarde = list(_semanas_historicas_qs('tarde'))
-    semanas_canceladas_manha = list(_semanas_canceladas_qs('manha'))
-    semanas_canceladas_tarde = list(_semanas_canceladas_qs('tarde'))
+    semana_ativa_integral_inicio, semana_ativa_integral_fim = obter_cronograma_ativo('integral')
+    semana_ativa_integral_obj = _semana_ativa_obj('integral')
+    semanas_historicas_integral = list(_semanas_historicas_qs('integral'))
+    semanas_canceladas_integral = list(_semanas_canceladas_qs('integral'))
 
     # Fase 2: SemanaCronogramaLaboratorio e a fonte unica das listas do
     # Diagnostico. A consulta e direta e independe de marcadores legados,
     # sessao ou existencia de agendamentos.
-    semanas_editando_manha = list(_semanas_editando_qs('manha'))
-    semana_editando_manha_inicio = semanas_editando_manha[0].data_inicio if semanas_editando_manha else None
-    semana_editando_manha_fim = semana_editando_manha_inicio + timedelta(days=6) if semana_editando_manha_inicio else None
+    semanas_editando_integral = list(_semanas_editando_qs('integral'))
+    semana_editando_integral_inicio = semanas_editando_integral[0].data_inicio if semanas_editando_integral else None
+    semana_editando_integral_fim = semana_editando_integral_inicio + timedelta(days=6) if semana_editando_integral_inicio else None
 
-    semanas_editando_tarde = list(_semanas_editando_qs('tarde'))
-    semana_editando_tarde_inicio = semanas_editando_tarde[0].data_inicio if semanas_editando_tarde else None
-    semana_editando_tarde_fim = semana_editando_tarde_inicio + timedelta(days=6) if semana_editando_tarde_inicio else None
 
     diagnostico = []
     if data_mais_recente and data_mais_antiga:
@@ -1051,30 +1045,19 @@ def diagnostico_cronograma_laboratorios(request):
                 'data_inicio': semana_cursor,
                 'data_fim': semana_cursor + timedelta(days=6),
                 'total': 0,
-                'manha': 0,
-                'tarde': 0,
                 'professores': set(),
                 'laboratorios': set(),
                 'turmas': set(),
             })
 
-            tem_manha = semana['manha'] > 0
-            tem_tarde = semana['tarde'] > 0
-            semana_completa = tem_manha and tem_tarde
-            semana_parcial = (tem_manha or tem_tarde) and not semana_completa
-            semana_ativavel = semana_completa or semana_parcial
-            cronograma_ativo_manha = semana_cursor == semana_ativa_manha_inicio
-            cronograma_ativo_tarde = semana_cursor == semana_ativa_tarde_inicio
-            cronograma_ativo = cronograma_ativo_manha or cronograma_ativo_tarde
+            # Como agora é tudo Integral, a semana é ativável se tiver agendamentos
+            semana_ativavel = semana['total'] > 0
+            cronograma_ativo = (semana_cursor == semana_ativa_integral_inicio)
 
-            if semana_completa:
-                status = 'Completo'
+            if semana['total'] > 0:
+                status = 'Com agendamentos'
                 status_icone = '✅'
                 status_classe = 'success'
-            elif semana_parcial:
-                status = 'Parcial'
-                status_icone = '⚠️'
-                status_classe = 'warning'
             else:
                 status = 'Sem agendamentos'
                 status_icone = '❌'
@@ -1084,50 +1067,32 @@ def diagnostico_cronograma_laboratorios(request):
                 'data_inicio': semana['data_inicio'],
                 'data_fim': semana['data_fim'],
                 'total': semana['total'],
-                'manha': semana['manha'],
-                'tarde': semana['tarde'],
                 'professores_total': len(semana['professores']),
                 'laboratorios_total': len(semana['laboratorios']),
                 'turmas_total': len(semana['turmas']),
                 'status': status,
                 'status_icone': status_icone,
                 'status_classe': status_classe,
-                'semana_completa': semana_completa,
-                'semana_parcial': semana_parcial,
                 'semana_ativavel': semana_ativavel,
                 'cronograma_ativo': cronograma_ativo,
-                'cronograma_ativo_manha': cronograma_ativo_manha,
-                'cronograma_ativo_tarde': cronograma_ativo_tarde,
-                'cronograma_configurado': cronograma_ativo and cronograma_configurado,
             })
 
             semana_cursor -= timedelta(days=7)
 
     context = {
         'semanas': diagnostico,
-        'semana_ativa_manha_inicio': semana_ativa_manha_inicio,
-        'semana_ativa_manha_fim': semana_ativa_manha_fim,
-        'semana_ativa_tarde_inicio': semana_ativa_tarde_inicio,
-        'semana_ativa_tarde_fim': semana_ativa_tarde_fim,
-        'semana_ativa_manha_obj': semana_ativa_manha_obj,
-        'semana_ativa_tarde_obj': semana_ativa_tarde_obj,
-        'semana_editando_manha_inicio': semana_editando_manha_inicio,
-        'semana_editando_manha_fim': semana_editando_manha_fim,
-        'semana_editando_tarde_inicio': semana_editando_tarde_inicio,
-        'semana_editando_tarde_fim': semana_editando_tarde_fim,
-        # Fase 2: listas completas (sem limite), usadas pelo novo template de
-        # cartoes multiplos por turno.
-        'semanas_editando_manha': semanas_editando_manha,
-        'semanas_editando_tarde': semanas_editando_tarde,
-        'semanas_historicas_manha': semanas_historicas_manha,
-        'semanas_historicas_tarde': semanas_historicas_tarde,
-        'semanas_canceladas_manha': semanas_canceladas_manha,
-        'semanas_canceladas_tarde': semanas_canceladas_tarde,
+        'semana_ativa_integral_inicio': semana_ativa_integral_inicio,
+        'semana_ativa_integral_fim': semana_ativa_integral_fim,
+        'semana_ativa_integral_obj': semana_ativa_integral_obj,
+        'semana_editando_integral_inicio': semana_editando_integral_inicio,
+        'semana_editando_integral_fim': semana_editando_integral_fim,
+        'semanas_editando_integral': semanas_editando_integral,
+        'semanas_historicas_integral': semanas_historicas_integral,
+        'semanas_canceladas_integral': semanas_canceladas_integral,
         'cronograma_configurado': cronograma_configurado,
         'configuracao_cronograma': configuracao_cronograma,
     }
     return render(request, 'laboratorios/diagnostico_cronograma.html', context)
-
 
 @login_required
 @user_passes_test(pode_ver_cronograma_laboratorios, login_url='/')
@@ -1148,7 +1113,7 @@ def consulta_cronograma_laboratorios(request):
     views de ativar/desativar/criar/cancelar/excluir semana).
     """
     turnos = []
-    for turno, rotulo in (('manha', 'Manhã'), ('tarde', 'Tarde')):
+    for turno, rotulo in (('integral', 'Integral'),):
         ativa_inicio, ativa_fim = obter_cronograma_ativo(turno)
         historicas = list(
             SemanaCronogramaLaboratorio.objects.filter(turno=turno, status='historica').order_by('-data_inicio')
@@ -1300,7 +1265,7 @@ def ativar_cronograma_laboratorio(request):
     turno = request.POST.get('turno', '').strip()
     data_inicio = request.POST.get('data_inicio', '').strip()
 
-    if turno not in ['manha', 'tarde']:
+    if turno not in ['integral']:
         messages.error(request, 'Turno invalido.')
         return redirect('diagnostico_cronograma_laboratorios')
 
@@ -1337,7 +1302,7 @@ def desativar_cronograma_laboratorio(request):
     Compatibilidade (turno ainda nao adotado): comportamento legado intacto,
     so limpa os campos antigos *_ativo daquele turno."""
     turno = request.POST.get('turno', '').strip()
-    if turno not in ['manha', 'tarde']:
+    if turno not in ['integral']:
         messages.error(request, 'Turno invalido.')
         return redirect('diagnostico_cronograma_laboratorios')
 
@@ -1440,7 +1405,7 @@ def editar_semana_cronograma_laboratorio(request):
     turno = request.POST.get('turno', '').strip()
     data_inicio = request.POST.get('data_inicio', '').strip()
 
-    if turno not in ['manha', 'tarde']:
+    if turno not in ['integral']:
         messages.error(request, 'Turno invalido.')
         return redirect('diagnostico_cronograma_laboratorios')
 
@@ -1515,7 +1480,7 @@ def cancelar_edicao_semana_cronograma_laboratorio(request):
         return redirect('diagnostico_cronograma_laboratorios')
 
     turno = request.POST.get('turno', '').strip()
-    if turno not in ['manha', 'tarde']:
+    if turno not in ['integral']:
         messages.error(request, 'Turno invalido.')
         return redirect('diagnostico_cronograma_laboratorios')
 
@@ -1593,7 +1558,7 @@ def excluir_semana_cronograma_laboratorio(request):
     turno = request.POST.get('turno', '').strip()
     data_inicio = request.POST.get('data_inicio', '').strip()
 
-    if turno not in ['manha', 'tarde']:
+    if turno not in ['integral']:
         messages.error(request, 'Turno invalido.')
         return redirect('diagnostico_cronograma_laboratorios')
 
@@ -1682,7 +1647,7 @@ def excluir_agendamento(request, agendamento_id):
     laboratorio = request.POST.get('laboratorio', '')
     scroll_y = request.POST.get('scroll_y', '')
     turno_bloqueado = request.POST.get('turno_bloqueado', '')
-    turno_bloqueado = turno_bloqueado if turno_bloqueado in ('manha', 'tarde') else None
+    turno_bloqueado = turno_bloqueado if turno_bloqueado in ('integral') else None
     return redirect(_url_cronograma_com_filtros(
         data_inicio, turno, laboratorio, scroll_y, turno_forcado=turno_bloqueado
     ))
@@ -1815,27 +1780,9 @@ def agendamento_lab(request, lab_id):
 @user_passes_test(pode_ver_cronograma_laboratorios, login_url='/')
 def cronograma_semanal(request, turno_forcado=None):
     """Exibe o cronograma semanal dos laboratorios, com filtro opcional por turno.
-
-    Perfil somente leitura (grupo "Consulta Cronograma", ou Equipe Diretiva/
-    superuser): a checagem de acesso acima (pode_ver_cronograma_laboratorios)
-    cobre GET e POST igualmente, mas escrita exige uma checagem adicional e
-    mais restrita (pertence_ao_grupo_equipe_diretiva) logo no inicio do bloco
-    POST abaixo - um membro so de "Consulta Cronograma" nunca passa dali,
-    mesmo montando um POST valido para uma semana ativa/editando.
-
-    `turno_forcado` chega apenas via a rota travada por turno (URLs
-    /laboratorios/cronograma/manha/ e /laboratorios/cronograma/tarde/, ver
-    apps/urls.py). Quando presente, tem prioridade absoluta sobre qualquer
-    valor de turno vindo da querystring ou do corpo do POST: a tela so
-    trabalha com aquele turno do inicio ao fim, e nao ha como um GET/POST
-    manipulado manualmente (ex.: ?turno=tarde numa URL travada em manha, ou
-    um campo 'turno' forjado no POST) fazer a view ler ou escrever dados do
-    outro turno.
     """
-    # A URL sem turno existe apenas para compatibilidade com links antigos.
-    # Ela nunca renderiza uma grade nem processa escrita: bookmarks com turno
-    # seguem para a URL travada correspondente; sem turno, cada perfil volta
-    # para sua pagina de entrada apropriada.
+    turno_forcado = 'integral' # <--- FORÇA O INTEGRAL
+
     if turno_forcado is None:
         if request.method != 'GET':
             messages.error(request, 'A rota generica do cronograma nao aceita alteracoes.')
@@ -1844,7 +1791,7 @@ def cronograma_semanal(request, turno_forcado=None):
             return redirect('consulta_cronograma_laboratorios')
 
         turno_compatibilidade = request.GET.get('turno', '')
-        if turno_compatibilidade in ('manha', 'tarde'):
+        if turno_compatibilidade == 'integral': # <--- CORRIGIDO
             return redirect(_url_cronograma_com_filtros(
                 request.GET.get('data_inicio', ''),
                 turno_compatibilidade,
@@ -1857,7 +1804,6 @@ def cronograma_semanal(request, turno_forcado=None):
             return redirect('diagnostico_cronograma_laboratorios')
         return redirect('consulta_cronograma_laboratorios')
 
-    # Capturar o filtro de turno vindo da URL travada.
     turno_filtro = turno_forcado if turno_forcado else request.GET.get('turno', '')
     laboratorio_filtro = request.GET.get('laboratorio', '')
     modo_edicao = bool(request.GET.get('data_inicio')) or bool(turno_forcado)
@@ -1866,12 +1812,6 @@ def cronograma_semanal(request, turno_forcado=None):
     cronograma_exibido_ativo = data_inicio == ativo_inicio and data_fim == ativo_fim
 
     if request.method == 'POST':
-        # Perfil somente leitura (ex.: grupo "Consulta Cronograma"): bloqueado
-        # aqui, antes de qualquer outra logica, mesmo que a semana pedida
-        # esteja ativa/editando e o restante do POST seja perfeitamente
-        # valido. Escrita exige pertencer a Equipe Diretiva (ou superuser) -
-        # pode_ver_cronograma_laboratorios (checado no decorator da view,
-        # acima) e deliberadamente mais permissivo e nao basta para escrever.
         if not pertence_ao_grupo_equipe_diretiva(request.user):
             messages.error(request, 'Você não tem permissão para alterar o cronograma.')
             return redirect('diagnostico_cronograma_laboratorios')
@@ -1880,9 +1820,6 @@ def cronograma_semanal(request, turno_forcado=None):
         laboratorio_id = request.POST.get('laboratorio_id')
         data_agendamento = request.POST.get('data')
         horario = request.POST.get('horario')
-        # Na rota travada por turno, o turno nunca vem do POST - e sempre o
-        # da URL, mesmo que o formulario (ou uma requisicao forjada) envie
-        # outro valor no campo 'turno'.
         turno = turno_forcado if turno_forcado else request.POST.get('turno')
         professor_id = request.POST.get('professor')
         turma_id = request.POST.get('turma')
@@ -1903,26 +1840,13 @@ def cronograma_semanal(request, turno_forcado=None):
             messages.error(request, 'Data invalida para o agendamento.')
             return redirect(url_retorno)
 
-        # Fase 2 (secoes 11 e 14): protecao de escrita centralizada e
-        # obrigatoria, consultando SemanaCronogramaLaboratorio - aplicada da
-        # MESMA forma para as duas rotas travadas por turno E para a rota
-        # generica (turno_forcado=None). So escreve (cria, edita ou
-        # reaproveita um AgendamentoLab) quando a semana correspondente ao
-        # turno+data existir e estiver ATIVA ou EM EDICAO. Bloqueia semana
-        # historica, cancelada, inexistente, turno invalido, ou qualquer
-        # tentativa de escrever via URL/POST manipulado manualmente. GET
-        # continua liberado para consulta em qualquer data (nao passa por
-        # aqui). Para turnos que ainda nao adotaram a tabela nova, cai no
-        # comportamento legado (Fase 1 e anteriores), intacto.
         semana_destino = None
         bloqueio_escrita = None
 
-        if turno not in ('manha', 'tarde'):
+        if turno != 'integral': # <--- CORRIGIDO
             bloqueio_escrita = 'Turno invalido para o agendamento.'
         elif _turno_usa_semana_nova(turno):
             try:
-                # Identidade explicita da versao exibida; nunca e inferida
-                # pela segunda-feira correspondente ao dia do agendamento.
                 versao_inicio = datetime.strptime(data_inicio_retorno, '%Y-%m-%d').date()
             except (TypeError, ValueError):
                 versao_inicio = None
@@ -1944,8 +1868,6 @@ def cronograma_semanal(request, turno_forcado=None):
             elif not semana_destino.pode_receber_escrita:
                 bloqueio_escrita = 'Esta semana nao esta disponivel para escrita.'
         else:
-            # Fallback legado: sem SemanaCronogramaLaboratorio, a versao era
-            # inferida pela semana civil que contem a data do agendamento.
             semana_solicitada = _inicio_semana(data_obj)
             ativo_inicio_turno, _ativo_fim_turno = obter_cronograma_ativo(turno)
             if semana_solicitada not in (ativo_inicio_turno, _semana_editando(turno)):
@@ -1964,9 +1886,6 @@ def cronograma_semanal(request, turno_forcado=None):
         if agendamento_id:
             agendamento = get_object_or_404(AgendamentoLab, id=agendamento_id)
             if turno_forcado and agendamento.turno != turno_forcado:
-                # Defesa em profundidade: mesmo que alguem monte manualmente um
-                # POST com o id de um agendamento do outro turno, a tela travada
-                # em manha (ou tarde) se recusa a ler ou alterar esse registro.
                 messages.error(
                     request,
                     'Este agendamento pertence ao outro turno e nao pode ser alterado por esta tela.'
@@ -1976,41 +1895,19 @@ def cronograma_semanal(request, turno_forcado=None):
         else:
             laboratorio = get_object_or_404(Laboratorio, id=laboratorio_id, ativo=True)
 
-        # Fase 2 (correcao do bug de conflito): quando o turno ja adotou
-        # SemanaCronogramaLaboratorio, a checagem de conflito e restrita a
-        # versao aberta (semana_destino) - um agendamento de outra versao
-        # (ativa, editando, historica ou cancelada) do MESMO turno/data/
-        # horario nao pode bloquear o cadastro na versao atual, ja que cada
-        # versao e um cronograma independente. Turnos legados (sem a tabela
-        # nova) preservam o comportamento antigo, filtrando so por
-        # turno+data+horario.
         if semana_destino is not None:
             conflito_professor = AgendamentoLab.objects.filter(
-                professor_id=professor_id,
-                data=data_obj,
-                horario=horario,
-                turno=turno,
-                semana=semana_destino,
+                professor_id=professor_id, data=data_obj, horario=horario, turno=turno, semana=semana_destino,
             )
             conflito_lab = AgendamentoLab.objects.filter(
-                laboratorio=laboratorio,
-                data=data_obj,
-                horario=horario,
-                turno=turno,
-                semana=semana_destino,
+                laboratorio=laboratorio, data=data_obj, horario=horario, turno=turno, semana=semana_destino,
             )
         else:
             conflito_professor = AgendamentoLab.objects.filter(
-                professor_id=professor_id,
-                data=data_obj,
-                horario=horario,
-                turno=turno,
+                professor_id=professor_id, data=data_obj, horario=horario, turno=turno,
             )
             conflito_lab = AgendamentoLab.objects.filter(
-                laboratorio=laboratorio,
-                data=data_obj,
-                horario=horario,
-                turno=turno,
+                laboratorio=laboratorio, data=data_obj, horario=horario, turno=turno,
             )
         if agendamento:
             conflito_professor = conflito_professor.exclude(id=agendamento.id)
@@ -2034,26 +1931,12 @@ def cronograma_semanal(request, turno_forcado=None):
         agendamento.turma_id = turma_id
         agendamento.disciplina = disciplina
         agendamento.observacao = observacao
-        # Fase 2 (secao 12): todo AgendamentoLab criado/editado pela grade,
-        # num turno que ja adotou a tabela nova, recebe obrigatoriamente a
-        # semana correspondente (recalculada a partir da data/turno que estao
-        # sendo salvos agora - nunca reaproveita ciegamente uma FK antiga).
-        # Em turno ainda nao adotado (legado), fica sem semana, como sempre foi.
         if semana_destino is not None:
             agendamento.semana = semana_destino
         try:
             with transaction.atomic():
                 agendamento.save()
         except IntegrityError:
-            # unique_together de AgendamentoLab e (laboratorio, data, horario,
-            # turno) - NAO inclui semana. Duas versoes do mesmo turno com
-            # janelas sobrepostas (ver _versao_ativa_turno) podem ter o mesmo
-            # laboratorio+data+horario+turno cada uma na sua propria versao;
-            # o filtro de conflito acima ja isola por semana_destino e deixa
-            # passar esse caso, mas o banco ainda bloqueia no nivel de linha.
-            # Sem migration para adicionar semana a essa constraint, so resta
-            # devolver a mesma mensagem amigavel em vez de deixar o
-            # IntegrityError virar erro 500.
             messages.error(request, f'{laboratorio.nome} ja esta reservado neste horario!')
             return redirect(url_retorno)
 
@@ -2061,41 +1944,21 @@ def cronograma_semanal(request, turno_forcado=None):
         return redirect(url_retorno)
 
     semana_exibida_obj = None
-    if modo_edicao and turno_filtro in ('manha', 'tarde'):
-        # Fase 2: o estado exibido vem de _estado_semana_para_exibicao, que
-        # consulta SemanaCronogramaLaboratorio quando o turno ja a adotou
-        # (suportando tambem historica/cancelada, que nao existiam antes),
-        # ou cai na regra antiga (ativo_inicio/_semana_editando) para turnos
-        # ainda nao adotados - nunca olha para o outro turno.
-        turno_label = 'Manhã' if turno_filtro == 'manha' else 'Tarde'
+    if modo_edicao and turno_filtro == 'integral': # <--- CORRIGIDO
+        turno_label = 'Integral' # <--- CORRIGIDO
         estado_exibido, semana_exibida_obj = _estado_semana_para_exibicao(
             turno_filtro, data_inicio, ativo_inicio,
         )
         if estado_exibido == 'ativa':
-            cronograma_titulo = (
-                f'🟢 Cronograma Ativo — {turno_label} · Início: '
-                f'{data_inicio.strftime("%d/%m/%Y")}'
-            )
+            cronograma_titulo = f'🟢 Cronograma Ativo — {turno_label} · Início: {data_inicio.strftime("%d/%m/%Y")}'
         elif estado_exibido == 'editando':
-            cronograma_titulo = (
-                f'📝 Editando Cronograma — {turno_label} · Início: '
-                f'{data_inicio.strftime("%d/%m/%Y")}'
-            )
+            cronograma_titulo = f'📝 Editando Cronograma — {turno_label} · Início: {data_inicio.strftime("%d/%m/%Y")}'
         elif estado_exibido == 'historica':
-            cronograma_titulo = (
-                f'📁 Semana Histórica — {turno_label} · Início: '
-                f'{data_inicio.strftime("%d/%m/%Y")}'
-            )
+            cronograma_titulo = f'📁 Semana Histórica — {turno_label} · Início: {data_inicio.strftime("%d/%m/%Y")}'
         elif estado_exibido == 'cancelada':
-            cronograma_titulo = (
-                f'🚫 Semana Cancelada — {turno_label} · Início: '
-                f'{data_inicio.strftime("%d/%m/%Y")}'
-            )
+            cronograma_titulo = f'🚫 Semana Cancelada — {turno_label} · Início: {data_inicio.strftime("%d/%m/%Y")}'
         else:
-            cronograma_titulo = (
-                f'🔍 Visualizando Semana — {turno_label} · Início: '
-                f'{data_inicio.strftime("%d/%m/%Y")}'
-            )
+            cronograma_titulo = f'🔍 Visualizando Semana — {turno_label} · Início: {data_inicio.strftime("%d/%m/%Y")}'
     elif modo_edicao:
         cronograma_titulo = f'✏️ Cronograma em edição — {"Ativo" if cronograma_exibido_ativo else "Não ativo"}'
     else:
@@ -2111,13 +1974,9 @@ def cronograma_semanal(request, turno_forcado=None):
     )
 
     if semana_exibida_obj is not None:
-        # Janelas de versoes com datas de inicio distintas podem se sobrepor
-        # (por exemplo, 17/08 e 23/08). A FK preserva qual versao esta aberta
-        # e impede que apenas o intervalo de datas misture seus agendamentos.
         agendamentos = agendamentos.filter(semana=semana_exibida_obj)
 
-    # Aplicar filtro de turno se fornecido
-    if turno_filtro in ['manha', 'tarde']:
+    if turno_filtro == 'integral': # <--- CORRIGIDO
         agendamentos = agendamentos.filter(turno=turno_filtro)
 
     agendamentos = agendamentos.select_related('laboratorio', 'professor', 'turma').order_by(
@@ -2167,17 +2026,6 @@ def cronograma_semanal(request, turno_forcado=None):
             })
         cronograma_grupos.append(grupo_cronograma)
 
-    # Preferencia de interface (nao e a protecao real, que ja esta no POST
-    # acima, e que tambem passou a valer para a rota generica na Fase 2): na
-    # rota travada por turno, so oferece os controles de criar/editar da
-    # grade quando a semana exibida esta ativa ou em edicao (historica e
-    # cancelada mostram a grade em modo somente-leitura). Na rota generica
-    # (turno_forcado=None) a interface continua liberada como antes, sujeita
-    # sempre a mesma condicao abaixo. Em qualquer caso, um usuario que nao
-    # pertence a Equipe Diretiva (ex.: grupo "Consulta Cronograma") nunca ve
-    # nenhum controle de escrita, independente do status da semana - essa e
-    # a mesma checagem que o POST usa de verdade, entao a interface nunca
-    # promete algo que o backend recusaria.
     usuario_pode_escrever = pertence_ao_grupo_equipe_diretiva(request.user)
     if turno_forcado:
         estado_exibido_grade, _semana_exibida_grade_obj = _estado_semana_para_exibicao(
@@ -2213,68 +2061,13 @@ def cronograma_semanal(request, turno_forcado=None):
 
 @login_required
 @user_passes_test(pode_ver_cronograma_laboratorios, login_url='/')
-def cronograma_print(request):
-    """Exibe o cronograma semanal para impressao (somente leitura - liberado
-    tambem para o grupo "Consulta Cronograma")."""
-    # 🔥 CAPTURAR TURNO (FALTAVA ISSO)
-    turno_filtro = request.GET.get('turno', '')
-    laboratorio_filtro = request.GET.get('laboratorio', '')
-    data_inicio, data_fim = _periodo_cronograma(request)
-
-    laboratorios_todos = _laboratorios_agendaveis()
-    laboratorios = _laboratorios_filtrados(laboratorio_filtro)
-
-    # 📊 Buscar agendamentos
-    agendamentos = AgendamentoLab.objects.filter(
-        data__gte=data_inicio,
-        data__lte=data_fim,
-        laboratorio__in=laboratorios,
-    )
-
-    # 🔥 APLICAR FILTRO (FALTAVA ISSO)
-    if turno_filtro in ['manha', 'tarde']:
-        agendamentos = agendamentos.filter(turno=turno_filtro)
-
-    agendamentos = agendamentos.select_related('laboratorio', 'professor', 'turma').order_by(
-        'laboratorio__nome', 'data', 'horario'
-    )
-    agendamentos_lista = list(agendamentos)
-    agendamentos_cards = _agendamentos_cards(agendamentos_lista)
-
-    # 📤 Contexto
-    context = {
-        'dias_semana': DIAS_SEMANA_LAB,
-        'horarios': HORARIOS_LAB,
-        'slots_cronograma': _slots_cronograma(turno_filtro),
-        'agendamentos_dict': _agendamentos_por_chave(agendamentos_lista),
-        'agendamentos_cards': agendamentos_cards,
-        'grupos_turno_cronograma': _grupos_turno_cronograma(turno_filtro, agendamentos_cards),
-        'laboratorios': laboratorios,
-        'laboratorios_todos': laboratorios_todos,
-        'data_inicio': data_inicio,
-        'data_fim': data_fim,
-        'turno_filtro': turno_filtro,
-        'laboratorio_filtro': laboratorio_filtro,
-    }
-
-    return render(request, 'laboratorios/cronograma_print.html', context)
-
-    import openpyxl
-from openpyxl.styles import Font, Alignment, PatternFill
-from django.http import HttpResponse
-
-@login_required
-@user_passes_test(pode_ver_cronograma_laboratorios, login_url='/')
 def exportar_cronograma_excel(request):
-    """Exporta o cronograma semanal para Excel (somente leitura - liberado
-    tambem para o grupo "Consulta Cronograma")."""
     from ..models import Laboratorio, AgendamentoLab
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     from openpyxl.utils import get_column_letter
 
-    # Captura o filtro de turno (vem do template)
-    turno_filtro = request.GET.get('turno', '')
+    turno_filtro = request.GET.get('turno', 'integral')
     laboratorio_filtro = request.GET.get('laboratorio', '')
     data_inicio, data_fim = _periodo_cronograma(request)
 
@@ -2282,33 +2075,25 @@ def exportar_cronograma_excel(request):
     dias_semana = DIAS_SEMANA_LAB
     horarios = HORARIOS_LAB
 
-    # Buscar agendamentos da semana (com filtro de turno)
     agendamentos = AgendamentoLab.objects.filter(
         data__gte=data_inicio,
         data__lte=data_fim,
         laboratorio__in=laboratorios,
     )
-    if turno_filtro in ['manha', 'tarde']:
+    if turno_filtro == 'integral':
         agendamentos = agendamentos.filter(turno=turno_filtro)
     agendamentos = agendamentos.select_related('laboratorio', 'professor', 'turma')
 
-    # Dicionario para acesso rapido
     agendamentos_dict = _agendamentos_por_chave(agendamentos)
 
     wb = Workbook()
     wb.remove(wb.active)
 
-    thin_border = Border(
-        left=Side(style='thin'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
-    )
+    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
     for lab in laboratorios:
         ws = wb.create_sheet(title=lab.nome)
 
-        # Cabecalho: dias da semana (uma coluna por dia)
         for idx, dia in enumerate(dias_semana, start=2):
             cell = ws.cell(row=1, column=idx, value=dia)
             cell.font = Font(bold=True, size=11)
@@ -2316,43 +2101,31 @@ def exportar_cronograma_excel(request):
             cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
             cell.border = thin_border
 
-        # Agora, para cada horario, mesclar 3 linhas na coluna A e preencher as outras colunas
-        row_offset = 2  # comeca na linha 2 (apos cabecalho)
+        row_offset = 2
         for horario_idx, horario in enumerate(horarios):
             base_row = row_offset + horario_idx * 3
-
-            # Mescla as 3 linhas na coluna A (horario)
             ws.merge_cells(start_row=base_row, start_column=1, end_row=base_row+2, end_column=1)
             cell_horario = ws.cell(row=base_row, column=1, value=f"Aula{horario}")
             cell_horario.font = Font(bold=True, size=11)
             cell_horario.alignment = Alignment(horizontal='center', vertical='center')
             cell_horario.border = thin_border
 
-            # Para cada dia da semana
             for col_idx, dia in enumerate(dias_semana, start=2):
-                key = (lab.id, dia, 'manha' if turno_filtro == 'manha' else 'tarde' if turno_filtro == 'tarde' else 'manha', horario)
+                key = (lab.id, dia, turno_filtro, horario)
                 a = agendamentos_dict.get(key)
-                if not a and turno_filtro not in ['manha', 'tarde']:
-                    a = agendamentos_dict.get((lab.id, dia, 'tarde', horario))
 
-                # Linha da disciplina
                 ws.cell(row=base_row, column=col_idx, value=a.disciplina if a else "").border = thin_border
                 ws.cell(row=base_row, column=col_idx).alignment = Alignment(horizontal='center', vertical='center')
-                # Linha da turma
                 ws.cell(row=base_row+1, column=col_idx, value=a.turma.nome if a else "").border = thin_border
                 ws.cell(row=base_row+1, column=col_idx).alignment = Alignment(horizontal='center', vertical='center')
-                # Linha do professor
-                ws.cell(row=base_row + 2, column=col_idx,
-                        value=a.professor.nome_abreviado if a else "").border = thin_border
+                ws.cell(row=base_row + 2, column=col_idx, value=a.professor.nome_abreviado if a else "").border = thin_border
                 ws.cell(row=base_row+2, column=col_idx).alignment = Alignment(horizontal='center', vertical='center')
 
-        # Ajustar larguras
         ws.column_dimensions['A'].width = 12
         for col in range(2, 2 + len(dias_semana)):
             col_letter = get_column_letter(col)
             ws.column_dimensions[col_letter].width = 28
 
-        # Ajustar altura das linhas (cada bloco de 3 linhas = 60, cada linha 20)
         for row in range(row_offset, row_offset + len(horarios)*3):
             ws.row_dimensions[row].height = 20
 
@@ -2464,3 +2237,122 @@ def listar_emprestimos(request):
     """Lista todos os emprestimos ativos"""
     emprestimos = Emprestimo.objects.filter(status='emprestado').order_by('data_prevista_devolucao')
     return render(request, 'laboratorios/lista_emprestimos.html', {'emprestimos': emprestimos})
+
+
+@login_required
+@user_passes_test(pode_ver_cronograma_laboratorios, login_url='/')
+def cronograma_print(request):
+    """Exibe o cronograma semanal para impressao."""
+    turno_filtro = request.GET.get('turno', 'integral')
+    laboratorio_filtro = request.GET.get('laboratorio', '')
+    data_inicio, data_fim = _periodo_cronograma(request)
+
+    laboratorios_todos = _laboratorios_agendaveis()
+    laboratorios = _laboratorios_filtrados(laboratorio_filtro)
+
+    agendamentos = AgendamentoLab.objects.filter(
+        data__gte=data_inicio,
+        data__lte=data_fim,
+        laboratorio__in=laboratorios,
+    )
+
+    if turno_filtro == 'integral':
+        agendamentos = agendamentos.filter(turno=turno_filtro)
+
+    agendamentos = agendamentos.select_related('laboratorio', 'professor', 'turma').order_by(
+        'laboratorio__nome', 'data', 'horario'
+    )
+    agendamentos_lista = list(agendamentos)
+    agendamentos_cards = _agendamentos_cards(agendamentos_lista)
+
+    context = {
+        'dias_semana': DIAS_SEMANA_LAB,
+        'horarios': HORARIOS_LAB,
+        'slots_cronograma': _slots_cronograma(turno_filtro),
+        'agendamentos_dict': _agendamentos_por_chave(agendamentos_lista),
+        'agendamentos_cards': agendamentos_cards,
+        'grupos_turno_cronograma': _grupos_turno_cronograma(turno_filtro, agendamentos_cards),
+        'laboratorios': laboratorios,
+        'laboratorios_todos': laboratorios_todos,
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'turno_filtro': turno_filtro,
+        'laboratorio_filtro': laboratorio_filtro,
+    }
+    return render(request, 'laboratorios/cronograma_print.html', context)
+
+
+@login_required
+@user_passes_test(pode_ver_cronograma_laboratorios, login_url='/')
+def exportar_cronograma_excel(request):
+    from ..models import Laboratorio, AgendamentoLab
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    turno_filtro = request.GET.get('turno', 'integral')
+    laboratorio_filtro = request.GET.get('laboratorio', '')
+    data_inicio, data_fim = _periodo_cronograma(request)
+
+    laboratorios = _laboratorios_filtrados(laboratorio_filtro)
+    dias_semana = DIAS_SEMANA_LAB
+    horarios = HORARIOS_LAB
+
+    agendamentos = AgendamentoLab.objects.filter(
+        data__gte=data_inicio,
+        data__lte=data_fim,
+        laboratorio__in=laboratorios,
+    )
+    if turno_filtro == 'integral':
+        agendamentos = agendamentos.filter(turno=turno_filtro)
+    agendamentos = agendamentos.select_related('laboratorio', 'professor', 'turma')
+
+    agendamentos_dict = _agendamentos_por_chave(agendamentos)
+
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+
+    for lab in laboratorios:
+        ws = wb.create_sheet(title=lab.nome)
+
+        for idx, dia in enumerate(dias_semana, start=2):
+            cell = ws.cell(row=1, column=idx, value=dia)
+            cell.font = Font(bold=True, size=11)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+            cell.border = thin_border
+
+        row_offset = 2
+        for horario_idx, horario in enumerate(horarios):
+            base_row = row_offset + horario_idx * 3
+            ws.merge_cells(start_row=base_row, start_column=1, end_row=base_row+2, end_column=1)
+            cell_horario = ws.cell(row=base_row, column=1, value=f"Aula{horario}")
+            cell_horario.font = Font(bold=True, size=11)
+            cell_horario.alignment = Alignment(horizontal='center', vertical='center')
+            cell_horario.border = thin_border
+
+            for col_idx, dia in enumerate(dias_semana, start=2):
+                key = (lab.id, dia, turno_filtro, horario)
+                a = agendamentos_dict.get(key)
+
+                ws.cell(row=base_row, column=col_idx, value=a.disciplina if a else "").border = thin_border
+                ws.cell(row=base_row, column=col_idx).alignment = Alignment(horizontal='center', vertical='center')
+                ws.cell(row=base_row+1, column=col_idx, value=a.turma.nome if a else "").border = thin_border
+                ws.cell(row=base_row+1, column=col_idx).alignment = Alignment(horizontal='center', vertical='center')
+                ws.cell(row=base_row + 2, column=col_idx, value=a.professor.nome_abreviado if a else "").border = thin_border
+                ws.cell(row=base_row+2, column=col_idx).alignment = Alignment(horizontal='center', vertical='center')
+
+        ws.column_dimensions['A'].width = 12
+        for col in range(2, 2 + len(dias_semana)):
+            col_letter = get_column_letter(col)
+            ws.column_dimensions[col_letter].width = 28
+
+        for row in range(row_offset, row_offset + len(horarios)*3):
+            ws.row_dimensions[row].height = 20
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="cronograma_{data_inicio.strftime("%Y%m%d")}.xlsx"'
+    wb.save(response)
+    return response

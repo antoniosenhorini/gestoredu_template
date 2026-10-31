@@ -110,6 +110,8 @@
                             <th>N&ordm;</th>
                             <th>Aluno</th>
                             <th>Ocorr&ecirc;ncia</th>
+                            <th>Chegada</th>
+                            <th>Saída</th>
                             <th>Descri&ccedil;&atilde;o</th>
                             <th>Atendido por</th>
                             <th class="text-end">A&ccedil;&otilde;es</th>
@@ -132,6 +134,9 @@
                                         {{ ocorrencia.get_tipo_ocorrencia_display }}
                                     </span>
                                 </td>
+                                <!-- AS DUAS LINHAS NOVAS ESTÃO AQUI -->
+                                <td>{{ ocorrencia.horario_chegada|time:"H:i"|default:"-" }}</td>
+                                <td>{{ ocorrencia.horario_saida|time:"H:i"|default:"-" }}</td>
                                 <td class="text-break">
                                     {{ ocorrencia.motivo_alegado|default:ocorrencia.observacoes_adicionais|default:"Sem descri&ccedil;&atilde;o" }}
                                 </td>

@@ -3,6 +3,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path, re_path
 from apps.views.importar import importar_alunos
 from apps.views.importar_professores import importar_professores
+from apps.views.laboratorios import cronograma_print, exportar_cronograma_excel
 
 from apps import views
 
@@ -134,7 +135,7 @@ urlpatterns = [
     # exclusivamente do caminho da URL (regex fecha a porta para qualquer outro valor,
     # como 'todos' - a URL simplesmente nao existe e retorna 404). Nunca aceita o turno
     # via querystring ou POST para esta rota; ver cronograma_semanal(turno_forcado=...).
-    re_path(r'^laboratorios/cronograma/(?P<turno_forcado>manha|tarde)/$', views.cronograma_semanal, name='cronograma_semanal_turno'),
+    re_path(r'^laboratorios/cronograma/(?P<turno_forcado>integral)/$', views.cronograma_semanal, name='cronograma_semanal_turno'),
     path('laboratorios/diagnostico-cronograma/', views.diagnostico_cronograma_laboratorios, name='diagnostico_cronograma_laboratorios'),
     path('laboratorios/consulta-cronograma/', views.consulta_cronograma_laboratorios, name='consulta_cronograma_laboratorios'),
 path('laboratorios/diagnostico-cronograma/ativar/', views.ativar_cronograma_laboratorio, name='ativar_cronograma_laboratorio'),
@@ -146,8 +147,8 @@ path('laboratorios/diagnostico-cronograma/excluir-semana/', views.excluir_semana
     path('laboratorios/emprestimo/<int:lab_id>/', views.emprestimo_equipamento, name='emprestimo_equipamento'),
     path('laboratorios/devolver/<int:emprestimo_id>/', views.devolver_equipamento, name='devolver_equipamento'),
     path('laboratorios/emprestimos/', views.listar_emprestimos, name='listar_emprestimos'),
-    path('laboratorios/cronograma/print/', views.cronograma_print, name='cronograma_print'),
-    path('laboratorios/cronograma/exportar-excel/', views.exportar_cronograma_excel, name='exportar_cronograma_excel'),
+    path('laboratorios/cronograma/print/', cronograma_print, name='cronograma_print'),
+    path('laboratorios/cronograma/exportar-excel/', exportar_cronograma_excel, name='exportar_cronograma_excel'),
     path('laboratorios/verificar-horario-pdf/', views.verificar_horario_pdf_upload, name='verificar_horario_pdf_upload'),
     path('laboratorios/verificar-horario-pdf/vinculos/', views.verificar_horario_pdf_aliases, name='verificar_horario_pdf_aliases'),
     path('laboratorios/verificar-horario-pdf/<int:upload_id>/', views.verificar_horario_pdf_relatorio, name='verificar_horario_pdf_relatorio'),

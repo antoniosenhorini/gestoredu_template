@@ -448,12 +448,16 @@ class RegistroOcorrenciaAluno(models.Model):
     """Registro de ocorrências/atrasos de alunos (pedagoga)"""
 
     TIPO_CHOICES = [
-        ('falta', 'Falta'),
         ('atraso', 'Atraso'),
-        ('piercing', 'Uso de Piercing'),
-        ('cabelo', 'Cabelo'),
         ('uniforme', 'Uniforme'),
-        ('desvio_normas', 'Desvio de Normas'),
+        ('matando_aula', 'Matando Aula'),
+        ('indisciplina', 'Indisciplina'),
+        ('desacato', 'Desacato'),
+        ('dano_patrimonio', 'Dano ao Patrimônio Público'),
+        ('bullying', 'Bullying'),
+        ('ato_infracional', 'Ato Infracional'),
+        ('saida_sem_autorizacao', 'Saída sem autorização'),
+        ('foi_embora', 'Foi Embora'),
     ]
 
 
@@ -466,7 +470,7 @@ class RegistroOcorrenciaAluno(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, related_name='ocorrencias')
     data = models.DateField(default=timezone.now)
     faltou = models.BooleanField(default=False, verbose_name="Faltou")
-    tipo_ocorrencia = models.CharField(max_length=20, choices=TIPO_CHOICES, default='falta', verbose_name="Tipo de ocorrência")
+    tipo_ocorrencia = models.CharField(max_length=50, choices=TIPO_CHOICES, default='falta', verbose_name="Tipo de ocorrência")
     busca_ativa_realizada = models.BooleanField(default=False, verbose_name="Busca Ativa realizada")
 
     # NOVO CAMPO
@@ -481,6 +485,7 @@ class RegistroOcorrenciaAluno(models.Model):
 
     # Dados do atraso/ocorrência
     horario_chegada = models.TimeField(verbose_name="Horário de chegada", null=True, blank=True)
+    horario_saida = models.TimeField(verbose_name="Horário de saída", null=True, blank=True)
     motivo_alegado = models.TextField(verbose_name="Motivo alegado pelo aluno", blank=True)
 
     # Quem atendeu

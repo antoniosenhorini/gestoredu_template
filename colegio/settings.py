@@ -159,6 +159,7 @@ ALLOWED_HOSTS = [
     "192.168.202.20",
     "127.0.0.1",
     "localhost",
+    "dompedroi.pythonanywhere.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -166,6 +167,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://www.luizzanchim.tech",
     "https://teste-escola.bertolo.online",
     "https://gestaoluizzanchim.bertolo.online",
+    "https://dompedroi.pythonanywhere.com",
 ]
 
 # ========== WHATSAPP CLOUD API ==========

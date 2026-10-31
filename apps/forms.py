@@ -6,22 +6,30 @@ from .models import AvisoProfessor, RecadoInterno, DocumentoPrivado, EventoPriva
 
 TIPOS_OCORRENCIA_PERMITIDOS = {
     'atraso',
-    'piercing',
-    'cabelo',
     'uniforme',
-    'desvio_normas',
-    'fora_sala',
     'matando_aula',
+    'indisciplina',
+    'desacato',
+    'dano_patrimonio',
+    'bullying',
+    'ato_infracional',
+    'saida_sem_autorizacao',
+    'foi_embora',
 }
+
 TIPOS_OCORRENCIA_LEGADOS_FALTA = ('falta', 'Falta')
+
 TIPOS_OCORRENCIA_CHOICES_PERMITIDOS = [
     ('atraso', 'Atraso'),
-    ('piercing', 'Uso de Piercing'),
-    ('cabelo', 'Cabelo'),
     ('uniforme', 'Uniforme'),
-    ('desvio_normas', 'Desvio de Normas'),
-    ('fora_sala', 'Fora da sala'),
-    ('matando_aula', 'Matando aula'),
+    ('matando_aula', 'Matando Aula'),
+    ('indisciplina', 'Indisciplina'),
+    ('desacato', 'Desacato'),
+    ('dano_patrimonio', 'Dano ao Patrimônio Público'),
+    ('bullying', 'Bullying'),
+    ('ato_infracional', 'Ato Infracional'),
+    ('saida_sem_autorizacao', 'Saída sem autorização'),
+    ('foi_embora', 'Foi Embora'),
 ]
 
 
@@ -189,16 +197,19 @@ class RegistroOcorrenciaForm(forms.ModelForm):
         fields = [
             'faltou',
             'horario_chegada',
+            'horario_saida', # <--- ADICIONE ESTA LINHA
             'motivo_alegado',
             'atendido_por',
             'responsavel_contatado',
             'horario_contato',
             'alegado_responsavel',
             'data',
-            'turno',  # ← ADICIONAR AQUI
+            'turno',
         ]
         widgets = {
-            'horario_chegada': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            # Adicione o ID no horario_chegada e crie o horario_saida:
+            'horario_chegada': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time', 'id': 'id_horario_chegada'}),
+            'horario_saida': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time', 'id': 'id_horario_saida'}), # <--- NOVO AQUI
             'motivo_alegado': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
