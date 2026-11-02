@@ -158,7 +158,7 @@
                     <hr style="border-color: rgba(255,255,255,0.2);">
                 </div>
                 <nav>
-                    <!-- CONTEÚDO PÚBLICO -->
+                   <!-- CONTEÚDO PÚBLICO -->
                 <div class="menu-secao">
                     <div style="background-color: #17a2b8; color: white; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center; font-weight: bold;">
                         📢 CONTEÚDO PÚBLICO
@@ -170,16 +170,16 @@
                         🌐 Ir para o Site dos Professores
                     </a>
 
-                    <a href="{% url 'admin:apps_recado_changelist' %}" target="_blank">
+                    <a href="{% url 'home' %}" target="_blank">
                         <i class="fas fa-bullhorn"></i> Recados Públicos
                     </a>
-                    <a href="{% url 'admin:apps_documento_changelist' %}" target="_blank">
+                    <a href="{% url 'home' %}" target="_blank">
                         <i class="fas fa-file-pdf"></i> Documentos Públicos
                     </a>
-                    <a href="{% url 'admin:apps_evento_changelist' %}" target="_blank">
+                    <a href="{% url 'home' %}" target="_blank">
                         <i class="fas fa-calendar-alt"></i> Eventos Públicos
                     </a>
-                    <a href="{% url 'admin:apps_video_changelist' %}" target="_blank">
+                    <a href="{% url 'home' %}" target="_blank">
                         <i class="fas fa-video"></i> Vídeos Públicos
                     </a>
                 </div>
@@ -227,7 +227,7 @@
                             <i class="fas fa-magnifying-glass" style="color: #28a745; margin-right: 10px; width: 25px; text-align: center;"></i>
                             Busca Ativa
                         </a>
-                    
+
                         <a href="{% url 'cadastrar_professor' %}" style="display: block; padding: 15px 20px; color: rgba(255,255,255,0.8); text-decoration: none; border-left: 3px solid #007bff; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px;">
                             <i class="fas fa-chalkboard-user"></i> Cadastrar Professor
                         </a>
@@ -348,7 +348,7 @@
                                 <input type="hidden" name="dia_ocorrencias_ranking" value="{{ dia_ocorrencias_ranking|default:'' }}">
                                 <input type="hidden" name="mes_ocorrencias_ranking" value="{{ mes_ocorrencias_ranking }}">
                                 <input type="hidden" name="ano_ocorrencias_ranking" value="{{ ano_ocorrencias_ranking }}">
-                                
+
                                 <div class="col-12 col-sm-6 col-lg-3">
                                     <label class="form-label"><i class="fas fa-calendar-day me-1"></i>Dia</label>
                                     <select name="dia" class="form-select">
@@ -777,7 +777,7 @@
                                 <input type="hidden" name="dia_ocorrencias_ranking" value="{{ dia_ocorrencias_ranking|default:'' }}">
                                 <input type="hidden" name="mes_ocorrencias_ranking" value="{{ mes_ocorrencias_ranking }}">
                                 <input type="hidden" name="ano_ocorrencias_ranking" value="{{ ano_ocorrencias_ranking }}">
-                                
+
                                 <div class="col-12 col-sm-6 col-xl-3">
                                     <label class="form-label"><i class="fas fa-calendar-day me-1"></i>Dia</label>
                                     <select name="dia_ranking" class="form-select">
