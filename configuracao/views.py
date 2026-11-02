@@ -18,3 +18,7 @@ def setup(request):
     else:
         form = ConfiguracaoEscolaForm(instance=escola)
     return render(request, "configuracao/setup.html", {"form": form})
+
+# --- NOVA VIEW ADICIONADA AQUI ---
+def trial_expirado(request):
+    return render(request, 'configuracao/trial_expirado.html')

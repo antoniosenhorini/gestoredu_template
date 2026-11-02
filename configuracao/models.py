@@ -9,6 +9,16 @@ class ConfiguracaoEscola(models.Model):
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)  
     cor_primaria = models.CharField(max_length=7, default='#0f2744')  
     setup_concluido = models.BooleanField(default=False)  
+    
+    # --- CAMPO NOVO ADICIONADO AQUI ---
+    data_expiracao = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Data de Expiração (Trial)",
+        help_text="Deixe em branco para acesso ilimitado."
+    )
+    # ----------------------------------
+    
     criado_em = models.DateTimeField(auto_now_add=True)  
     atualizado_em = models.DateTimeField(auto_now=True)  
   
@@ -22,4 +32,4 @@ class ConfiguracaoEscola(models.Model):
     @classmethod  
     def get_solo(cls):  
         obj, created = cls.objects.get_or_create(pk=1)  
-        return obj 
+        return obj
