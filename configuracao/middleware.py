@@ -15,13 +15,12 @@ class SetupMiddleware:
         return self.get_response(request)
 
 
-# --- NOVO MIDDLEWARE ADICIONADO AQUI ---
 class TrialMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Caminhos que NUNCA devem ser bloqueados
+        # Caminhos que NUNCA devem ser bloqueados (para o admin poder renovar)
         caminhos_livres = (
             '/expirado/',
             '/login/',
@@ -49,4 +48,3 @@ class TrialMiddleware:
             pass
 
         return self.get_response(request)
-
