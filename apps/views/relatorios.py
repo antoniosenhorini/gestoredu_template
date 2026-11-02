@@ -76,116 +76,8 @@ def relatorio_faltas_por_aluno(request):
 
 
 @relatorios_required
-def relatorio_alunos_mais_faltosos(request):
-    turnos_validos = ['manha', 'tarde', 'integral']
-    turno_filtro = request.GET.get('turno', 'integral')
-    if turno_filtro not in turnos_validos:
-        turno_filtro = 'integral'
-
-    turma_filtro = request.GET.get('turma', '')
-    data_inicial = request.GET.get('data_inicial', '')
-    data_final = request.GET.get('data_final', '')
-    data_inicial_obj = None
-    data_final_obj = None
-
-    if turma_filtro and not turma_filtro.isdigit():
-        turma_filtro = ''
-
-    if data_inicial:
-        try:
-            data_inicial_obj = datetime.strptime(data_inicial, '%Y-%m-%d').date()
-        except ValueError:
-            data_inicial = ''
-
-    if data_final:
-        try:
-            data_final_obj = datetime.strptime(data_final, '%Y-%m-%d').date()
-        except ValueError:
-            data_final = ''
-
-    if turno_filtro == 'integral':
-        turmas = Turma.objects.filter(Q(turno='integral') | Q(turno=None) | Q(turno=''), ativa=True).order_by('nome')
-        faltas = RegistroFaltaAluno.objects.filter(
-            Q(aluno__turma__turno='integral') | Q(aluno__turma__turno=None) | Q(aluno__turma__turno='')
-        ).select_related('aluno', 'aluno__turma')
-    else:
-        turmas = Turma.objects.filter(ativa=True, turno=turno_filtro).order_by('nome')
-        faltas = RegistroFaltaAluno.objects.filter(
-            aluno__turma__turno=turno_filtro
-        ).select_related('aluno', 'aluno__turma')
-
-    if turma_filtro:
-        faltas = faltas.filter(aluno__turma_id=turma_filtro)
-    if data_inicial_obj:
-        faltas = faltas.filter(data__gte=data_inicial_obj)
-    if data_final_obj:
-        faltas = faltas.filter(data__lte=data_final_obj)
-
-    totais = (
-        faltas
-        .values(
-            'aluno_id',
-            'aluno__nome',
-            'aluno__numero',
-            'aluno__turma_id',
-            'aluno__turma__nome',
-            'aluno__turma__serie',
-        )
-        .annotate(total_registros=Sum('quantidade_faltas'))
-        .order_by('aluno__turma__nome', '-total_registros', 'aluno__nome')
-    )
-
-    turmas_relatorio = []
-    turma_atual_id = None
-    grupo_atual = None
-    posicao = 0
-    total_alunos = 0
-
-    for item in totais:
-        total_registros = item['total_registros'] or 0
-        if total_registros <= 0:
-            continue
-
-        if item['aluno__turma_id'] != turma_atual_id:
-            turma_atual_id = item['aluno__turma_id']
-            posicao = 0
-            grupo_atual = {
-                'turma_id': turma_atual_id,
-                'turma': item['aluno__turma__nome'],
-                'serie': item['aluno__turma__serie'],
-                'alunos': [],
-            }
-            turmas_relatorio.append(grupo_atual)
-
-        posicao += 1
-        total_alunos += 1
-        grupo_atual['alunos'].append({
-            'posicao': posicao,
-            'nome': item['aluno__nome'],
-            'numero': item['aluno__numero'],
-            'turma': item['aluno__turma__nome'],
-            'serie': item['aluno__turma__serie'],
-            'total_aulas_faltadas': total_registros * 6,
-        })
-
-    context = {
-        'turno_filtro': turno_filtro,
-        'turma_filtro': turma_filtro,
-        'data_inicial': data_inicial,
-        'data_final': data_final,
-        'turmas': turmas,
-        'turmas_relatorio': turmas_relatorio,
-        'total_alunos': total_alunos,
-    }
-    return render(request, 'faltas/relatorio_alunos_mais_faltosos.html', context)
-
-
-@relatorios_required
 def relatorio_alunos_mais_ocorrencias(request):
-    turnos_validos = ['manha', 'tarde']
-    turno_filtro = request.GET.get('turno', 'manha')
-    if turno_filtro not in turnos_validos:
-        turno_filtro = 'manha'
+    turno_filtro = request.GET.get('turno', 'integral')
 
     turma_filtro = request.GET.get('turma', '')
     data_inicial = request.GET.get('data_inicial', '')
@@ -208,10 +100,10 @@ def relatorio_alunos_mais_ocorrencias(request):
         except ValueError:
             data_final = ''
 
-    turmas = Turma.objects.filter(ativa=True, turno=turno_filtro).order_by('nome')
+    # 👇 A LINHA QUE ESTAVA FALTANDO O "turmas =" 👇
+    turmas = Turma.objects.filter(ativa=True).order_by('nome')
 
     ocorrencias = RegistroOcorrenciaAluno.objects.filter(
-        aluno__turma__turno=turno_filtro,
         faltou=False,
     ).exclude(
         tipo_ocorrencia__in=TIPOS_OCORRENCIA_LEGADOS_FALTA
@@ -235,7 +127,7 @@ def relatorio_alunos_mais_ocorrencias(request):
         if turma_id not in alunos_por_turma:
             alunos_por_turma[turma_id] = {
                 'turma_id': turma_id,
-                'turma': turma.nome,
+                'turma': str(turma),
                 'serie': turma.serie,
                 'alunos': {},
             }
@@ -990,3 +882,97 @@ def relatorio_ocorrencias_por_tipo(request):
 
     wb.save(response)
     return response
+
+@relatorios_required
+def relatorio_alunos_mais_faltosos(request):
+    turno_filtro = request.GET.get('turno', 'integral')
+    turma_filtro = request.GET.get('turma', '')
+    data_inicial = request.GET.get('data_inicial', '')
+    data_final = request.GET.get('data_final', '')
+
+    data_inicial_obj = None
+    data_final_obj = None
+
+    if turma_filtro and not turma_filtro.isdigit():
+        turma_filtro = ''
+
+    if data_inicial:
+        try:
+            data_inicial_obj = datetime.strptime(data_inicial, '%Y-%m-%d').date()
+        except ValueError:
+            data_inicial = ''
+
+    if data_final:
+        try:
+            data_final_obj = datetime.strptime(data_final, '%Y-%m-%d').date()
+        except ValueError:
+            data_final = ''
+
+    turmas = Turma.objects.filter(ativa=True).order_by('nome')
+
+    faltas = RegistroFaltaAluno.objects.all().select_related('aluno', 'aluno__turma')
+
+    if turma_filtro:
+        faltas = faltas.filter(aluno__turma_id=turma_filtro)
+    if data_inicial_obj:
+        faltas = faltas.filter(data__gte=data_inicial_obj)
+    if data_final_obj:
+        faltas = faltas.filter(data__lte=data_final_obj)
+
+    totais = (
+        faltas
+        .values(
+            'aluno_id',
+            'aluno__nome',
+            'aluno__numero',
+            'aluno__turma_id',
+            'aluno__turma__nome',
+            'aluno__turma__serie',
+        )
+        .annotate(total_registros=Sum('quantidade_faltas'))
+        .order_by('aluno__turma__nome', '-total_registros', 'aluno__nome')
+    )
+
+    turmas_relatorio = []
+    turma_atual_id = None
+    grupo_atual = None
+    posicao = 0
+    total_alunos = 0
+
+    for item in totais:
+        total_registros = item['total_registros'] or 0
+        if total_registros <= 0:
+            continue
+
+        if item['aluno__turma_id'] != turma_atual_id:
+            turma_atual_id = item['aluno__turma_id']
+            posicao = 0
+            grupo_atual = {
+                'turma_id': turma_atual_id,
+                'turma': item['aluno__turma__nome'],
+                'serie': item['aluno__turma__serie'],
+                'alunos': [],
+            }
+            turmas_relatorio.append(grupo_atual)
+
+        posicao += 1
+        total_alunos += 1
+
+        grupo_atual['alunos'].append({
+            'posicao': posicao,
+            'nome': item['aluno__nome'],
+            'serie': item['aluno__turma__serie'],
+            'turma': item['aluno__turma__nome'],
+            'total_aulas_faltadas': total_registros,
+        })
+
+    context = {
+        'turno_filtro': turno_filtro,
+        'turma_filtro': turma_filtro,
+        'data_inicial': data_inicial,
+        'data_final': data_final,
+        'turmas': turmas,
+        'turmas_relatorio': turmas_relatorio,
+        'total_alunos': total_alunos,
+    }
+    return render(request, 'faltas/relatorio_alunos_mais_faltosos.html', context)

@@ -565,6 +565,12 @@ class ConfiguracaoCronogramaLaboratorio(models.Model):
     data_fim_manha_ativo = models.DateField(null=True, blank=True)
     data_inicio_tarde_ativo = models.DateField(null=True, blank=True)
     data_fim_tarde_ativo = models.DateField(null=True, blank=True)
+    data_inicio_integral_editando = models.DateField(null=True, blank=True) # <-- Adicione essa também por segurança
+
+     # --- ADICIONE ESTAS DUAS LINHAS AQUI ---
+    data_inicio_integral_ativo = models.DateField(null=True, blank=True)
+    data_fim_integral_ativo = models.DateField(null=True, blank=True)
+    # ---------------------------------------
 
     # Semana em preparacao (ainda nao ativada), separada por turno e
     # compartilhada entre toda a equipe diretiva - antes ficava presa a
@@ -789,9 +795,9 @@ class Emprestimo(models.Model):
 # =============================================================================
 
 TURNO_CHOICES_LAB = [
-    ('manha', 'Manha'), ('integral', 'Integral'),
+    ('manha', 'Manha'),
     ('tarde', 'Tarde'),
-    ('integral', 'Integral'), # <-- ADICIONE ESTA LINHA
+    ('integral', 'Integral'),
 ]
 
 
