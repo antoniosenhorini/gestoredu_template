@@ -210,6 +210,12 @@ document.addEventListener('DOMContentLoaded', function() {
         radio.addEventListener('change', verificarTipo);
     });
 
+    // Se não houver nenhum selecionado, marca o Atraso ANTES de verificar
+    if (!document.querySelector('.tipo-radio:checked')) {
+        document.getElementById('tipo_atraso').checked = true;
+    }
+
+    // Roda a verificação inicial (agora o atraso já está marcado!)
     verificarTipo();
 });
 </script>
@@ -236,10 +242,6 @@ document.addEventListener('DOMContentLoaded', function () {
         pedagogaInput.readOnly = valor !== pedagogaNaoDefinida;
     }
 
-    const selectedTipo = document.querySelector('input[name="tipo_ocorrencia"]:checked');
-    if (!selectedTipo) {
-        document.getElementById('tipo_atraso').checked = true;
-    }
 
     function atualizarObservacoes() {
         if (observacoes && descricao) {
