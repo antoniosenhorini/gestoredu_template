@@ -87,8 +87,25 @@ class TurmaAdmin(admin.ModelAdmin):
     list_filter = ['ativa', 'ano']
     search_fields = ['nome', 'serie']
 
+from import_export import resources, fields
+from import_export.widgets import ForeignKeyWidget
+from import_export.admin import ImportExportMixin
+
+class AlunoResource(resources.ModelResource):
+    # Diz ao sistema para procurar a Turma pelo 'nome' em vez do ID
+    turma = fields.Field(
+        column_name='turma',
+        attribute='turma',
+        widget=ForeignKeyWidget(Turma, 'nome')
+    )
+
+    class Meta:
+        model = Aluno
+        fields = ('id', 'nome', 'numero', 'turma', 'telefone', 'ativo')
+
 @admin.register(Aluno)
-class AlunoAdmin(admin.ModelAdmin):
+class AlunoAdmin(ImportExportMixin, admin.ModelAdmin):
+    resource_class = AlunoResource
     list_display = ['nome', 'numero', 'turma', 'telefone', 'ativo']
     list_filter = ['turma', 'ativo', TelefoneFilter]
     search_fields = ['nome', 'numero']

@@ -1,0 +1,17 @@
+{% extends "admin/import_export/import.html" %}
+
+{% block import_form %}
+    <div class="alert alert-info" style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h4><i class="fas fa-file-excel"></i> Antes de importar, baixe o modelo!</h4>
+        <p>Para evitar erros, baixe a planilha modelo, preencha com os seus dados e depois faça o upload aqui.</p>
+        
+        <a href="/media/modelos/modelo_alunos.xlsx" class="btn btn-success" style="background-color: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; margin-right: 10px; font-weight: bold;">
+            <i class="fas fa-download"></i> Baixar Modelo de Alunos
+        </a>
+        <a href="/media/modelos/modelo_professores.xlsx" class="btn btn-success" style="background-color: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            <i class="fas fa-download"></i> Baixar Modelo de Professores
+        </a>
+    </div>
+    
+    {{ block.super }}
+{% endblock %}
