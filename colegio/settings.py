@@ -23,9 +23,9 @@ env_config = Config(RepositoryEnv(str(ENV_FILE))) if ENV_FILE.exists() else conf
 SECRET_KEY = 'django-insecure-mxntg-(z5@zzn81h3wpe#(^@*m%ek842k0ai&(ft80j-f6ufr&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['dompedroi.pythonanywhere.com']
 
 
 # Application definition
