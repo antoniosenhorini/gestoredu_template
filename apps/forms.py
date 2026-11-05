@@ -2,7 +2,7 @@ from django import forms
 from django.utils import timezone
 import unicodedata
 import re
-from .models import AvisoProfessor, RecadoInterno, DocumentoPrivado, EventoPrivado, RegistroOcorrenciaAluno, Aluno, Turma
+from .models import AvisoProfessor, RecadoInterno, DocumentoPrivado, EventoPrivado, RegistroOcorrenciaAluno, Aluno, Turma, Laboratorio
 
 TIPOS_OCORRENCIA_PERMITIDOS = {
     'atraso',
@@ -326,3 +326,15 @@ class AlunoEditForm(forms.ModelForm):
             'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
+
+class LaboratorioForm(forms.ModelForm):
+    class Meta:
+        model = Laboratorio
+        # ATENÇÃO: Confira no seu models.py se os campos são exatamente esses:
+        fields = ['nome', 'tipo', 'equipamento', 'quantidade_total']
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'equipamento': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantidade_total': forms.NumberInput(attrs={'class': 'form-control'}),
+        }

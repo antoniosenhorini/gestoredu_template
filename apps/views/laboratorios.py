@@ -15,6 +15,9 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET
 from datetime import date, datetime, timedelta
 import hashlib
+from django.shortcuts import get_object_or_404
+from django.contrib import messages
+from ..forms import LaboratorioForm
 
 
 DIAS_SEMANA_LAB = ['Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira']
@@ -972,7 +975,43 @@ def listar_laboratorios(request):
                 disponivel=True
             ).count()
 
-    return render(request, 'laboratorios/listar.html', {'laboratorios': laboratorios})
+    form = LaboratorioForm()
+    return render(request, 'laboratorios/listar.html', {'laboratorios': laboratorios, 'form': form})
+
+@login_required
+@user_passes_test(pertence_ao_grupo_equipe_diretiva, login_url='/')
+def adicionar_laboratorio(request):
+    if request.method == 'POST':
+        form = LaboratorioForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Laboratório adicionado com sucesso!')
+        else:
+            messages.error(request, 'Erro ao adicionar laboratório. Verifique os dados.')
+    return redirect('listar_laboratorios')
+
+@login_required
+@user_passes_test(pertence_ao_grupo_equipe_diretiva, login_url='/')
+def editar_laboratorio(request, pk):
+    lab = get_object_or_404(Laboratorio, pk=pk)
+    if request.method == 'POST':
+        form = LaboratorioForm(request.POST, instance=lab)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Laboratório editado com sucesso!')
+        else:
+            messages.error(request, 'Erro ao editar laboratório.')
+    return redirect('listar_laboratorios')
+
+@login_required
+@user_passes_test(pertence_ao_grupo_equipe_diretiva, login_url='/')
+def excluir_laboratorio(request, pk):
+    lab = get_object_or_404(Laboratorio, pk=pk)
+    if request.method == 'POST':
+        lab.ativo = False  # Desativa em vez de apagar do banco (preserva histórico)
+        lab.save()
+        messages.success(request, 'Laboratório excluído com sucesso!')
+    return redirect('listar_laboratorios')
 
 
 @login_required

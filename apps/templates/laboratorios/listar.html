@@ -4,16 +4,19 @@
 {% block content %}
 <div class="container-fluid px-2 px-md-4 py-3">
     <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h4><i class="fas fa-laptop me-2"></i>Gestao de Laboratorios</h4>
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="fas fa-laptop me-2"></i>Gestao de Laboratorios</h4>
+            <button class="btn btn-light text-primary fw-bold" onclick="abrirModalAdicionar()">
+                <i class="fas fa-plus me-1"></i> Novo Laboratório
+            </button>
         </div>
         <div class="card-body">
             <div class="row">
                 {% for lab in laboratorios %}
                 <div class="col-md-6 mb-4">
                     <div class="card h-100">
-                        <div class="card-header bg-secondary text-white">
-                            <h5>{{ lab.nome }} - {{ lab.equipamento }}</h5>
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ lab.nome }} - {{ lab.equipamento|default:"Geral" }}</h5>
                         </div>
                         <div class="card-body">
                             <p><strong>Tipo:</strong> 
@@ -25,9 +28,9 @@
                             </p>
                             
                             {% if lab.tipo == 'fixo' %}
-                                <p><strong>Capacidade:</strong> 1 turma (ate 35 alunos)</p>
+                                <p><strong>Capacidade:</strong> {{ lab.quantidade_total|default:"0" }} alunos/equipamentos</p>
                             {% else %}
-                                <p><strong>Quantidade total:</strong> {{ lab.quantidade_total }} equipamentos</p>
+                                <p><strong>Quantidade total:</strong> {{ lab.quantidade_total|default:"0" }} equipamentos</p>
                                 <p><strong>Disponiveis:</strong>
                                     <span class="badge bg-success">{{ lab.disponiveis }}</span>
                                 </p>
@@ -36,11 +39,95 @@
                                 </a>
                             {% endif %}
                         </div>
+                        
+                        <div class="card-footer bg-white d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-warning" 
+                                    onclick="abrirModalEditar({{ lab.id }}, '{{ lab.nome }}', '{{ lab.tipo }}', '{{ lab.equipamento|default:'' }}', '{{ lab.quantidade_total|default:'' }}')">
+                                <i class="fas fa-edit me-1"></i> Editar
+                            </button>
+                            <form action="{% url 'excluir_laboratorio' lab.id %}" method="POST" class="m-0" onsubmit="return confirm('Tem certeza que deseja excluir o laboratório {{ lab.nome }}? Ele não aparecerá mais no cronograma.');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash me-1"></i> Excluir
+                                </button>
+                            </form>
+                        </div>
                     </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <h5 class="text-muted">Nenhum laboratório cadastrado ou ativo no momento.</h5>
                 </div>
                 {% endfor %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- MODAL DE ADICIONAR / EDITAR -->
+<div class="modal fade" id="modalLaboratorio" tabindex="-1" aria-labelledby="modalLaboratorioLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formLaboratorio" method="POST" action="{% url 'adicionar_laboratorio' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalLaboratorioLabel">Adicionar Laboratório</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nome do Laboratório</label>
+                        {{ form.nome }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo</label>
+                        {{ form.tipo }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Equipamento (Ex: Desktop, Notebook)</label>
+                        {{ form.equipamento }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Capacidade / Quantidade Total</label>
+                        {{ form.quantidade_total }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i> Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function abrirModalAdicionar() {
+        document.getElementById('modalLaboratorioLabel').innerText = 'Adicionar Laboratório';
+        document.getElementById('formLaboratorio').action = "{% url 'adicionar_laboratorio' %}";
+        
+        document.getElementById('id_nome').value = '';
+        document.getElementById('id_tipo').value = 'fixo';
+        document.getElementById('id_equipamento').value = '';
+        document.getElementById('id_quantidade_total').value = '';
+        
+        var myModal = new bootstrap.Modal(document.getElementById('modalLaboratorio'));
+        myModal.show();
+    }
+
+    function abrirModalEditar(id, nome, tipo, equipamento, quantidade) {
+        document.getElementById('modalLaboratorioLabel').innerText = 'Editar Laboratório';
+        document.getElementById('formLaboratorio').action = `/laboratorios/editar/${id}/`;
+        
+        document.getElementById('id_nome').value = nome;
+        document.getElementById('id_tipo').value = tipo;
+        document.getElementById('id_equipamento').value = equipamento;
+        document.getElementById('id_quantidade_total').value = quantidade;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('modalLaboratorio'));
+        myModal.show();
+    }
+</script>
 {% endblock %}
